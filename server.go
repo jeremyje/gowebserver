@@ -43,7 +43,7 @@ func init() {
 			defaultSecurePortInt = 443
 		}
 	}
-	
+
 	defaultPort := os.Getenv("PORT")
 	if defaultPort != "" {
 		port, err := strconv.Atoi(defaultPort)
@@ -51,7 +51,7 @@ func init() {
 			defaultPortInt = port
 		}
 	}
-	
+
 	httpPortFlag = flag.Int("port", defaultPortInt, "Port to run HTTP server.")
 	httpsPortFlag = flag.Int("secure_port", defaultSecurePortInt, "Port to run HTTPS server.")
 }
