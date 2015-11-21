@@ -1,13 +1,12 @@
 Go Web Server
 =============
 
-A simple standalone web server that can quickly host static files on a file system.
-
+A simple web server to host static files on a file system via HTTP and HTTPS with no configuration. 
 
 Example command to host your home directory.
 
 ```
-./server --port=8080 --secure_port=8443 --directory=${HOME}
+./server --directory=${HOME}
 ```
 
 Downloads
