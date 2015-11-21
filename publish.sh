@@ -29,5 +29,5 @@ BuildBinary "openbsd" "amd64"
 BuildBinary "freebsd" "amd64"
 BuildBinary "dragonfly" "amd64"
 
-gsutil -m -o cp -r build/* gs://gowebserver/pub/
+gsutil -m cp -r build/ gs://gowebserver/pub/
 gsutil -m -o acl set public-read gs://gowebserver/pub/**
