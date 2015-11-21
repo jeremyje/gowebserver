@@ -16,6 +16,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -23,7 +24,7 @@ import (
 )
 
 var httpsPortFlag = flag.Int("secure_port", 443, "Port to run HTTPS server.")
-var httpPortFlag = flag.Int("port", 80, "Port to run HTTP server.")
+var httpPortFlag *int
 var certificateFilePathFlag = flag.String("certificate", "cert.pem", "Certificate to host HTTPS with.")
 var privateKeyFilePathFlag = flag.String("private_key", "rsa.pem", "Certificate to host HTTPS with.")
 var rootDirectoryFlag = flag.String("directory", "", "The directory to serve.")
@@ -31,6 +32,19 @@ var rootDirectoryFlag = flag.String("directory", "", "The directory to serve.")
 var certHostsFlag = flag.String("host", "", "Comma-separated hostnames and IPs to generate a certificate for")
 var validDurationFlag = flag.Int("certificate_duration", 365, "Certificate valid duration.")
 var certificateAuthorityFlag = flag.Bool("ca", false, "whether this cert should be its own Certificate Authority")
+
+func init() {
+	defaultPortInt := 80
+	defaultPort := os.Getenv("PORT")
+	log.Printf("Default Port: %s", defaultPort)
+	if defaultPort != "" {
+		port, err := strconv.Atoi(defaultPort)
+		if err == nil {
+			defaultPortInt = port
+		}
+	}
+	httpPortFlag = flag.Int("port", defaultPortInt, "Port to run HTTP server.")
+}
 
 func main() {
 	flag.Parse()
@@ -167,7 +181,7 @@ type CertificateBuilder interface {
 	// Set the certificate to be used as the certificate authority.
 	SetUseSelfAsCertificateAuthority(useSelf bool) CertificateBuilder
 	// Set the certificate organization.
-	SetOrganization(organization string) CertificateBuilder
+	SetOrganization(organization string, unit string) CertificateBuilder
 	// Gets the X.509 certificate in PEM format as a byte string.
 	GetCertificate() ([]byte, error)
 	// Gets the private key in PEM format as a byte string.
@@ -190,10 +204,18 @@ type CertificateBuilderImpl struct {
 	hostName                      string
 	useSelfAsCertificateAuthority bool
 	certOrganization              string
+	certOrganizationUnit          string
 }
 
 // Creates a new Certificate Builder.
 func NewCertificateBuilder() CertificateBuilder {
+	defaultCertOrg := "Some Company"
+	defaultCertOrgUnit := "None"
+	currentUser, err := user.Current()
+	if err == nil {
+		defaultCertOrg = currentUser.Name
+		defaultCertOrgUnit = currentUser.Username
+	}
 	return &CertificateBuilderImpl{
 		rsaBits:                       2048,
 		ecdsaCurve:                    nil,
@@ -205,7 +227,8 @@ func NewCertificateBuilder() CertificateBuilder {
 		certValidStart:                time.Now(),
 		hostName:                      "",
 		useSelfAsCertificateAuthority: true,
-		certOrganization:              "Some Company",
+		certOrganization:              defaultCertOrg,
+		certOrganizationUnit:          defaultCertOrgUnit,
 	}
 }
 
@@ -275,8 +298,9 @@ func (this *CertificateBuilderImpl) SetUseSelfAsCertificateAuthority(useSelf boo
 	return this
 }
 
-func (this *CertificateBuilderImpl) SetOrganization(organization string) CertificateBuilder {
+func (this *CertificateBuilderImpl) SetOrganization(organization string, unit string) CertificateBuilder {
 	this.certOrganization = organization
+	this.certOrganizationUnit = unit
 	this.isDirty = true
 	return this
 }
@@ -335,11 +359,11 @@ func (this *CertificateBuilderImpl) buildCertificate() error {
 		this.buildError = err
 		return err
 	}
-
+	log.Printf("Serial Number: %v", serialNumber)
 	certName := pkix.Name{
-		Country:            []string{"United States"},
+		Country:            []string{"US"},
 		Organization:       []string{this.certOrganization},
-		OrganizationalUnit: []string{"Local System"},
+		OrganizationalUnit: []string{this.certOrganizationUnit},
 		Locality:           []string{"Seattle"},
 		Province:           []string{"Washington"},
 		CommonName:         this.certOrganization,
