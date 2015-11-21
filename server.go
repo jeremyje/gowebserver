@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-var httpsPortFlag = flag.Int("secure_port", 443, "Port to run HTTPS server.")
+var httpsPortFlag *int
 var httpPortFlag *int
 var certificateFilePathFlag = flag.String("certificate", "cert.pem", "Certificate to host HTTPS with.")
 var privateKeyFilePathFlag = flag.String("private_key", "rsa.pem", "Certificate to host HTTPS with.")
@@ -34,16 +34,26 @@ var validDurationFlag = flag.Int("certificate_duration", 365, "Certificate valid
 var certificateAuthorityFlag = flag.Bool("ca", false, "whether this cert should be its own Certificate Authority")
 
 func init() {
-	defaultPortInt := 80
+	defaultPortInt := 8080
+	defaultSecurePortInt := 8443
+	currentUser, err := user.Current()
+	if err == nil {
+		if currentUser.Uid == "0" {
+			defaultPortInt = 80
+			defaultSecurePortInt = 443
+		}
+	}
+	
 	defaultPort := os.Getenv("PORT")
-	log.Printf("Default Port: %s", defaultPort)
 	if defaultPort != "" {
 		port, err := strconv.Atoi(defaultPort)
 		if err == nil {
 			defaultPortInt = port
 		}
 	}
+	
 	httpPortFlag = flag.Int("port", defaultPortInt, "Port to run HTTP server.")
+	httpsPortFlag = flag.Int("secure_port", defaultSecurePortInt, "Port to run HTTPS server.")
 }
 
 func main() {
@@ -359,7 +369,6 @@ func (this *CertificateBuilderImpl) buildCertificate() error {
 		this.buildError = err
 		return err
 	}
-	log.Printf("Serial Number: %v", serialNumber)
 	certName := pkix.Name{
 		Country:            []string{"US"},
 		Organization:       []string{this.certOrganization},

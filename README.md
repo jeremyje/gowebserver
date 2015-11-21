@@ -15,14 +15,16 @@ Downloads
 
     OS    | Arch  | Link
 ----------|-------|--------------------------------------------------------------------------------
-Linux     | amd64 | curl -O https://storage.googleapis.com/gowebserver/pub/linux-amd64/server
-Linux     | 386   | curl -O https://storage.googleapis.com/gowebserver/pub/linux-386/server
-Linux     | arm   | curl -O https://storage.googleapis.com/gowebserver/pub/linux-arm/server
-Linux     | arm64 | curl -O https://storage.googleapis.com/gowebserver/pub/linux-arm64/server
-Windows   | amd64 | curl -O https://storage.googleapis.com/gowebserver/pub/windows-amd64/server.exe
-Windows   | 386   | curl -O https://storage.googleapis.com/gowebserver/pub/windows-386/server.exe
-Darwin    | amd64 | curl -O https://storage.googleapis.com/gowebserver/pub/darwin-amd64/server
-NetBSD    | amd64 | curl -O https://storage.googleapis.com/gowebserver/pub/netbsd-amd64/server
-OpenBSD   | amd64 | curl -O https://storage.googleapis.com/gowebserver/pub/openbsd-amd64/server
-FreeBSD   | amd64 | curl -O https://storage.googleapis.com/gowebserver/pub/freebsd-amd64/server
-Dragonfly | amd64 | curl -O https://storage.googleapis.com/gowebserver/pub/dragonfly-amd64/server
+Linux     | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.1/server-amd64
+Linux     | arm   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.1/server-arm
+Windows   | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.1/server-amd64.exe
+
+
+Build
+-----
+
+Install [Go 1.5+](https://golang.org/dl/).
+
+```
+go build server.go
+```
