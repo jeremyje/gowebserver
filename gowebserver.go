@@ -29,9 +29,10 @@ var certificateFilePathFlag = flag.String("certificate", "cert.pem", "Certificat
 var privateKeyFilePathFlag = flag.String("private_key", "rsa.pem", "Certificate to host HTTPS with.")
 var rootDirectoryFlag = flag.String("directory", "", "The directory to serve.")
 
-var certHostsFlag = flag.String("host", "", "Comma-separated hostnames and IPs to generate a certificate for")
+var certHostsFlag = flag.String("host", "", "Comma-separated hostnames and IPs to generate a certificate for.")
 var validDurationFlag = flag.Int("certificate_duration", 365, "Certificate valid duration.")
-var certificateAuthorityFlag = flag.Bool("ca", false, "whether this cert should be its own Certificate Authority")
+var certificateAuthorityFlag = flag.Bool("ca", false, "(Experimental) Generate a root cert as a Certificate Authority")
+var generateCertFlag = flag.Bool("generate_cert", false, "Only generate a self-signed certificate for the server.")
 
 func init() {
 	defaultPortInt := 8080
@@ -58,9 +59,12 @@ func init() {
 
 func main() {
 	flag.Parse()
-	err := createCertificate(*certificateFilePathFlag, *privateKeyFilePathFlag, *certHostsFlag, *validDurationFlag, *certificateAuthorityFlag)
+	err := createCertificate(*certificateFilePathFlag, *privateKeyFilePathFlag, *certHostsFlag, *validDurationFlag, *certificateAuthorityFlag, *generateCertFlag)
 	if err != nil {
 		log.Fatal(err)
+	}
+	if *generateCertFlag {
+		return
 	}
 	server := NewWebServer()
 	server.SetPorts(*httpPortFlag, *httpsPortFlag)
@@ -76,10 +80,10 @@ func main() {
 	server.Serve()
 }
 
-func createCertificate(certPath string, privateKeyPath string, hosts string, durationInDays int, isCa bool) error {
+func createCertificate(certPath string, privateKeyPath string, hosts string, durationInDays int, isCa bool, overwrite bool) error {
 	_, certErr := os.Stat(certPath)
 	_, privateKeyErr := os.Stat(privateKeyPath)
-	if os.IsNotExist(certErr) && os.IsNotExist(privateKeyErr) {
+	if overwrite || (os.IsNotExist(certErr) && os.IsNotExist(privateKeyErr)) {
 		certBuilder := NewCertificateBuilder()
 		certBuilder.SetRsa2048().SetValidDurationInDays(durationInDays).SetUseSelfAsCertificateAuthority(isCa)
 		err := certBuilder.WriteCertificate(certPath)
