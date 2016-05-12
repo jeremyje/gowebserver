@@ -1,9 +1,9 @@
-prefix = /usr/local
+prefix = /usr
 bindir = $(prefix)/bin
 sharedir = $(prefix)/share
 mandir = $(sharedir)/man
 man1dir = $(mandir)/man1
-export PATH := $(PATH):/usr/local/go/bin
+export PATH := $(PATH):/usr/local/go/bin:/usr/go/bin
 BINARY_NAME=gowebserver
 
 all: gowebserver
