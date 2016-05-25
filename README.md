@@ -14,11 +14,11 @@ Downloads
 
     OS    | Arch  | Link
 ----------|-------|-------------------------------------------------------------------------------------------
-Linux     | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.2/server-amd64
-Linux     | arm   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.2/server-arm
-Linux     | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.2/server-386
-Windows   | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.2/server-amd64.exe
-Windows   | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.2/server-386.exe
+Linux     | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.3/server-amd64
+Linux     | arm   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.3/server-arm
+Linux     | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.3/server-386
+Windows   | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.3/server-amd64.exe
+Windows   | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.3/server-386.exe
 
 
 Build
@@ -27,5 +27,6 @@ Build
 Install [Go 1.5+](https://golang.org/dl/).
 
 ```
-go build gowebserver.go
+make deps
+make gowebserver
 ```
