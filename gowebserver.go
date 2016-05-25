@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"flag"
+	"github.com/prometheus/client_golang/prometheus"
 	"io/ioutil"
 	"log"
 	"math/big"
@@ -28,6 +29,10 @@ var httpPortFlag *int
 var certificateFilePathFlag = flag.String("certificate", "cert.pem", "Certificate to host HTTPS with.")
 var privateKeyFilePathFlag = flag.String("private_key", "rsa.pem", "Certificate to host HTTPS with.")
 var rootDirectoryFlag = flag.String("directory", "", "The directory to serve.")
+var servePathFlag = flag.String("http_root", "/", "HTTP serve root path for the filesystem.")
+
+var metricsFlag = flag.Bool("metrics", true, "Enables server metrics for monitoring.")
+var metricsPathFlag = flag.String("metrics_path", "/metrics", "The URL path for exporting server metrics for Prometheus montitoring.")
 
 var certHostsFlag = flag.String("host", "", "Comma-separated hostnames and IPs to generate a certificate for.")
 var validDurationFlag = flag.Int("certificate_duration", 365, "Certificate valid duration.")
@@ -75,6 +80,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	server.SetMetricsEnabled(*metricsFlag)
+	server.SetServePath(*servePathFlag, *metricsPathFlag)
+
 	server.SetCertificateFile(*certificateFilePathFlag)
 	server.SetPrivateKey(*privateKeyFilePathFlag)
 	server.Serve()
@@ -100,6 +108,8 @@ func createCertificate(certPath string, privateKeyPath string, hosts string, dur
 
 type WebServer interface {
 	SetPorts(httpPort, httpsPort int)
+	SetMetricsEnabled(enabled bool)
+	SetServePath(fileSystemServePath string, metricsServePath string)
 	SetDirectory(dir string) error
 	SetCertificateFile(certificateFilePath string)
 	SetPrivateKey(privateKeyFilePath string)
@@ -109,6 +119,9 @@ type WebServer interface {
 type WebServerImpl struct {
 	httpPort            string
 	httpsPort           string
+	metricsEnabled      bool
+	fileSystemServePath string
+	metricsServePath    string
 	certificateFilePath string
 	privateKeyFilePath  string
 	servingDirectory    string
@@ -117,6 +130,15 @@ type WebServerImpl struct {
 func (this *WebServerImpl) SetPorts(httpPort, httpsPort int) {
 	this.httpPort = ":" + strconv.Itoa(httpPort)
 	this.httpsPort = ":" + strconv.Itoa(httpsPort)
+}
+
+func (this *WebServerImpl) SetMetricsEnabled(enabled bool) {
+	this.metricsEnabled = enabled
+}
+
+func (this *WebServerImpl) SetServePath(fileSystemServePath string, metricsServePath string) {
+	this.fileSystemServePath = fileSystemServePath
+	this.metricsServePath = metricsServePath
 }
 
 func (this *WebServerImpl) SetDirectory(dir string) error {
@@ -146,14 +168,21 @@ func (this *WebServerImpl) SetPrivateKey(privateKeyFilePath string) {
 func (this *WebServerImpl) Serve() {
 	log.Printf("Serving %s on %s and %s", this.servingDirectory, this.httpPort, this.httpsPort)
 	fsHandler := http.FileServer(http.Dir(this.servingDirectory + "/"))
+	serverMux := http.NewServeMux()
+	if this.metricsEnabled {
+		serverMux.Handle(this.metricsServePath, prometheus.Handler())
+		serverMux.HandleFunc(this.fileSystemServePath, prometheus.InstrumentHandler(this.fileSystemServePath, fsHandler))
+	} else {
+		serverMux.Handle(this.fileSystemServePath, fsHandler)
+	}
 	go func() {
-		err := http.ListenAndServeTLS(this.httpsPort, this.certificateFilePath, this.privateKeyFilePath, fsHandler)
+		err := http.ListenAndServeTLS(this.httpsPort, this.certificateFilePath, this.privateKeyFilePath, serverMux)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}()
 	go func() {
-		err := http.ListenAndServe(this.httpPort, fsHandler)
+		err := http.ListenAndServe(this.httpPort, serverMux)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -166,6 +195,9 @@ func NewWebServer() WebServer {
 	return &WebServerImpl{
 		httpPort:            "80",
 		httpsPort:           "443",
+		metricsEnabled:      true,
+		fileSystemServePath: "/",
+		metricsServePath:    "/metrics",
 		certificateFilePath: "",
 		privateKeyFilePath:  "",
 		servingDirectory:    "",

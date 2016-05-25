@@ -31,12 +31,19 @@ gowebserver-%:
 gowebserver:
 	@go build gowebserver.go
 
+lint:
+	@go fmt gowebserver.go
+	@go vet gowebserver.go
+
 clean:
-	@rm -f gowebserver gowebserver-*
+	@rm -f gowebserver gowebserver-* cert.pem rsa.pem
 	@rm -rf release/
+
+deps:
+	@go get -u github.com/prometheus/client_golang/...
 
 install: all
 	@install gowebserver $(DESTDIR)$(bindir)
 	@install -m 0644 gowebserver.1 $(DESTDIR)$(man1dir)
 
-.PHONY : main-platforms extended-platforms dist
+.PHONY : main-platforms extended-platforms dist lint deps
