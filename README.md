@@ -27,6 +27,6 @@ Build
 Install [Go 1.5+](https://golang.org/dl/).
 
 ```
-make deps
-make gowebserver
+git clone git@github.com:jeremyje/gowebserver.git --recursive
+make
 ```
