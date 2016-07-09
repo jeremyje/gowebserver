@@ -1,0 +1,21 @@
+[submodule "vendor/github.com/prometheus/client_golang"]
+	path = vendor/github.com/prometheus/client_golang
+	url = git@github.com:prometheus/client_golang.git
+[submodule "vendor/github.com/prometheus/client_model"]
+	path = vendor/github.com/prometheus/client_model
+	url = git@github.com:prometheus/client_model.git
+[submodule "vendor/github.com/prometheus/common"]
+	path = vendor/github.com/prometheus/common
+	url = git@github.com:prometheus/common.git
+[submodule "vendor/github.com/prometheus/procfs"]
+	path = vendor/github.com/prometheus/procfs
+	url = git@github.com:prometheus/procfs.git
+[submodule "vendor/github.com/beorn7/perks"]
+	path = vendor/github.com/beorn7/perks
+	url = git@github.com:beorn7/perks.git
+[submodule "vendor/github.com/golang/protobuf"]
+	path = vendor/github.com/golang/protobuf
+	url = git@github.com:golang/protobuf.git
+[submodule "vendor/github.com/matttproud/golang_protobuf_extensions"]
+	path = vendor/github.com/matttproud/golang_protobuf_extensions
+	url = git@github.com:matttproud/golang_protobuf_extensions.git
