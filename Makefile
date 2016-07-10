@@ -3,6 +3,7 @@ bindir = $(prefix)/bin
 sharedir = $(prefix)/share
 mandir = $(sharedir)/man
 man1dir = $(mandir)/man1
+GO := @GO15VENDOREXPERIMENT=1 go
 export PATH := $(PATH):/usr/local/go/bin:/usr/go/bin
 BINARY_NAME=gowebserver
 
@@ -29,18 +30,23 @@ gowebserver-%:
 	@rm "$(BINARY_NAME)-$(BINARY_SUFFIX).go"
 
 gowebserver:
-	@go build gowebserver.go
+	$(GO) build gowebserver.go
 
 lint:
-	@go fmt gowebserver.go
-	@go vet gowebserver.go
+	$(GO) fmt gowebserver.go
+	$(GO) vet gowebserver.go
 
 clean:
 	@rm -f gowebserver gowebserver-* cert.pem rsa.pem
 	@rm -rf release/
 
 deps:
-	@go get -u github.com/prometheus/client_golang/...
+	$(GO) get -u github.com/prometheus/client_golang/...
+
+check: test
+
+test:
+	$(GO) test github.com/jeremyje/gowebserver/cert
 
 install: all
 	@install gowebserver $(DESTDIR)$(bindir)

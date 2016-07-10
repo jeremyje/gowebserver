@@ -34,12 +34,6 @@
 [submodule "vendor/golang.org/x/crypto"]
 	path = vendor/golang.org/x/crypto
 	url = https://go.googlesource.com/crypto
-[submodule "vendor/gopkg.in/gemnasium/logrus-airbrake-hook.v2"]
-	path = vendor/gopkg.in/gemnasium/logrus-airbrake-hook.v2
-	url = git@github.com:gemnasium/logrus-airbrake-hook.git
-[submodule "vendor/gopkg.in/airbrake/gobrake.v2"]
-	path = vendor/gopkg.in/airbrake/gobrake.v2
-	url = git@github.com:airbrake/gobrake.git
 [submodule "vendor/github.com/stretchr/testify"]
 	path = vendor/github.com/stretchr/testify
 	url = git@github.com:stretchr/testify.git
