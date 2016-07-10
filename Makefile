@@ -7,7 +7,8 @@ GO := @GO15VENDOREXPERIMENT=1 go
 export PATH := $(PATH):/usr/local/go/bin:/usr/go/bin
 BINARY_NAME=gowebserver
 
-all: gowebserver
+build: gowebserver
+all: gowebserver extended-platforms main-platforms
 
 main-platforms: gowebserver-linux-386 gowebserver-linux-amd64 gowebserver-linux-arm gowebserver-windows-386 gowebserver-windows-amd64
 extended-platforms: gowebserver-linux-arm64 gowebserver-darwin-amd64 gowebserver-netbsd-amd64 gowebserver-openbsd-amd64 gowebserver-freebsd-amd64 gowebserver-dragonfly-amd64
@@ -28,8 +29,6 @@ gowebserver-%:
 	@cp "$(BINARY_NAME).go" "$(BINARY_NAME)-$(BINARY_SUFFIX).go"
 	@GOOS=$(GOOS) GOARCH=$(GOARCH) go build "$(BINARY_NAME)-$(BINARY_SUFFIX).go"
 	@rm "$(BINARY_NAME)-$(BINARY_SUFFIX).go"
-
-build: gowebserver
 
 gowebserver:
 	$(GO) build gowebserver.go
