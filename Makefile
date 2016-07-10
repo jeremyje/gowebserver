@@ -27,7 +27,7 @@ gowebserver-%: GOARCH = $(shell echo $@ | sed 's/.*-\(.*\)/\1/')
 gowebserver-%: BINARY_SUFFIX = ${GOOS}-${GOARCH}
 gowebserver-%:
 	@cp "$(BINARY_NAME).go" "$(BINARY_NAME)-$(BINARY_SUFFIX).go"
-	@GOOS=$(GOOS) GOARCH=$(GOARCH) go build "$(BINARY_NAME)-$(BINARY_SUFFIX).go"
+	@GOOS=$(GOOS) GOARCH=$(GOARCH) GO15VENDOREXPERIMENT=1 go build "$(BINARY_NAME)-$(BINARY_SUFFIX).go"
 	@rm "$(BINARY_NAME)-$(BINARY_SUFFIX).go"
 
 gowebserver:
