@@ -29,6 +29,8 @@ gowebserver-%:
 	@GOOS=$(GOOS) GOARCH=$(GOARCH) go build "$(BINARY_NAME)-$(BINARY_SUFFIX).go"
 	@rm "$(BINARY_NAME)-$(BINARY_SUFFIX).go"
 
+build: gowebserver
+
 gowebserver:
 	$(GO) build gowebserver.go
 
@@ -47,6 +49,8 @@ check: test
 
 test:
 	$(GO) test github.com/jeremyje/gowebserver/cert
+	$(GO) test github.com/jeremyje/gowebserver/config
+	$(GO) test github.com/jeremyje/gowebserver/server
 
 package:
 	@cd packaging
@@ -57,4 +61,4 @@ install: all
 	@install gowebserver $(DESTDIR)$(bindir)
 	@install -m 0644 gowebserver.1 $(DESTDIR)$(man1dir)
 
-.PHONY : main-platforms extended-platforms dist lint deps
+.PHONY : all main-platforms extended-platforms dist build lint clean deps check test package install 

@@ -26,7 +26,7 @@ func main() {
 		SetServePath(serverConf.ServePath, serverConf.MetricsHttpPath).
 		SetCertificateFile(serverConf.CertificateFilePath).
 		SetPrivateKey(serverConf.PrivateKeyFilePath)
-	err = httpServer.SetDirectory(serverConf.RootDirectory)
+	err = httpServer.SetDirectory(serverConf.ServeDirectory)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,7 +37,6 @@ func createCertificate(serverConf *config.ServerConfiguration) error {
 	_, certErr := os.Stat(serverConf.CertificateFilePath)
 	_, privateKeyErr := os.Stat(serverConf.PrivateKeyFilePath)
 	if serverConf.ForceOverwrite || (os.IsNotExist(certErr) && os.IsNotExist(privateKeyErr)) {
-
 		certBuilder := cert.NewCertificateBuilder().
 			SetRsa2048().
 			SetValidDurationInDays(serverConf.CertificateValidDuration).
