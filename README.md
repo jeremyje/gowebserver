@@ -24,6 +24,8 @@ Windows   | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/
 Build
 -----
 
+Status: [![Build Status](https://secure.travis-ci.org/jeremyje/gowebserver.png)](http://travis-ci.org/jeremyje/gowebserver)
+
 Install [Go 1.5+](https://golang.org/dl/).
 
 ```

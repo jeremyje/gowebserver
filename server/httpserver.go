@@ -60,12 +60,12 @@ func (this *tracingHttpHandler) ServeHTTP(writer http.ResponseWriter, request *h
 }
 
 type WebServer interface {
-	SetPorts(httpPort, httpsPort int)
-	SetMetricsEnabled(enabled bool)
-	SetServePath(fileSystemServePath string, metricsServePath string)
+	SetPorts(httpPort, httpsPort int) WebServer
+	SetMetricsEnabled(enabled bool) WebServer
+	SetServePath(fileSystemServePath string, metricsServePath string) WebServer
 	SetDirectory(dir string) error
-	SetCertificateFile(certificateFilePath string)
-	SetPrivateKey(privateKeyFilePath string)
+	SetCertificateFile(certificateFilePath string) WebServer
+	SetPrivateKey(privateKeyFilePath string) WebServer
 	Serve()
 }
 
@@ -80,18 +80,21 @@ type WebServerImpl struct {
 	servingDirectory    string
 }
 
-func (this *WebServerImpl) SetPorts(httpPort, httpsPort int) {
+func (this *WebServerImpl) SetPorts(httpPort, httpsPort int) WebServer {
 	this.httpPort = ":" + strconv.Itoa(httpPort)
 	this.httpsPort = ":" + strconv.Itoa(httpsPort)
+	return this
 }
 
-func (this *WebServerImpl) SetMetricsEnabled(enabled bool) {
+func (this *WebServerImpl) SetMetricsEnabled(enabled bool) WebServer {
 	this.metricsEnabled = enabled
+	return this
 }
 
-func (this *WebServerImpl) SetServePath(fileSystemServePath string, metricsServePath string) {
+func (this *WebServerImpl) SetServePath(fileSystemServePath string, metricsServePath string) WebServer {
 	this.fileSystemServePath = fileSystemServePath
 	this.metricsServePath = metricsServePath
+	return this
 }
 
 func (this *WebServerImpl) SetDirectory(dir string) error {
@@ -110,12 +113,14 @@ func (this *WebServerImpl) SetDirectory(dir string) error {
 	return nil
 }
 
-func (this *WebServerImpl) SetCertificateFile(certificateFilePath string) {
+func (this *WebServerImpl) SetCertificateFile(certificateFilePath string) WebServer {
 	this.certificateFilePath = certificateFilePath
+	return this
 }
 
-func (this *WebServerImpl) SetPrivateKey(privateKeyFilePath string) {
+func (this *WebServerImpl) SetPrivateKey(privateKeyFilePath string) WebServer {
 	this.privateKeyFilePath = privateKeyFilePath
+	return this
 }
 
 func (this *WebServerImpl) Serve() {

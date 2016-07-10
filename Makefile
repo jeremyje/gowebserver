@@ -48,6 +48,11 @@ check: test
 test:
 	$(GO) test github.com/jeremyje/gowebserver/cert
 
+package:
+	@cd packaging
+	@snapcraft
+	@cd ..
+
 install: all
 	@install gowebserver $(DESTDIR)$(bindir)
 	@install -m 0644 gowebserver.1 $(DESTDIR)$(man1dir)
