@@ -8,9 +8,9 @@ import (
 )
 
 // Serving Flags
-var serveDirectoryFlag = flag.String("serve.directory", "", "The directory on the local filesystem to serve.")
-var servePathFlag = flag.String("serve.path", "/", "The HTTP/HTTPS serving root path for the hosted filesystem directory.")
-var configFileFlag = flag.String("config.file", "", "YAML formatted configuration file. (overrides flag values)")
+var serveDirectoryFlag = flag.String("directory", "", "The directory on the local filesystem to serve.")
+var servePathFlag = flag.String("servepath", "/", "The HTTP/HTTPS serving root path for the hosted filesystem directory.")
+var configFileFlag = flag.String("configfile", "", "YAML formatted configuration file. (overrides flag values)")
 var verboseFlag = flag.Bool("verbose", false, "Print out extra information.")
 
 // HTTP Flags
