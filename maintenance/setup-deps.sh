@@ -26,7 +26,7 @@ BitbucketClone() {
 
 GitClone golang.org/x/net https://go.googlesource.com/net
 
-
+GitClone gopkg.in/yaml.v2 https://github.com/go-yaml/yaml.git
 GithubClone stretchr/testify
 GithubClone beorn7/perks
 GithubClone golang/protobuf

@@ -1,0 +1,15 @@
+verbose: true
+directory: /home
+serve-path: /
+http:
+  port: 80
+https:
+  port: 443
+  certificate:
+    private-key: rsa.pem
+    path: cert.pem
+    hosts: "emerald.net"
+    duration: 5475
+metrics:
+  enabled: true
+  path: /metrics

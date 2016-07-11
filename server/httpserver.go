@@ -84,15 +84,13 @@ func (this *WebServerImpl) Serve() {
 	log.Printf("Serving %s on %s and %s", this.servingDirectory, this.httpPort, this.httpsPort)
 	fsHandler := http.FileServer(http.Dir(this.servingDirectory + "/"))
 	serverMux := http.NewServeMux()
-	var httpHandler http.Handler
 	if this.metricsEnabled {
 		serverMux.Handle(this.metricsServePath, prometheus.Handler())
 		serverMux.HandleFunc(this.fileSystemServePath, prometheus.InstrumentHandler(this.fileSystemServePath, fsHandler))
-		httpHandler = newTracingHttpHandler(serverMux)
 	} else {
 		serverMux.Handle(this.fileSystemServePath, fsHandler)
-		httpHandler = serverMux
 	}
+	httpHandler := newTracingHttpHandler(serverMux, this.metricsEnabled, this.verbose)
 	go func() {
 		err := http.ListenAndServeTLS(this.httpsPort, this.certificateFilePath, this.privateKeyFilePath, httpHandler)
 		if err != nil {

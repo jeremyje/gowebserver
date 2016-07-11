@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
+	"log"
 	"time"
 )
 
@@ -38,18 +39,27 @@ func init() {
 	prometheus.MustRegister(httpRequestByPathCount)
 }
 
-func newTracingHttpHandler(handler http.Handler) http.Handler {
+func newTracingHttpHandler(handler http.Handler, metricsEnabled bool, verbose bool) http.Handler {
 	return &tracingHttpHandler{
 		handler: handler,
+		metricsEnabled:metricsEnabled,
+		verbose: verbose,
 	}
 }
 
 type tracingHttpHandler struct {
 	handler http.Handler
+	metricsEnabled bool
+	verbose bool
 }
 
 func (this *tracingHttpHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if this.metricsEnabled {
 	httpRequestCount.WithLabelValues(request.Method).Inc()
 	httpRequestByPathCount.WithLabelValues(request.Method, request.URL.Path).Inc()
+	}
+	if this.verbose {
+		log.Printf("%s %s", request.Method, request.URL.Path)
+	}
 	this.handler.ServeHTTP(writer, request)
 }
