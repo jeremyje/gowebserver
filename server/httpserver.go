@@ -16,6 +16,7 @@ type WebServer interface {
 	SetDirectory(dir string) error
 	SetCertificateFile(certificateFilePath string) WebServer
 	SetPrivateKey(privateKeyFilePath string) WebServer
+	SetVerbose(verbose bool) WebServer
 	Serve()
 }
 
@@ -28,6 +29,7 @@ type WebServerImpl struct {
 	certificateFilePath string
 	privateKeyFilePath  string
 	servingDirectory    string
+	verbose      bool
 }
 
 func (this *WebServerImpl) SetPorts(httpPort, httpsPort int) WebServer {
@@ -73,18 +75,24 @@ func (this *WebServerImpl) SetPrivateKey(privateKeyFilePath string) WebServer {
 	return this
 }
 
+func (this *WebServerImpl) SetVerbose(verbose bool) WebServer {
+	this.verbose = verbose
+	return this
+}
+
 func (this *WebServerImpl) Serve() {
 	log.Printf("Serving %s on %s and %s", this.servingDirectory, this.httpPort, this.httpsPort)
 	fsHandler := http.FileServer(http.Dir(this.servingDirectory + "/"))
 	serverMux := http.NewServeMux()
+	var httpHandler http.Handler
 	if this.metricsEnabled {
 		serverMux.Handle(this.metricsServePath, prometheus.Handler())
 		serverMux.HandleFunc(this.fileSystemServePath, prometheus.InstrumentHandler(this.fileSystemServePath, fsHandler))
+		httpHandler = newTracingHttpHandler(serverMux)
 	} else {
 		serverMux.Handle(this.fileSystemServePath, fsHandler)
+		httpHandler = serverMux
 	}
-
-	httpHandler := newTracingHttpHandler(serverMux)
 	go func() {
 		err := http.ListenAndServeTLS(this.httpsPort, this.certificateFilePath, this.privateKeyFilePath, httpHandler)
 		if err != nil {

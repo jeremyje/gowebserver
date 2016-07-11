@@ -28,19 +28,19 @@ func TestDefaultConfiguration(t *testing.T) {
 	assert := assert.New(t)
 
 	conf := Get()
-	conf.HttpPort = 8080
-	conf.HttpsPort = 8443
+	conf.Http.Port = 8080
+	conf.Https.Port = 8443
 
 	assert.NotNil(conf)
-    assert.Equal(conf.EnableMetrics, true)
+    assert.Equal(conf.Metrics.Enabled, true)
 }
 
 func TestString(t *testing.T) {
 	assert := assert.New(t)
 
 	conf := Get()
-	conf.HttpPort = 8080
-	conf.HttpsPort = 8443
+	conf.Http.Port = 8080
+	conf.Https.Port = 8443
 
 	assert.NotNil(conf)
     assert.Equal(conf.String(), YAML_OUTPUT)

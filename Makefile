@@ -41,9 +41,6 @@ clean:
 	@rm -f gowebserver gowebserver-* cert.pem rsa.pem
 	@rm -rf release/
 
-deps:
-	$(GO) get -u github.com/prometheus/client_golang/...
-
 check: test
 
 test:
@@ -60,4 +57,4 @@ install: all
 	@install gowebserver $(DESTDIR)$(bindir)
 	@install -m 0644 gowebserver.1 $(DESTDIR)$(man1dir)
 
-.PHONY : all main-platforms extended-platforms dist build lint clean deps check test package install 
+.PHONY : all main-platforms extended-platforms dist build lint clean check test package install 
