@@ -1,7 +1,7 @@
 package config
 
 import (
-	//"fmt"
+	"gopkg.in/yaml.v2"
 )
 
 type Http struct {
@@ -37,6 +37,15 @@ type Config struct {
     Http Http `yaml:"http"`
     Https Https `yaml:"https"`
     Metrics Metrics `yaml:"metrics"`
+}
+
+func (this *Config) String() string {
+    data, err := yaml.Marshal(this)
+    if err != nil {
+        return err.Error()
+    }
+    
+    return string(data)
 }
 /*
 // Bundle set of configuration values for the server.

@@ -51,8 +51,3 @@ func init() {
 	httpPortFlag = flag.Int("http.port", defaultPortInt, "Port to run HTTP server.")
 	httpsPortFlag = flag.Int("https.port", defaultSecurePortInt, "Port to run HTTPS server.")
 }
-
-func Load() *Config {
-    flag.Parse()
-    return Get()
-}
