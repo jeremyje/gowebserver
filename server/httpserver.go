@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/jeremyje/gowebserver/filesystem"
 	"github.com/prometheus/client_golang/prometheus"
 	"log"
 	"net/http"
@@ -82,7 +83,11 @@ func (this *WebServerImpl) SetVerbose(verbose bool) WebServer {
 
 func (this *WebServerImpl) Serve() {
 	log.Printf("Serving %s on %s and %s", this.servingDirectory, this.httpPort, this.httpsPort)
-	fsHandler := http.FileServer(http.Dir(this.servingDirectory + "/"))
+	httpFs, err := filesystem.New(this.servingDirectory)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fsHandler := http.FileServer(httpFs)
 	serverMux := http.NewServeMux()
 	if this.metricsEnabled {
 		serverMux.Handle(this.metricsServePath, prometheus.Handler())
