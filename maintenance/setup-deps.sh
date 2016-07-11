@@ -24,19 +24,19 @@ BitbucketClone() {
     GitClone ${BASE_DIR} ${REPO}
 }
 
-GitClone golang.org/x/net https://go.googlesource.com/net
+#GitClone golang.org/x/net https://go.googlesource.com/net
 
-GitClone gopkg.in/yaml.v2 https://github.com/go-yaml/yaml.git
-GithubClone stretchr/testify
-GithubClone beorn7/perks
-GithubClone golang/protobuf
-GithubClone matttproud/golang_protobuf_extensions
-GithubClone prometheus/client_golang
-GithubClone prometheus/client_model
-GithubClone prometheus/common
-GithubClone prometheus/procfs
-
-
+#GitClone gopkg.in/yaml.v2 https://github.com/go-yaml/yaml.git
+#GithubClone stretchr/testify
+#GithubClone beorn7/perks
+#GithubClone golang/protobuf
+#GithubClone matttproud/golang_protobuf_extensions
+#GithubClone prometheus/client_golang
+#GithubClone prometheus/client_model
+#GithubClone prometheus/common
+#GithubClone prometheus/procfs
+#GithubClone rs/cors
+GithubClone rs/xhandler
 #
 #GitClone golang.org/x/text https://go.googlesource.com/text
 #GitClone golang.org/x/crypto https://go.googlesource.com/crypto

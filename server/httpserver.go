@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/jeremyje/gowebserver/filesystem"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/cors"
 	"log"
 	"net/http"
 	"os"
@@ -95,7 +96,8 @@ func (this *WebServerImpl) Serve() {
 	} else {
 		serverMux.Handle(this.fileSystemServePath, fsHandler)
 	}
-	httpHandler := newTracingHttpHandler(serverMux, this.metricsEnabled, this.verbose)
+	corsHandler := cors.Default().Handler(serverMux)
+	httpHandler := newTracingHttpHandler(corsHandler, this.metricsEnabled, this.verbose)
 	go func() {
 		err := http.ListenAndServeTLS(this.httpsPort, this.certificateFilePath, this.privateKeyFilePath, httpHandler)
 		if err != nil {

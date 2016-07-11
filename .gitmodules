@@ -28,3 +28,9 @@
 [submodule "vendor/gopkg.in/yaml.v2"]
 	path = vendor/gopkg.in/yaml.v2
 	url = https://github.com/go-yaml/yaml.git
+[submodule "vendor/github.com/rs/cors"]
+	path = vendor/github.com/rs/cors
+	url = https://github.com/rs/cors.git
+[submodule "vendor/github.com/rs/xhandler"]
+	path = vendor/github.com/rs/xhandler
+	url = https://github.com/rs/xhandler.git
