@@ -3,8 +3,8 @@ package server
 import (
 	"flag"
 	"github.com/prometheus/client_golang/prometheus"
-	"net/http"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -41,22 +41,22 @@ func init() {
 
 func newTracingHttpHandler(handler http.Handler, metricsEnabled bool, verbose bool) http.Handler {
 	return &tracingHttpHandler{
-		handler: handler,
-		metricsEnabled:metricsEnabled,
-		verbose: verbose,
+		handler:        handler,
+		metricsEnabled: metricsEnabled,
+		verbose:        verbose,
 	}
 }
 
 type tracingHttpHandler struct {
-	handler http.Handler
+	handler        http.Handler
 	metricsEnabled bool
-	verbose bool
+	verbose        bool
 }
 
 func (this *tracingHttpHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	if this.metricsEnabled {
-	httpRequestCount.WithLabelValues(request.Method).Inc()
-	httpRequestByPathCount.WithLabelValues(request.Method, request.URL.Path).Inc()
+		httpRequestCount.WithLabelValues(request.Method).Inc()
+		httpRequestByPathCount.WithLabelValues(request.Method, request.URL.Path).Inc()
 	}
 	if this.verbose {
 		log.Printf("%s %s", request.Method, request.URL.Path)

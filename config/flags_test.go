@@ -13,7 +13,7 @@ func TestDefaultConfiguration(t *testing.T) {
 	conf.Https.Port = 8443
 
 	assert.NotNil(conf)
-	
+
 	assert.Equal(conf.Verbose, false)
 	assert.Equal(conf.Directory, "")
 	assert.Equal(conf.ServePath, "/")

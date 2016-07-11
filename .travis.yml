@@ -8,4 +8,4 @@ script:
     - make check
     - make bench
     - make all -j4
-    - make dist
+    - make dist -j4
