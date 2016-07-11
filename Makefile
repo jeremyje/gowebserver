@@ -7,6 +7,7 @@ GO := @GO15VENDOREXPERIMENT=1 go
 SOURCE_DIRS=$(shell GO15VENDOREXPERIMENT=1 go list ./... | grep -v '/vendor/')
 export PATH := $(PATH):/usr/local/go/bin:/usr/go/bin
 BINARY_NAME=gowebserver
+SERVER_MAIN=gowebserver.go
 
 build: gowebserver
 all: gowebserver extended-platforms main-platforms
@@ -32,7 +33,7 @@ gowebserver-%:
 	@rm "$(BINARY_NAME)-$(BINARY_SUFFIX).go"
 
 gowebserver:
-	$(GO) build gowebserver.go
+	$(GO) build ${SERVER_MAIN}
 
 lint:
 	$(GO) fmt ${SOURCE_DIRS}
