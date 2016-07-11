@@ -7,6 +7,7 @@ GO := @GO15VENDOREXPERIMENT=1 go
 SOURCE_DIRS=$(shell GO15VENDOREXPERIMENT=1 go list ./... | grep -v '/vendor/')
 export PATH := $(PATH):/usr/local/go/bin:/usr/go/bin
 BINARY_NAME=gowebserver
+MAN_PAGE_NAME=${BINARY_NAME}.1
 SERVER_MAIN=gowebserver.go
 
 build: gowebserver
@@ -41,7 +42,7 @@ lint:
 	$(GO) vet ${SOURCE_DIRS}
 
 clean:
-	@rm -f gowebserver gowebserver-* cert.pem rsa.pem release.tar.gz
+	@rm -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz
 	@rm -rf release/
 
 check: test
@@ -60,7 +61,7 @@ package:
 	@cd ..
 
 install: all
-	@install gowebserver $(DESTDIR)$(bindir)
-	@install -m 0644 gowebserver.1 $(DESTDIR)$(man1dir)
+	@install ${BINARY_NAME} $(DESTDIR)$(bindir)
+	@install -m 0644 ${MAN_PAGE_NAME} $(DESTDIR)$(man1dir)
 
 .PHONY : all main-platforms extended-platforms dist build lint clean check test bench benchmark package install
