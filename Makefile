@@ -23,6 +23,7 @@ dist: main-platforms
 	@mv release/gowebserver-linux-amd64 release/server-amd64
 	@mv release/gowebserver-windows-386.exe release/server-386.exe
 	@mv release/gowebserver-windows-amd64.exe release/server-amd64.exe
+	@tar -zcf release.tar.gz release/ 
 
 gowebserver-%: GOOS = $(shell echo $@ | sed 's/.*-\(.*\)-.*/\1/')
 gowebserver-%: GOARCH = $(shell echo $@ | sed 's/.*-\(.*\)/\1/')
@@ -40,7 +41,7 @@ lint:
 	$(GO) vet ${SOURCE_DIRS}
 
 clean:
-	@rm -f gowebserver gowebserver-* cert.pem rsa.pem
+	@rm -f gowebserver gowebserver-* cert.pem rsa.pem release.tar.gz
 	@rm -rf release/
 
 check: test

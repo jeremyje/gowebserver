@@ -6,13 +6,15 @@ description: Standalone HTTP/HTTPS web server to host files on your file system.
 icon: setup/gui/icon.png
 confinement: strict
 
-
 apps:
-  sensor-exporter:
-    command: bin/gowebserver.git
+  gowebserver:
+    command: bin/gowebserver.git --config.file=/var/lib/gowebserver.yaml
     daemon: simple
 
 parts:
-  sensor-exporter:
+  gowebserver:
     plugin: go
     source: git@bitbucket.org:futonredemption/gowebserver.git
+    filesets:
+      defaultconfig:
+        - var/lib/gowebserver.yaml

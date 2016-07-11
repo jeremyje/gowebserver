@@ -7,5 +7,5 @@ script:
     - make build
     - make check
     - make bench
-    - make all
+    - make all -j4
     - make dist

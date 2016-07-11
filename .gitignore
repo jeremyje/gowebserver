@@ -24,6 +24,8 @@ _testmain.go
 *.prof
 
 build/
+release/
 
 gowebserver
 *.pem
+release.tar.gz
