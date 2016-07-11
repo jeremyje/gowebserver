@@ -19,9 +19,11 @@ var httpPortFlag *int
 // HTTPS Flags
 var httpsPortFlag *int
 var privateKeyFilePathFlag = flag.String("https.privatekey", "rsa.pem", "Certificate to host HTTPS with.")
+
+// HTTPS Certificate Flags
 var certificateFilePathFlag = flag.String("https.certificate.path", "cert.pem", "Certificate to host HTTPS with.")
 var certHostsFlag = flag.String("https.certificate.hosts", "", "Comma-separated hostnames and IPs to generate a certificate for.")
-var validDurationFlag = flag.Int("https.certificate.duration", 365, "Certificate valid duration.")
+var validDurationFlag = flag.Int("https.certificate.duration", 5475, "Certificate valid duration.")
 var actAsCertificateAuthorityFlag = flag.Bool("https.certificate.authority", false, "(Experimental) Generate a root cert as a Certificate Authority")
 var onlyGenerateCertFlag = flag.Bool("https.certificate.onlygenerate", false, "Only generate a self-signed certificate for the server.")
 
@@ -50,4 +52,32 @@ func init() {
 
 	httpPortFlag = flag.Int("http.port", defaultPortInt, "Port to run HTTP server.")
 	httpsPortFlag = flag.Int("https.port", defaultSecurePortInt, "Port to run HTTPS server.")
+}
+
+func loadFromFlags() *Config {
+	return &Config{
+		Verbose:           *verboseFlag,
+		Directory:         *serveDirectoryFlag,
+		ServePath:         *servePathFlag,
+		ConfigurationFile: *configFileFlag,
+		Http: Http{
+			Port: *httpPortFlag,
+		},
+		Https: Https{
+			Port: *httpsPortFlag,
+			Certificate: Certificate{
+				PrivateKeyFilePath:        *privateKeyFilePathFlag,
+				CertificateFilePath:       *certificateFilePathFlag,
+				CertificateHosts:          *certHostsFlag,
+				CertificateValidDuration:  *validDurationFlag,
+				ActAsCertificateAuthority: *actAsCertificateAuthorityFlag,
+				OnlyGenerateCertificate:   *onlyGenerateCertFlag,
+				ForceOverwrite:            *onlyGenerateCertFlag, // No flag available yet.
+			},
+		},
+		Metrics: Metrics{
+			Enabled: *metricsFlag,
+			Path:    *metricsPathFlag,
+		},
+	}
 }

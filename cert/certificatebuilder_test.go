@@ -7,6 +7,8 @@ import (
 	"testing"
 )
 
+var sentinel interface{}
+
 func TestBuildDefaultCertificate(t *testing.T) {
 	assert := assert.New(t)
 
@@ -67,6 +69,6 @@ func ExampleNewCertificateBuilder() {
 func BenchmarkNewCertificateBuilder(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		certBuilder := NewCertificateBuilder()
-		certBuilder.GetCertificate()
+		sentinel, _ = certBuilder.GetCertificate()
 	}
 }

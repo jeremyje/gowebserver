@@ -6,5 +6,6 @@ go:
 script:
     - make build
     - make check
+    - make bench
     - make all
     - make dist

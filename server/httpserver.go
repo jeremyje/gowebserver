@@ -29,7 +29,7 @@ type WebServerImpl struct {
 	certificateFilePath string
 	privateKeyFilePath  string
 	servingDirectory    string
-	verbose      bool
+	verbose             bool
 }
 
 func (this *WebServerImpl) SetPorts(httpPort, httpsPort int) WebServer {

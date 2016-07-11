@@ -1,19 +1,21 @@
 package cert
 
 import (
-	"io/ioutil"
 	"github.com/stretchr/testify/assert"
-	"testing"
+	"io/ioutil"
 	"os"
+	"testing"
 )
 
 func TestWriteDefaultCertificate(t *testing.T) {
 	assert := assert.New(t)
 
 	certFp, err := createTempFile()
+	defer os.Remove(certFp.Name())
 	assert.Nil(err)
 	certPath := certFp.Name()
 	keyFp, err := createTempFile()
+	defer os.Remove(keyFp.Name())
 	assert.Nil(err)
 	keyPath := keyFp.Name()
 
@@ -30,5 +32,5 @@ func TestWriteDefaultCertificate(t *testing.T) {
 }
 
 func createTempFile() (*os.File, error) {
-    return ioutil.TempFile(os.TempDir(), "tempfile")
+	return ioutil.TempFile(os.TempDir(), "tempfile")
 }

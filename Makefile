@@ -4,6 +4,7 @@ sharedir = $(prefix)/share
 mandir = $(sharedir)/man
 man1dir = $(mandir)/man1
 GO := @GO15VENDOREXPERIMENT=1 go
+SOURCE_DIRS=$(shell GO15VENDOREXPERIMENT=1 go list ./... | grep -v '/vendor/')
 export PATH := $(PATH):/usr/local/go/bin:/usr/go/bin
 BINARY_NAME=gowebserver
 
@@ -34,8 +35,8 @@ gowebserver:
 	$(GO) build gowebserver.go
 
 lint:
-	$(GO) fmt gowebserver.go
-	$(GO) vet gowebserver.go
+	$(GO) fmt ${SOURCE_DIRS}
+	$(GO) vet ${SOURCE_DIRS}
 
 clean:
 	@rm -f gowebserver gowebserver-* cert.pem rsa.pem
@@ -44,10 +45,13 @@ clean:
 check: test
 
 test:
-	$(GO) test github.com/jeremyje/gowebserver/cert
-	$(GO) test github.com/jeremyje/gowebserver/config
-	$(GO) test github.com/jeremyje/gowebserver/server
+	$(GO) test -cover ${SOURCE_DIRS}
 
+bench: benchmark
+
+benchmark:
+	$(GO) test -cover -benchmem -bench=. ${SOURCE_DIRS}
+	
 package:
 	@cd packaging
 	@snapcraft
@@ -57,4 +61,4 @@ install: all
 	@install gowebserver $(DESTDIR)$(bindir)
 	@install -m 0644 gowebserver.1 $(DESTDIR)$(man1dir)
 
-.PHONY : all main-platforms extended-platforms dist build lint clean check test package install 
+.PHONY : all main-platforms extended-platforms dist build lint clean check test bench benchmark package install

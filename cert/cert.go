@@ -6,8 +6,8 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-	"io/ioutil"
 	"fmt"
+	"io/ioutil"
 )
 
 // Reads a certificate from a file.
@@ -40,7 +40,6 @@ func WriteDefaultCertificate(certPath string, privateKeyPath string) error {
 	}
 	return certBuilder.WritePrivateKey(privateKeyPath)
 }
-
 
 func publicKey(priv interface{}) interface{} {
 	switch k := priv.(type) {

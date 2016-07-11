@@ -29,7 +29,7 @@ func main() {
 		SetCertificateFile(conf.Https.Certificate.CertificateFilePath).
 		SetPrivateKey(conf.Https.Certificate.PrivateKeyFilePath).
 		SetVerbose(conf.Verbose)
-	err = httpServer.SetDirectory(conf.ServeDirectory)
+	err = httpServer.SetDirectory(conf.Directory)
 	if err != nil {
 		log.Fatal(err)
 	}
