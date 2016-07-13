@@ -42,17 +42,30 @@ lint:
 	$(GO) vet ${SOURCE_DIRS}
 
 clean:
-	@rm -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz
+	@rm -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz testing/*.zip testdata/*.tar.gz testdata/testassets.go
 	@rm -rf release/
 
 check: test
 
-test:
+testing/testassets.zip:
+	@cd testing/testassets/; zip -qr9 ../testassets.zip *
+
+testing/testassets.tar.gz:
+	@cd testing/testassets/; tar czf ../testassets.tar.gz *
+
+testing/testassets.go: testing
+	@echo "package testing" > testing/testassets.go
+	@echo "const ZIP_ASSETS=\"$(shell base64 -w0 testing/testassets.zip)\"" >> testing/testassets.go
+	@gofmt -s -w ./testing/
+
+testing: testing/testassets.zip testing/testassets.tar.gz
+
+test: testing/testassets.go
 	$(GO) test -cover ${SOURCE_DIRS}
 
 bench: benchmark
 
-benchmark:
+benchmark: testing/testassets.go
 	$(GO) test -cover -benchmem -bench=. ${SOURCE_DIRS}
 	
 package:
@@ -64,4 +77,4 @@ install: all
 	@install ${BINARY_NAME} $(DESTDIR)$(bindir)
 	@install -m 0644 ${MAN_PAGE_NAME} $(DESTDIR)$(man1dir)
 
-.PHONY : all main-platforms extended-platforms dist build lint clean check test bench benchmark package install
+.PHONY : all main-platforms extended-platforms dist build lint clean check test testdata bench benchmark package install

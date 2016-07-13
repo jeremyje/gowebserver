@@ -1,11 +1,9 @@
 package server
 
 import (
-	"flag"
 	"github.com/prometheus/client_golang/prometheus"
 	"log"
 	"net/http"
-	"time"
 )
 
 var (
