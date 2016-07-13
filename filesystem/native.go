@@ -5,5 +5,5 @@ import (
 )
 
 func newNative(directory string) http.FileSystem {
-	return http.Dir(directory + "/")
+	return http.Dir(dirPath(directory))
 }

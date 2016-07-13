@@ -11,7 +11,7 @@ func CreateTempFile() (*os.File, error) {
 }
 
 func WriteTempFile(content string) (*os.File, error) {
-	fp, err := createTempFile()
+	fp, err := CreateTempFile()
 	if err != nil {
 		return fp, err
 	}
@@ -24,10 +24,14 @@ func GetZipFilePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	err = ioutil.WriteFile(GetZipContents(), tf.Name())
+	data, err := GetZipContents()
+	if err != nil {
+		return "", err
+	}
+	err = ioutil.WriteFile(tf.Name(), data, os.FileMode(0644))
 	return tf.Name(), err
 }
 
-func GetZipContents() []byte {
-	return base64.StdEncoding.DecodeString(ZIP_FILE)
+func GetZipContents() ([]byte, error) {
+	return base64.StdEncoding.DecodeString(ZIP_ASSETS)
 }
