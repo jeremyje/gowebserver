@@ -11,5 +11,5 @@ func New(path string) (http.FileSystem, error) {
 		handler, _, _, err := newZipFs(path)
 		return handler, err
 	}
-	return newNative(path), nil
+	return newNative(path)
 }

@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"syscall"
 )
 
 func newZipFs(filePath string) (http.FileSystem, string, string, error) {
@@ -43,15 +42,14 @@ func newZipFs(filePath string) (http.FileSystem, string, string, error) {
 		if f.FileInfo().IsDir() {
 			err = os.MkdirAll(dirPath(filePath), os.FileMode(0777))
 			if err != nil {
-				log.Fatalf("Cannot create directory: %s, Error= %v, Errno= %v", dirPath, err, syscall.Errno(0x14).Error())
+				log.Fatalf("Cannot create directory: %s, Error= %v", dirPath, err)
 				return nil, localFilePath, tmpDir, err
 			}
 		} else {
 			dirPath := dirPath(filepath.Dir(filePath))
-			log.Printf("%s %s", filePath, dirPath)
 			err = os.MkdirAll(dirPath, os.FileMode(0777))
 			if err != nil {
-				log.Fatalf("Cannot create directory: %s, Error= %v, Errno= %v", dirPath, err, syscall.Errno(0x14).Error())
+				log.Fatalf("Cannot create directory: %s, Error= %v", dirPath, err)
 				return nil, localFilePath, tmpDir, err
 			}
 			
@@ -72,5 +70,6 @@ func newZipFs(filePath string) (http.FileSystem, string, string, error) {
 			}
 		}
 	}
-	return newNative(tmpDir), localFilePath, tmpDir, nil
+	handler, err := newNative(tmpDir)
+	return handler, localFilePath, tmpDir, err
 }

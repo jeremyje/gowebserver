@@ -2,9 +2,11 @@ package termhook
 
 import (
 	"os"
+	"log"
 )
 
 type signalManager struct {
+	intest bool
 	channel      chan os.Signal
 	callbackList []SignalCallback
 }
@@ -13,6 +15,7 @@ var globalSignalManager *signalManager
 
 func newSignalManager() *signalManager {
 	manager := &signalManager{
+		intest: false,
 		channel:      make(chan os.Signal, 1),
 		callbackList: []SignalCallback{},
 	}
@@ -27,6 +30,10 @@ func (this *signalManager) startListening() {
 			for sig := range this.channel {
 				for _, callback := range this.callbackList {
 					callback(sig)
+				}
+				log.Printf("Sigterming: %t", this.intest)
+				if !this.intest {
+					os.Exit(0xf)
 				}
 			}
 		}

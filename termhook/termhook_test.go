@@ -5,12 +5,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+	"log"
 )
 
 func TestAddCallback(t *testing.T) {
 	assert := assert.New(t)
 
-	manager := newSignalManager()
+	manager := newSignalManagerForTest()
 
 	signalCaught := false
 
@@ -30,7 +31,7 @@ func TestAddCallback(t *testing.T) {
 func TestMultipleCallbacks(t *testing.T) {
 	assert := assert.New(t)
 
-	manager := newSignalManager()
+	manager := newSignalManagerForTest()
 
 	signalCaughtOne := false
 	signalCaughtTwo := false
@@ -57,7 +58,7 @@ func TestMultipleCallbacks(t *testing.T) {
 func TestStopListening(t *testing.T) {
 	assert := assert.New(t)
 
-	manager := newSignalManager()
+	manager := newSignalManagerForTest()
 
 	signalCaught := false
 
@@ -71,6 +72,9 @@ func TestStopListening(t *testing.T) {
 }
 
 func simulateSignal() {
+	// Tell the signal manager to not kill the app.
+	globalSignalManager.intest = true
+	log.Printf("Set Val (race condition?): %t", globalSignalManager.intest)
 	// Send 2 signals to ensure the first one gets through, this is flaky, needs better fix.
 	globalSignalManager.channel <- os.Interrupt
 	globalSignalManager.channel <- os.Interrupt
@@ -124,4 +128,10 @@ func ExampleAddWithSignal() {
 
 	fmt.Printf("Signal Caught: %t", signalCaught)
 	// Output: Signal Caught: true
+}
+
+func newSignalManagerForTest() *signalManager {
+	m := newSignalManager()
+	m.intest = true
+	return m
 }

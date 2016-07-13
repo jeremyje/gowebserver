@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 )
 
@@ -58,10 +57,6 @@ func (this *WebServerImpl) SetDirectory(dir string) error {
 			return err
 		}
 		dir = cwd
-	}
-	dir, err := filepath.Abs(dir)
-	if err != nil {
-		return err
 	}
 	this.servingDirectory = dir
 	return nil
