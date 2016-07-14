@@ -1,12 +1,12 @@
 package termhook
 
 import (
-	"os"
 	"log"
+	"os"
 )
 
 type signalManager struct {
-	intest bool
+	intest       bool
 	channel      chan os.Signal
 	callbackList []SignalCallback
 }
@@ -15,7 +15,7 @@ var globalSignalManager *signalManager
 
 func newSignalManager() *signalManager {
 	manager := &signalManager{
-		intest: false,
+		intest:       false,
 		channel:      make(chan os.Signal, 1),
 		callbackList: []SignalCallback{},
 	}

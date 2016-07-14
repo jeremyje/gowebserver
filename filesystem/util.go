@@ -1,12 +1,40 @@
 package filesystem
 
 import (
+	"github.com/jeremyje/gowebserver/termhook"
 	"io"
 	"io/ioutil"
+	"log"
+	"net/http"
 	"os"
 	"strings"
-	"net/http"
 )
+
+const DIR_MODE = os.FileMode(0777)
+
+func createDirectory(path string) error {
+	return os.MkdirAll(dirPath(path), DIR_MODE)
+}
+
+func stageRemoteFile(maybeRemoteFilePath string) (string, string, error) {
+	localFilePath, err := downloadFile(maybeRemoteFilePath)
+	if err != nil {
+		return "", "", err
+	}
+	tmpDir, err := createTempDirectory()
+	if err != nil {
+		return "", "", err
+	}
+
+	termhook.Add(func() {
+		err := os.RemoveAll(tmpDir)
+		if err != nil {
+			log.Fatalf("Cannot delete directory: %s, Error= %v", tmpDir, err)
+		}
+	})
+
+	return localFilePath, tmpDir, nil
+}
 
 func createTempDirectory() (string, error) {
 	return ioutil.TempDir(os.TempDir(), "gowebserver")

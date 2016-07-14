@@ -1,12 +1,12 @@
 package filesystem
 
 import (
+	"fmt"
 	test "github.com/jeremyje/gowebserver/testing"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
 	"path/filepath"
 	"testing"
-	"fmt"
-	"io/ioutil"
 )
 
 func TestZipFs(t *testing.T) {
@@ -19,15 +19,31 @@ func TestZipFs(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(localArchivePath, path)
 	assert.NotNil(handler)
+	verifyLocalFileFromDefaultAsset(dir, assert)
+}
+
+func TestIsSupportedZip(t *testing.T) {
+	assert := assert.New(t)
+
+	assert.True(isSupportedZip("ok.zip"))
+	assert.True(isSupportedZip("ok.ZIP"))
+
+	assert.False(isSupportedZip("ok.tar"))
+	assert.False(isSupportedZip("ok.tar.gz"))
+	assert.False(isSupportedZip("ok.tar.bz2"))
+
+	assert.False(isSupportedZip("ok.tar.lzma"))
+}
+
+func verifyLocalFileFromDefaultAsset(dir string, assert *assert.Assertions) {
 	assert.Nil(verifyLocalFile(dir, "index.html"))
-	assert.True(exists(filepath.Join(dir, "index.html")))
-	assert.True(exists(filepath.Join(dir, "site.js")))
-	assert.True(exists(filepath.Join(dir, "assets/1.txt")))
-	assert.True(exists(filepath.Join(dir, "assets/2.txt")))
-	assert.True(exists(filepath.Join(dir, "assets/more/3.txt")))
-	assert.True(exists(filepath.Join(dir, "assets/four/4.txt")))
-	assert.True(exists(filepath.Join(dir, "assets/fivesix/5.txt")))
-	assert.True(exists(filepath.Join(dir, "assets/fivesix/6.txt")))
+	assert.Nil(verifyLocalFile(dir, "site.js"))
+	assert.Nil(verifyLocalFile(dir, "assets/1.txt"))
+	assert.Nil(verifyLocalFile(dir, "assets/2.txt"))
+	assert.Nil(verifyLocalFile(dir, "assets/more/3.txt"))
+	assert.Nil(verifyLocalFile(dir, "assets/four/4.txt"))
+	assert.Nil(verifyLocalFile(dir, "assets/fivesix/5.txt"))
+	assert.Nil(verifyLocalFile(dir, "assets/fivesix/6.txt"))
 }
 
 func verifyLocalFile(dir string, assetPath string) error {

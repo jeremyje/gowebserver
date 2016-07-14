@@ -2,14 +2,16 @@ package filesystem
 
 import (
 	"net/http"
-	"strings"
 )
 
 func New(path string) (http.FileSystem, error) {
-	lcPath := path
-	if strings.HasSuffix(lcPath, ".zip") {
+	if isSupportedZip(path) {
 		handler, _, _, err := newZipFs(path)
 		return handler, err
+	} else if isSupportedTar(path) {
+		handler, _, _, err := newTarFs(path)
+		return handler, err
+	} else {
+		return newNative(path)
 	}
-	return newNative(path)
 }

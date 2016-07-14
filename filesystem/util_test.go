@@ -2,9 +2,9 @@ package filesystem
 
 import (
 	"github.com/stretchr/testify/assert"
-	"testing"
 	"io/ioutil"
 	"os"
+	"testing"
 )
 
 func TestDirPath(t *testing.T) {
@@ -33,7 +33,7 @@ func TestDownloadFileOnLocalFile(t *testing.T) {
 	path := f.Name()
 	err = ioutil.WriteFile(path, []byte("ok"), os.FileMode(0644))
 	assert.Nil(err)
-	
+
 	localPath, err := downloadFile(path)
 	assert.Equal(localPath, path)
 	assert.Nil(err)

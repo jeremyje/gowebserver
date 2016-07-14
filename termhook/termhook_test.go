@@ -3,9 +3,9 @@ package termhook
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"os"
 	"testing"
-	"log"
 )
 
 func TestAddCallback(t *testing.T) {

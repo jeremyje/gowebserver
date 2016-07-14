@@ -42,7 +42,7 @@ lint:
 	$(GO) vet ${SOURCE_DIRS}
 
 clean:
-	@rm -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz testing/*.zip testdata/*.tar.gz testdata/testassets.go
+	@rm -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz testing/*.zip testing/*.tar* testing/testassets.go
 	@rm -rf release/
 
 check: test
@@ -51,14 +51,23 @@ testing/testassets.zip:
 	@cd testing/testassets/; zip -qr9 ../testassets.zip *
 
 testing/testassets.tar.gz:
-	@cd testing/testassets/; tar czf ../testassets.tar.gz *
+	@cd testing/testassets/; GZIP=-9 tar czf ../testassets.tar.gz *
+	
+testing/testassets.tar.bz2:
+	@cd testing/testassets/; BZIP=-9 tar cjf ../testassets.tar.bz2 *
+	
+testing/testassets.tar:
+	@cd testing/testassets/; tar cf ../testassets.tar *
 
 testing/testassets.go: testing
 	@echo "package testing" > testing/testassets.go
 	@echo "const ZIP_ASSETS=\"$(shell base64 -w0 testing/testassets.zip)\"" >> testing/testassets.go
+	@echo "const TAR_ASSETS=\"$(shell base64 -w0 testing/testassets.tar)\"" >> testing/testassets.go
+	@echo "const TAR_GZ_ASSETS=\"$(shell base64 -w0 testing/testassets.tar.gz)\"" >> testing/testassets.go
+	@echo "const TAR_BZIP2_ASSETS=\"$(shell base64 -w0 testing/testassets.tar.bz2)\"" >> testing/testassets.go
 	@gofmt -s -w ./testing/
 
-testing: testing/testassets.zip testing/testassets.tar.gz
+testing: testing/testassets.zip testing/testassets.tar.gz testing/testassets.tar.bz2 testing/testassets.tar
 
 test: testing/testassets.go
 	$(GO) test -cover ${SOURCE_DIRS}
