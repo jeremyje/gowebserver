@@ -11,13 +11,10 @@ addons:
     - sourceline: 'ppa:snappy-dev/tools'
     packages:
     - snapcraft
-#before_install:
-#    - sudo add-apt-repository ppa:snappy-dev/tools -y
-#    - sudo apt-get update -q
 script:
-    - make package
     - make build
     - make check
     - make bench
     - make all -j4
     - make dist -j4
+    - make package
