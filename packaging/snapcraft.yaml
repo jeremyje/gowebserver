@@ -14,7 +14,7 @@ apps:
 parts:
   gowebserver:
     plugin: go
-    source: git@bitbucket.org:futonredemption/gowebserver.git
+    source: git@github.com:jeremyje/gowebserver.git
     filesets:
       config:
         - var/lib/gowebserver/
