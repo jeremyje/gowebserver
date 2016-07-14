@@ -82,7 +82,7 @@ package:
 	@snapcraft
 	@cd ..
 
-install: all
+install: gowebserver
 	@install ${BINARY_NAME} $(DESTDIR)$(bindir)
 	@install -m 0644 ${MAN_PAGE_NAME} $(DESTDIR)$(man1dir)
 

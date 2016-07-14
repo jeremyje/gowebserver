@@ -1,9 +1,20 @@
+sudo: required
+dist: trusty
 language: go
 go:
     - 1.5
     - 1.6.2
     - tip
+addons:
+  apt:
+    sources:
+    - sourceline: 'ppa:snappy-dev/tools'
+    packages:
+    - snapcraft
+before_install:
+    - sudo add-apt-repository ppa:snappy-dev/tools
 script:
+    - make package
     - make build
     - make check
     - make bench
