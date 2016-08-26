@@ -13,7 +13,7 @@ addons:
     packages:
     - snapcraft
 before_script:
-  - ssh-keygen -t rsa -b 4096 -C "localhost@localhost" -q -N ""
+  - ssh-keygen -b 4096 -t rsa -f /tmp/sshkey -q -N ""
 script:
     - make build
     - make check
