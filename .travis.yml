@@ -12,6 +12,8 @@ addons:
     - sourceline: 'ppa:snappy-dev/tools'
     packages:
     - snapcraft
+before_script:
+  - ssh-keygen -t rsa -b 4096 -C "localhost@localhost" -q -N ""
 script:
     - make build
     - make check
