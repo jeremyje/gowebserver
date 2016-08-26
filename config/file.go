@@ -3,7 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
-	"gopkg.in/yaml.v2"
+	"github.com/go-yaml/yaml"
 	"io/ioutil"
 )
 

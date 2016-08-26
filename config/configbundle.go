@@ -1,7 +1,7 @@
 package config
 
 import (
-	"gopkg.in/yaml.v2"
+	"github.com/go-yaml/yaml"
 )
 
 type Http struct {
