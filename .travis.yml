@@ -3,7 +3,8 @@ dist: trusty
 language: go
 go:
     - 1.5
-    - 1.6.2
+    - 1.6.3
+    - 1.7
     - tip
 addons:
   apt:
