@@ -83,7 +83,7 @@ benchmark: testing/testassets.go
 
 test-all: test benchmark coverage
 
-package: clean
+package:
 	@cd packaging; snapcraft; cd ..
 
 install: gowebserver

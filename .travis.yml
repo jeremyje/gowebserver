@@ -2,6 +2,11 @@ sudo: required
 dist: trusty
 language: go
 go:
+- 1.0
+- 1.1
+- 1.2
+- 1.3
+- 1.4
 - 1.5
 - 1.6.3
 - 1.7
@@ -9,7 +14,7 @@ go:
 addons:
   apt:
     sources:
-    - sourceline: ppa:snappy-dev/tools
+    - sourceline: 'ppa:snappy-dev/tools'
     packages:
     - snapcraft
 script:
@@ -19,7 +24,7 @@ script:
 - make test-all
 - make dist
 - snapcraft --version
-- make package
+- cd packaging/legacy; snapcraft
 deploy:
   provider: releases
   api_key:
