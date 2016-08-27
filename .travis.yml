@@ -14,8 +14,7 @@ addons:
     - snapcraft
 script:
     - make build
-    - make check
-    - make bench
     - make all -j4
     - make dist -j4
+    - make test-all
     - make package

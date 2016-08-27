@@ -71,13 +71,18 @@ testing/testassets.go: testing
 testing: testing/testassets.zip testing/testassets.tar.gz testing/testassets.tar.bz2 testing/testassets.tar
 
 test: testing/testassets.go
+	$(GO) test -race ${SOURCE_DIRS}
+
+coverage:
 	$(GO) test -cover ${SOURCE_DIRS}
 
 bench: benchmark
 
 benchmark: testing/testassets.go
-	$(GO) test -cover -benchmem -bench=. ${SOURCE_DIRS}
-	
+	$(GO) test -benchmem -bench=. ${SOURCE_DIRS}
+
+test-all: test benchmark coverage
+
 package:
 	@cd packaging; snapcraft; cd ..
 
@@ -85,4 +90,4 @@ install: gowebserver
 	@install ${BINARY_NAME} $(DESTDIR)$(bindir)
 	@install -m 0644 ${MAN_PAGE_NAME} $(DESTDIR)$(man1dir)
 
-.PHONY : all main-platforms extended-platforms dist build lint clean check test testdata bench benchmark package install
+.PHONY : all main-platforms extended-platforms dist build lint clean check test testdata coverage bench benchmark test-all package install
