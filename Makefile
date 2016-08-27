@@ -93,6 +93,7 @@ package:
 	@cd packaging; snapcraft; cd ..
 
 install: gowebserver
+	@mkdir -p $(DESTDIR)$(bindir)
 	@install ${BINARY_NAME} $(DESTDIR)$(bindir)
 	@install -m 0644 ${MAN_PAGE_NAME} $(DESTDIR)$(man1dir)
 
