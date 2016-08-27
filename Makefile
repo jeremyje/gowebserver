@@ -73,7 +73,7 @@ testing: testing/testassets.zip testing/testassets.tar.gz testing/testassets.tar
 test: testing/testassets.go
 	$(GO) test -race ${SOURCE_DIRS}
 
-coverage:
+coverage: testing/testassets.go
 	$(GO) test -cover ${SOURCE_DIRS}
 
 bench: benchmark
