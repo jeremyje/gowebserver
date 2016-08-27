@@ -22,9 +22,8 @@ func TestAddCallback(t *testing.T) {
 
 	assert.False(signalCaught.get(), "signalCaught should be false.")
 
-	// Send 2 signals to ensure the first one gets through, this is flaky, needs better fix.
-	manager.channel <- os.Interrupt
-	manager.channel <- os.Interrupt
+	simulateSignalOnManager(manager)
+
 	assert.True(signalCaught.get(), "signalCaught should be true.")
 }
 
@@ -48,9 +47,8 @@ func TestMultipleCallbacks(t *testing.T) {
 	assert.False(signalCaughtOne.get(), "signalCaughtOne should be false.")
 	assert.False(signalCaughtTwo.get(), "signalCaughtTwo should be false.")
 
-	// Send 2 signals to ensure the first one gets through, this is flaky, needs better fix.
-	manager.channel <- os.Interrupt
-	manager.channel <- os.Interrupt
+	simulateSignalOnManager(manager)
+
 	assert.True(signalCaughtOne.get(), "signalCaughtOne should be true.")
 	assert.True(signalCaughtTwo.get(), "signalCaughtTwo should be true.")
 }
@@ -68,15 +66,8 @@ func TestStopListening(t *testing.T) {
 	manager.startListening()
 	manager.stopListening()
 
-	assert.True(manager.isclosed.get(), "manager.channel should be nil.")
-}
-
-func simulateSignal() {
-	// Tell the signal manager to not kill the app.
-	globalSignalManager.intest.set(true)
-	log.Printf("Set Val (race condition?): %t", globalSignalManager.intest.get())
-	globalSignalManager.channel <- os.Interrupt
-	<-globalSignalManager.testchan
+	assert.True(manager.isclosed.get(), "manager.isclosed should be true")
+	assert.False(signalCaught.get(), "signal caught should not be set.")
 }
 
 func TestGlobalSignalCallbacks(t *testing.T) {
@@ -123,4 +114,16 @@ func newSignalManagerForTest() *signalManager {
 	m := newSignalManager()
 	m.intest.set(true)
 	return m
+}
+
+func simulateSignal() {
+	simulateSignalOnManager(globalSignalManager)
+}
+
+func simulateSignalOnManager(manager *signalManager) {
+	// Tell the signal manager to not kill the app.
+	manager.intest.set(true)
+	log.Printf("Set Val (race condition?): %t", manager.intest.get())
+	manager.channel <- os.Interrupt
+	<-manager.testchan
 }

@@ -72,6 +72,9 @@ testing: testing/testassets.zip testing/testassets.tar.gz testing/testassets.tar
 
 test: testing/testassets.go
 	$(GO) test -race ${SOURCE_DIRS}
+	
+test-10: testing/testassets.go
+	$(GO) test -race ${SOURCE_DIRS} -count 10
 
 coverage: testing/testassets.go
 	$(GO) test -cover ${SOURCE_DIRS}
@@ -81,10 +84,10 @@ bench: benchmark
 benchmark: testing/testassets.go
 	$(GO) test -benchmem -bench=. ${SOURCE_DIRS}
 
-test-all: test benchmark coverage
+test-all: test test-10 benchmark coverage
 
 package-legacy:
-	@cd packaging-legacy; snapcraft; cd ..
+	@snapcraft
 
 package:
 	@cd packaging; snapcraft; cd ..
@@ -93,4 +96,4 @@ install: gowebserver
 	@install ${BINARY_NAME} $(DESTDIR)$(bindir)
 	@install -m 0644 ${MAN_PAGE_NAME} $(DESTDIR)$(man1dir)
 
-.PHONY : all main-platforms extended-platforms dist build lint clean check test testdata coverage bench benchmark test-all package-legacy package install
+.PHONY : all main-platforms extended-platforms dist build lint clean check testdata testing test test-10 coverage bench benchmark test-all package-legacy package install
