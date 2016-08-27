@@ -31,6 +31,7 @@ deploy:
     - release/server-386.exe
     - release/server-amd64.exe
     - gowebserver_1_amd64.snap
+  skip_cleanup: true
   on:
     tags: true
     repo: jeremyje/gowebserver
