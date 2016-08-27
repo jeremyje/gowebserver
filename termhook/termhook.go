@@ -6,7 +6,7 @@ import (
 )
 
 type signalManager struct {
-	intest       bool
+	intest       *atomicBool
 	channel      chan os.Signal
 	callbackList []SignalCallback
 }
@@ -15,7 +15,7 @@ var globalSignalManager *signalManager
 
 func newSignalManager() *signalManager {
 	manager := &signalManager{
-		intest:       false,
+		intest:       newAtomicBool(),
 		channel:      make(chan os.Signal, 1),
 		callbackList: []SignalCallback{},
 	}
@@ -31,8 +31,8 @@ func (this *signalManager) startListening() {
 				for _, callback := range this.callbackList {
 					callback(sig)
 				}
-				log.Printf("Sigterming: %t", this.intest)
-				if !this.intest {
+				log.Printf("Sigterming: %t", this.intest.get())
+				if !this.intest.get() {
 					os.Exit(0xf)
 				}
 			}
