@@ -68,7 +68,7 @@ func TestStopListening(t *testing.T) {
 	manager.startListening()
 	manager.stopListening()
 
-	assert.Nil(manager.channel, "manager.channel should be nil.")
+	assert.True(manager.isclosed.get(), "manager.channel should be nil.")
 }
 
 func simulateSignal() {
