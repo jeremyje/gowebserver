@@ -44,7 +44,7 @@ lint:
 clean:
 	@rm -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz testing/*.zip testing/*.tar* testing/testassets.go
 	@rm -rf release/
-	@rm -rf packaging/parts/ packaging/snap/ packaging/stage/ packaging/*.snap
+	@rm -rf packaging/parts/ packaging/prime/ packaging/snap/ packaging/stage/ packaging/*.snap
 
 check: test
 
@@ -83,7 +83,7 @@ benchmark: testing/testassets.go
 
 test-all: test benchmark coverage
 
-package:
+package: clean
 	@cd packaging; snapcraft; cd ..
 
 install: gowebserver

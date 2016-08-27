@@ -2,18 +2,23 @@ name: gowebserver
 version: 1
 summary: Go Web Server
 description: Standalone HTTP/HTTPS web server to host files on your file system.
-icon: icon.png
 confinement: strict
 
 apps:
   gowebserver:
-    command: bin/gowebserver.git --config.file=/var/lib/gowebserver.yaml
+    command: gowebserver --config.file=/var/lib/gowebserver.yaml
     daemon: simple
+    plugs:
+    - network-bind
 
 parts:
   gowebserver:
-    plugin: go
-    source: git@github.com:jeremyje/gowebserver.git
+    plugin: make
+    source: ..
+    makefile: Makefile
+    make-parameters: [build]
+    artifacts:
+    - gowebserver
     filesets:
       config:
         - var/lib/gowebserver/
