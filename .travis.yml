@@ -18,6 +18,7 @@ script:
 - make dist -j4
 - make test-all
 - make dist
+- snapcraft --version
 - make package
 deploy:
   provider: releases
