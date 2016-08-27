@@ -1,9 +1,8 @@
 name: gowebserver
 version: 1
-vendor: Jeremy Edwards <jeremyje@gmail.com>
 summary: Go Web Server
 description: Standalone HTTP/HTTPS web server to host files on your file system.
-icon: setup/gui/icon.png
+icon: icon.png
 confinement: strict
 
 apps:

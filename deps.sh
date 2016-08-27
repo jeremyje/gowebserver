@@ -15,14 +15,14 @@ GitClone() {
 GithubClone() {
     USER_PATH=$1
     BASE_DIR=github.com/${USER_PATH}
-    REPO=git@github.com:${USER_PATH}.git
+    REPO=https://github.com/${USER_PATH}.git
     GitClone ${BASE_DIR} ${REPO}
 }
 
 BitbucketClone() {
     USER_PATH=$1
     BASE_DIR=bitbucket.org/${USER_PATH}
-    REPO=git@bitbucket.org:${USER_PATH}.git
+    REPO=https://bitbucket.org/${USER_PATH}.git
     GitClone ${BASE_DIR} ${REPO}
 }
 
