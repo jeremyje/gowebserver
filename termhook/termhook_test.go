@@ -75,19 +75,8 @@ func simulateSignal() {
 	// Tell the signal manager to not kill the app.
 	globalSignalManager.intest.set(true)
 	log.Printf("Set Val (race condition?): %t", globalSignalManager.intest.get())
-	// Send 2 signals to ensure the first one gets through, this is flaky, needs better fix.
 	globalSignalManager.channel <- os.Interrupt
-	globalSignalManager.channel <- os.Interrupt
-	globalSignalManager.channel <- os.Interrupt
-	globalSignalManager.channel <- os.Interrupt
-	globalSignalManager.channel <- os.Interrupt
-	globalSignalManager.channel <- os.Interrupt
-	globalSignalManager.channel <- os.Interrupt
-	globalSignalManager.channel <- os.Interrupt
-	globalSignalManager.channel <- os.Interrupt
-	globalSignalManager.channel <- os.Interrupt
-	globalSignalManager.channel <- os.Interrupt
-	globalSignalManager.channel <- os.Interrupt
+	<-globalSignalManager.testchan
 }
 
 func TestGlobalSignalCallbacks(t *testing.T) {

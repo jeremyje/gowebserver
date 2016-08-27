@@ -10,6 +10,7 @@ type signalManager struct {
 	isclosed     *atomicBool
 	channel      chan os.Signal
 	callbackList []SignalCallback
+	testchan     chan bool
 }
 
 var globalSignalManager *signalManager
@@ -20,6 +21,7 @@ func newSignalManager() *signalManager {
 		channel:      make(chan os.Signal, 1),
 		isclosed:     newAtomicBool(),
 		callbackList: []SignalCallback{},
+		testchan:     make(chan bool),
 	}
 
 	addTerminatingSignals(manager.channel)
@@ -36,6 +38,8 @@ func (this *signalManager) startListening() {
 				log.Printf("Sigterming: %t", this.intest.get())
 				if !this.intest.get() {
 					os.Exit(0xf)
+				} else {
+					this.testchan <- true
 				}
 			}
 		}
