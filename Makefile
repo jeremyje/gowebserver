@@ -83,6 +83,9 @@ benchmark: testing/testassets.go
 
 test-all: test benchmark coverage
 
+package-legacy:
+	@cd packaging-legacy; snapcraft; cd ..
+
 package:
 	@cd packaging; snapcraft; cd ..
 
@@ -90,4 +93,4 @@ install: gowebserver
 	@install ${BINARY_NAME} $(DESTDIR)$(bindir)
 	@install -m 0644 ${MAN_PAGE_NAME} $(DESTDIR)$(man1dir)
 
-.PHONY : all main-platforms extended-platforms dist build lint clean check test testdata coverage bench benchmark test-all package install
+.PHONY : all main-platforms extended-platforms dist build lint clean check test testdata coverage bench benchmark test-all package-legacy package install

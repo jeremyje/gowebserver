@@ -3,7 +3,7 @@ version: 1
 summary: Go Web Server
 description: Standalone HTTP/HTTPS web server to host files on your file system.
 confinement: strict
-icon: ../setup/gui/icon.png
+icon: setup/gui/icon.png
 vendor: Jeremy Edwards <jeremyje@gmail.com>
 
 apps:
@@ -16,7 +16,7 @@ apps:
 parts:
   gowebserver:
     plugin: make
-    source: ../..
+    source: ..
     makefile: Makefile
     make-parameters: [build]
     artifacts:

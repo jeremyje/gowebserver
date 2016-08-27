@@ -1,0 +1,13 @@
+apps:
+  gowebserver:
+    command: command-gowebserver.wrapper
+    daemon: simple
+    plugs:
+    - network-bind
+architectures:
+- amd64
+confinement: strict
+description: Standalone HTTP/HTTPS web server to host files on your file system.
+name: gowebserver
+summary: Go Web Server
+version: 1

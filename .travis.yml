@@ -18,7 +18,7 @@ script:
 - make test-all -j4
 - make dist -j4
 - snapcraft --version
-- cd packaging/legacy; snapcraft
+- make package-legacy
 deploy:
   provider: releases
   api_key:
@@ -29,7 +29,7 @@ deploy:
     - release/server-amd64
     - release/server-386.exe
     - release/server-amd64.exe
-    - packaging/gowebserver_1_amd64.snap
+    - packaging-legacy/gowebserver_1_amd64.snap
   on:
     tags: true
     repo: jeremyje/gowebserver
