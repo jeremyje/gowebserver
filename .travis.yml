@@ -20,11 +20,6 @@ script:
 - make dist -j4
 - snapcraft --version
 - make package-legacy
-- snap install gowebserver_1_amd64.snap
-- curl localhost
-- curl localhost:8080
-- curl https://localhost
-- curl https://localhost:8443
 deploy:
   provider: releases
   api_key:
