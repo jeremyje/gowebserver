@@ -6,10 +6,7 @@ confinement: strict
 
 apps:
   gowebserver:
-    command: gowebserver --config.file=/var/lib/gowebserver.yaml
-    daemon: simple
-    plugs:
-    - network-bind
+    command: gowebserver
 
 parts:
   gowebserver:
@@ -19,6 +16,3 @@ parts:
     make-parameters: [build]
     artifacts:
     - gowebserver
-    filesets:
-      config:
-        - var/lib/gowebserver/
