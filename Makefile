@@ -4,6 +4,8 @@ sharedir = $(prefix)/share
 mandir = $(sharedir)/man
 man1dir = $(mandir)/man1
 GO := @GO15VENDOREXPERIMENT=1 go
+GOGET := @go get -u 
+
 SOURCE_DIRS=$(shell GO15VENDOREXPERIMENT=1 go list ./... | grep -v '/vendor/')
 export PATH := $(PATH):/usr/local/go/bin:/usr/go/bin
 BINARY_NAME=gowebserver
@@ -97,4 +99,19 @@ install: gowebserver
 	@install ${BINARY_NAME} $(DESTDIR)$(bindir)
 	@install -m 0644 ${MAN_PAGE_NAME} $(DESTDIR)$(man1dir)
 
-.PHONY : all main-platforms extended-platforms dist build lint clean check testdata testing test test-10 coverage bench benchmark test-all package-legacy package install
+deps:
+	$(GOGET) gopkg.in/yaml.v2
+	$(GOGET) github.com/prometheus/client_golang/prometheus
+	$(GOGET) github.com/rs/cors
+
+tools:
+	$(GOGET) golang.org/x/tools/cmd/gorename
+	$(GOGET) github.com/golang/lint/golint
+	$(GOGET) golang.org/x/tools/cmd/oracle
+	$(GOGET) github.com/nsf/gocode
+	$(GOGET) github.com/rogpeppe/godef
+	$(GOGET) github.com/lukehoban/go-outline
+	$(GOGET) github.com/newhook/go-symbols
+	$(GOGET) github.com/sqs/goreturns
+
+.PHONY : all main-platforms extended-platforms dist build lint clean check testdata testing test test-10 coverage bench benchmark test-all package-legacy package install deps tools
