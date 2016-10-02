@@ -1,7 +1,6 @@
 package termhook
 
 import (
-	"log"
 	"os"
 )
 
@@ -35,7 +34,6 @@ func (this *signalManager) startListening() {
 				for _, callback := range this.callbackList {
 					callback(sig)
 				}
-				log.Printf("Sigterming: %t", this.intest.get())
 				if !this.intest.get() {
 					os.Exit(0xf)
 				} else {
