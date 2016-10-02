@@ -3,8 +3,8 @@ bindir = $(prefix)/bin
 sharedir = $(prefix)/share
 mandir = $(sharedir)/man
 man1dir = $(mandir)/man1
-GO := @GO15VENDOREXPERIMENT=1 go
-GOGET := @go get -u 
+GO := @go
+GOGET := @go get -u
 
 SOURCE_DIRS=$(shell GO15VENDOREXPERIMENT=1 go list ./... | grep -v '/vendor/')
 export PATH := $(PATH):/usr/local/go/bin:/usr/go/bin
@@ -103,6 +103,7 @@ deps:
 	$(GOGET) gopkg.in/yaml.v2
 	$(GOGET) github.com/prometheus/client_golang/prometheus
 	$(GOGET) github.com/rs/cors
+	$(GOGET) github.com/stretchr/testify/assert
 
 tools:
 	$(GOGET) golang.org/x/tools/cmd/gorename
