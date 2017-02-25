@@ -93,6 +93,14 @@ func (this *WebServerImpl) SetUpload(uploadDirectory string, uploadServePath str
 	return nil
 }
 
+func (this *WebServerImpl) addHandler(serverMux *http.ServeMux, servePath string, handler http.Handler) {
+	if this.metricsEnabled {
+		serverMux.HandleFunc(servePath, prometheus.InstrumentHandler(servePath, handler))
+	} else {
+		serverMux.Handle(servePath, handler)
+	}
+}
+
 func (this *WebServerImpl) Serve() {
 	log.Printf("Serving %s on %s and %s", this.servingDirectory, this.httpPort, this.httpsPort)
 	httpFs, err := filesystem.New(this.servingDirectory)
@@ -103,13 +111,16 @@ func (this *WebServerImpl) Serve() {
 	serverMux := http.NewServeMux()
 	if this.metricsEnabled {
 		serverMux.Handle(this.metricsServePath, prometheus.Handler())
-		serverMux.HandleFunc(this.fileSystemServePath, prometheus.InstrumentHandler(this.fileSystemServePath, fsHandler))
+		//serverMux.HandleFunc(this.fileSystemServePath, prometheus.InstrumentHandler(this.fileSystemServePath, fsHandler))
 	} else {
-		serverMux.Handle(this.fileSystemServePath, fsHandler)
+		//serverMux.Handle(this.fileSystemServePath, fsHandler)
 	}
+	this.addHandler(serverMux, this.fileSystemServePath, fsHandler)
+
 	if len(this.uploadServePath) > 0 {
 		uploadHandler := newUploadHandler(this.uploadServePath, this.uploadDirectory)
-		serverMux.Handle(this.uploadServePath, uploadHandler)
+		this.addHandler(serverMux, this.uploadServePath, uploadHandler)
+		//serverMux.Handle(this.uploadServePath, uploadHandler)
 	}
 	corsHandler := cors.Default().Handler(serverMux)
 	httpHandler := newTracingHttpHandler(corsHandler, this.metricsEnabled, this.verbose)
