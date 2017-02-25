@@ -49,7 +49,7 @@ func verifyLocalFileFromDefaultAsset(dir string, assert *assert.Assertions) {
 func verifyLocalFile(dir string, assetPath string) error {
 	fullPath := filepath.Join(dir, assetPath)
 	if !exists(fullPath) {
-		return fmt.Errorf("%s does not exist when it's expected to.", fullPath)
+		return fmt.Errorf("%s does not exist when it's expected to", fullPath)
 	}
 	data, err := ioutil.ReadFile(fullPath)
 	if err != nil {

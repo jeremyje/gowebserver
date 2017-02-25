@@ -80,7 +80,7 @@ type certificateBuilderImpl struct {
 	province                      string
 }
 
-// Creates a new Certificate Builder.
+// NewCertificateBuilder creates a new Certificate Builder.
 func NewCertificateBuilder() CertificateBuilder {
 	defaultCertOrg := "Some Company"
 	defaultCertOrgUnit := "None"
@@ -108,188 +108,188 @@ func NewCertificateBuilder() CertificateBuilder {
 	}
 }
 
-func (this *certificateBuilderImpl) SetRsa1024() CertificateBuilder {
-	this.rsaBits = 1024
-	this.ecdsaCurve = nil
-	this.isDirty = true
-	return this
+func (cb *certificateBuilderImpl) SetRsa1024() CertificateBuilder {
+	cb.rsaBits = 1024
+	cb.ecdsaCurve = nil
+	cb.isDirty = true
+	return cb
 }
 
-func (this *certificateBuilderImpl) SetRsa2048() CertificateBuilder {
-	this.rsaBits = 2048
-	this.ecdsaCurve = nil
-	this.isDirty = true
-	return this
+func (cb *certificateBuilderImpl) SetRsa2048() CertificateBuilder {
+	cb.rsaBits = 2048
+	cb.ecdsaCurve = nil
+	cb.isDirty = true
+	return cb
 }
 
-func (this *certificateBuilderImpl) SetRsa4096() CertificateBuilder {
-	this.rsaBits = 4096
-	this.ecdsaCurve = nil
-	this.isDirty = true
-	return this
+func (cb *certificateBuilderImpl) SetRsa4096() CertificateBuilder {
+	cb.rsaBits = 4096
+	cb.ecdsaCurve = nil
+	cb.isDirty = true
+	return cb
 }
 
-func (this *certificateBuilderImpl) SetEcdsaP224() CertificateBuilder {
-	this.rsaBits = 0
-	this.ecdsaCurve = elliptic.P224()
-	this.isDirty = true
-	return this
+func (cb *certificateBuilderImpl) SetEcdsaP224() CertificateBuilder {
+	cb.rsaBits = 0
+	cb.ecdsaCurve = elliptic.P224()
+	cb.isDirty = true
+	return cb
 }
 
-func (this *certificateBuilderImpl) SetEcdsaP256() CertificateBuilder {
-	this.rsaBits = 0
-	this.ecdsaCurve = elliptic.P256()
-	this.isDirty = true
-	return this
+func (cb *certificateBuilderImpl) SetEcdsaP256() CertificateBuilder {
+	cb.rsaBits = 0
+	cb.ecdsaCurve = elliptic.P256()
+	cb.isDirty = true
+	return cb
 }
 
-func (this *certificateBuilderImpl) SetEcdsaP384() CertificateBuilder {
-	this.rsaBits = 0
-	this.ecdsaCurve = elliptic.P384()
-	this.isDirty = true
-	return this
+func (cb *certificateBuilderImpl) SetEcdsaP384() CertificateBuilder {
+	cb.rsaBits = 0
+	cb.ecdsaCurve = elliptic.P384()
+	cb.isDirty = true
+	return cb
 }
 
-func (this *certificateBuilderImpl) SetEcdsaP521() CertificateBuilder {
-	this.rsaBits = 0
-	this.ecdsaCurve = elliptic.P521()
-	this.isDirty = true
-	return this
+func (cb *certificateBuilderImpl) SetEcdsaP521() CertificateBuilder {
+	cb.rsaBits = 0
+	cb.ecdsaCurve = elliptic.P521()
+	cb.isDirty = true
+	return cb
 }
 
-func (this *certificateBuilderImpl) SetValidDurationInDays(numDays int) CertificateBuilder {
-	this.validDuration = time.Duration(time.Hour * 24 * 365)
-	this.isDirty = true
-	return this
+func (cb *certificateBuilderImpl) SetValidDurationInDays(numDays int) CertificateBuilder {
+	cb.validDuration = time.Duration(time.Hour * 24 * 365)
+	cb.isDirty = true
+	return cb
 }
 
-func (this *certificateBuilderImpl) SetStartValidTime(startTime time.Time) CertificateBuilder {
-	this.certValidStart = startTime
-	this.isDirty = true
-	return this
+func (cb *certificateBuilderImpl) SetStartValidTime(startTime time.Time) CertificateBuilder {
+	cb.certValidStart = startTime
+	cb.isDirty = true
+	return cb
 }
 
-func (this *certificateBuilderImpl) SetHostName(hostName string) CertificateBuilder {
-	this.hostName = hostName
-	this.isDirty = true
-	return this
+func (cb *certificateBuilderImpl) SetHostName(hostName string) CertificateBuilder {
+	cb.hostName = hostName
+	cb.isDirty = true
+	return cb
 }
 
-func (this *certificateBuilderImpl) SetUseSelfAsCertificateAuthority(useSelf bool) CertificateBuilder {
-	this.useSelfAsCertificateAuthority = useSelf
-	this.isDirty = true
-	return this
+func (cb *certificateBuilderImpl) SetUseSelfAsCertificateAuthority(useSelf bool) CertificateBuilder {
+	cb.useSelfAsCertificateAuthority = useSelf
+	cb.isDirty = true
+	return cb
 }
 
-func (this *certificateBuilderImpl) SetOrganization(organization string, unit string) CertificateBuilder {
-	this.organization = organization
-	this.organizationUnit = unit
-	this.isDirty = true
-	return this
+func (cb *certificateBuilderImpl) SetOrganization(organization string, unit string) CertificateBuilder {
+	cb.organization = organization
+	cb.organizationUnit = unit
+	cb.isDirty = true
+	return cb
 }
 
-func (this *certificateBuilderImpl) SetCountry(country string) CertificateBuilder {
-	this.country = country
-	this.isDirty = true
-	return this
+func (cb *certificateBuilderImpl) SetCountry(country string) CertificateBuilder {
+	cb.country = country
+	cb.isDirty = true
+	return cb
 }
 
-func (this *certificateBuilderImpl) SetLocality(locality string) CertificateBuilder {
-	this.locality = locality
-	this.isDirty = true
-	return this
+func (cb *certificateBuilderImpl) SetLocality(locality string) CertificateBuilder {
+	cb.locality = locality
+	cb.isDirty = true
+	return cb
 }
 
-func (this *certificateBuilderImpl) SetProvince(province string) CertificateBuilder {
-	this.province = province
-	this.isDirty = true
-	return this
+func (cb *certificateBuilderImpl) SetProvince(province string) CertificateBuilder {
+	cb.province = province
+	cb.isDirty = true
+	return cb
 }
 
-func (this *certificateBuilderImpl) GetCertificate() ([]byte, error) {
-	this.buildCertificateIfNecessary()
-	return this.x509PemBytes, this.buildError
+func (cb *certificateBuilderImpl) GetCertificate() ([]byte, error) {
+	cb.buildCertificateIfNecessary()
+	return cb.x509PemBytes, cb.buildError
 }
 
-func (this *certificateBuilderImpl) GetCertificateString() (string, error) {
-	certBytes, err := this.GetCertificate()
+func (cb *certificateBuilderImpl) GetCertificateString() (string, error) {
+	certBytes, err := cb.GetCertificate()
 	return string(certBytes), err
 }
 
-func (this *certificateBuilderImpl) GetPrivateKey() ([]byte, error) {
-	this.buildCertificateIfNecessary()
-	return this.privateKeyPemBytes, this.buildError
+func (cb *certificateBuilderImpl) GetPrivateKey() ([]byte, error) {
+	cb.buildCertificateIfNecessary()
+	return cb.privateKeyPemBytes, cb.buildError
 }
 
-func (this *certificateBuilderImpl) GetPrivateKeyString() (string, error) {
-	keyBytes, err := this.GetPrivateKey()
+func (cb *certificateBuilderImpl) GetPrivateKeyString() (string, error) {
+	keyBytes, err := cb.GetPrivateKey()
 	return string(keyBytes), err
 }
 
-func (this *certificateBuilderImpl) WriteCertificate(path string) error {
-	x509PemBytes, err := this.GetCertificate()
+func (cb *certificateBuilderImpl) WriteCertificate(path string) error {
+	x509PemBytes, err := cb.GetCertificate()
 	if err != nil {
 		return err
 	}
 	return ioutil.WriteFile(path, x509PemBytes, 0660)
 }
 
-func (this *certificateBuilderImpl) WritePrivateKey(path string) error {
-	privateKeyPemBytes, err := this.GetPrivateKey()
+func (cb *certificateBuilderImpl) WritePrivateKey(path string) error {
+	privateKeyPemBytes, err := cb.GetPrivateKey()
 	if err != nil {
 		return err
 	}
 	return ioutil.WriteFile(path, privateKeyPemBytes, 0660)
 }
 
-func (this *certificateBuilderImpl) buildCertificateIfNecessary() error {
-	if this.isDirty {
-		return this.buildCertificate()
+func (cb *certificateBuilderImpl) buildCertificateIfNecessary() error {
+	if cb.isDirty {
+		return cb.buildCertificate()
 	}
-	return this.buildError
+	return cb.buildError
 }
 
-func (this *certificateBuilderImpl) buildCertificate() error {
+func (cb *certificateBuilderImpl) buildCertificate() error {
 	var privateKey interface{}
 	var err error
-	if this.ecdsaCurve == nil {
-		privateKey, err = rsa.GenerateKey(rand.Reader, this.rsaBits)
+	if cb.ecdsaCurve == nil {
+		privateKey, err = rsa.GenerateKey(rand.Reader, cb.rsaBits)
 	} else {
-		privateKey, err = ecdsa.GenerateKey(this.ecdsaCurve, rand.Reader)
+		privateKey, err = ecdsa.GenerateKey(cb.ecdsaCurve, rand.Reader)
 	}
 	if err != nil {
-		this.buildError = err
+		cb.buildError = err
 		return err
 	}
 
-	certValidEnd := this.certValidStart.Add(this.validDuration)
+	certValidEnd := cb.certValidStart.Add(cb.validDuration)
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		this.buildError = err
+		cb.buildError = err
 		return err
 	}
 	certName := pkix.Name{
-		Country:            []string{this.country},
-		Organization:       []string{this.organization},
-		OrganizationalUnit: []string{this.organizationUnit},
-		Locality:           []string{this.locality},
-		Province:           []string{this.province},
-		CommonName:         this.organization,
+		Country:            []string{cb.country},
+		Organization:       []string{cb.organization},
+		OrganizationalUnit: []string{cb.organizationUnit},
+		Locality:           []string{cb.locality},
+		Province:           []string{cb.province},
+		CommonName:         cb.organization,
 	}
 	template := x509.Certificate{
 		SerialNumber:          serialNumber,
 		Subject:               certName,
 		Issuer:                certName,
-		NotBefore:             this.certValidStart,
+		NotBefore:             cb.certValidStart,
 		NotAfter:              certValidEnd,
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 	}
 
-	hosts := strings.Split(this.hostName, ",")
+	hosts := strings.Split(cb.hostName, ",")
 	for _, h := range hosts {
 		if ip := net.ParseIP(h); ip != nil {
 			template.IPAddresses = append(template.IPAddresses, ip)
@@ -298,25 +298,25 @@ func (this *certificateBuilderImpl) buildCertificate() error {
 		}
 	}
 
-	if this.useSelfAsCertificateAuthority {
+	if cb.useSelfAsCertificateAuthority {
 		template.IsCA = true
 		template.KeyUsage |= x509.KeyUsageCertSign
 	}
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, publicKey(privateKey), privateKey)
 	if err != nil {
-		this.buildError = err
+		cb.buildError = err
 		return err
 	}
 
-	this.x509PemBytes = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+	cb.x509PemBytes = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 
 	pemPriv, err := pemBlockForKey(privateKey)
 	if err != nil {
-		this.buildError = err
+		cb.buildError = err
 		return err
 	}
-	this.privateKeyPemBytes = pem.EncodeToMemory(pemPriv)
-	this.isDirty = false
+	cb.privateKeyPemBytes = pem.EncodeToMemory(pemPriv)
+	cb.isDirty = false
 	return nil
 }

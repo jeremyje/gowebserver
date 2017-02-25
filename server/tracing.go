@@ -21,26 +21,26 @@ func init() {
 	prometheus.MustRegister(httpRequestCount)
 }
 
-func newTracingHttpHandler(handler http.Handler, metricsEnabled bool, verbose bool) http.Handler {
-	return &tracingHttpHandler{
+func newTracingHTTPHandler(handler http.Handler, metricsEnabled bool, verbose bool) http.Handler {
+	return &tracingHTTPHandler{
 		handler:        handler,
 		metricsEnabled: metricsEnabled,
 		verbose:        verbose,
 	}
 }
 
-type tracingHttpHandler struct {
+type tracingHTTPHandler struct {
 	handler        http.Handler
 	metricsEnabled bool
 	verbose        bool
 }
 
-func (this *tracingHttpHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	if this.metricsEnabled {
+func (thh *tracingHTTPHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if thh.metricsEnabled {
 		httpRequestCount.WithLabelValues(request.Method).Inc()
 	}
-	if this.verbose {
+	if thh.verbose {
 		log.Printf("%s %s", request.Method, request.URL.Path)
 	}
-	this.handler.ServeHTTP(writer, request)
+	thh.handler.ServeHTTP(writer, request)
 }

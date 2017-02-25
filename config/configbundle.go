@@ -4,15 +4,18 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Http struct {
+// HTTP holds the configuration for HTTP serving.
+type HTTP struct {
 	Port int `yaml:"port"`
 }
 
-type Https struct {
+// HTTPS holds the configuration for HTTPS serving.
+type HTTPS struct {
 	Port        int         `yaml:"port"`
 	Certificate Certificate `yaml:"certificate"`
 }
 
+// Certificate holds the certificate/private key configuration for HTTPS.
 type Certificate struct {
 	PrivateKeyFilePath        string `yaml:"private-key"`
 	CertificateFilePath       string `yaml:"path"`
@@ -23,11 +26,13 @@ type Certificate struct {
 	ForceOverwrite            bool   `yaml:"-"`
 }
 
+// Metrics holds the metrics configuration.
 type Metrics struct {
 	Enabled bool   `yaml:"enabled"`
 	Path    string `yaml:"path"`
 }
 
+// Config is the root of the server configuration.
 type Config struct {
 	Verbose           bool   `yaml:"verbose"`
 	Directory         string `yaml:"directory"`
@@ -37,13 +42,14 @@ type Config struct {
 	UploadDirectory string `yaml:"upload-directory"`
 	UploadServePath string `yaml:"upload-serve-path"`
 
-	Http    Http    `yaml:"http"`
-	Https   Https   `yaml:"https"`
+	HTTP    HTTP    `yaml:"http"`
+	HTTPS   HTTPS   `yaml:"https"`
 	Metrics Metrics `yaml:"metrics"`
 }
 
-func (this *Config) String() string {
-	data, err := yaml.Marshal(this)
+// String returns a string representation of the config.
+func (c *Config) String() string {
+	data, err := yaml.Marshal(c)
 	if err != nil {
 		return err.Error()
 	}

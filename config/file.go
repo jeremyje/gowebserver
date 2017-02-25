@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 )
 
+// Load loads the configuration for the server.
 func Load() *Config {
 	flag.Parse()
 	conf := loadFromFlags()

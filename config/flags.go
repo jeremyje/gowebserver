@@ -66,10 +66,10 @@ func loadFromFlags() *Config {
 		ConfigurationFile: *configFileFlag,
 		UploadDirectory:   *uploadDirectoryFlag,
 		UploadServePath:   *uploadServePathFlag,
-		Http: Http{
+		HTTP: HTTP{
 			Port: *httpPortFlag,
 		},
-		Https: Https{
+		HTTPS: HTTPS{
 			Port: *httpsPortFlag,
 			Certificate: Certificate{
 				PrivateKeyFilePath:        *privateKeyFilePathFlag,

@@ -37,7 +37,7 @@ func GetZipFilePath() (string, error) {
 }
 
 func getZipContents() ([]byte, error) {
-	return base64.StdEncoding.DecodeString(ZIP_ASSETS)
+	return base64.StdEncoding.DecodeString(zipAssets)
 }
 
 // GetTarFilePath gets the .tar test asset file.
@@ -54,7 +54,7 @@ func GetTarFilePath() (string, error) {
 }
 
 func getTarContents() ([]byte, error) {
-	return base64.StdEncoding.DecodeString(TAR_ASSETS)
+	return base64.StdEncoding.DecodeString(tarAssets)
 }
 
 // GetTarGzFilePath gets the .tar.gz test asset file.
@@ -71,7 +71,7 @@ func GetTarGzFilePath() (string, error) {
 }
 
 func getTarGzContents() ([]byte, error) {
-	return base64.StdEncoding.DecodeString(TAR_GZ_ASSETS)
+	return base64.StdEncoding.DecodeString(tarGzAssets)
 }
 
 // GetTarBzip2FilePath gets .tar.bz2 test asset file.
@@ -88,7 +88,7 @@ func GetTarBzip2FilePath() (string, error) {
 }
 
 func getTarBzip2Contents() ([]byte, error) {
-	return base64.StdEncoding.DecodeString(TAR_BZIP2_ASSETS)
+	return base64.StdEncoding.DecodeString(tarBzip2Assets)
 }
 
 func createTempArchive(suffix string) (string, error) {

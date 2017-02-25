@@ -15,7 +15,7 @@ import (
 
 func newTarFs(filePath string) (http.FileSystem, string, string, error) {
 	if !isSupportedTar(filePath) {
-		return nil, "", "", fmt.Errorf("%s is not a valid tarball.", filePath)
+		return nil, "", "", fmt.Errorf("%s is not a valid tarball", filePath)
 	}
 	localFilePath, tmpDir, err := stageRemoteFile(filePath)
 	if err != nil {

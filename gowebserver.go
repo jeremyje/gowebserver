@@ -19,15 +19,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if conf.Https.Certificate.OnlyGenerateCertificate {
+	if conf.HTTPS.Certificate.OnlyGenerateCertificate {
 		return
 	}
 	httpServer := server.NewWebServer().
-		SetPorts(conf.Http.Port, conf.Https.Port).
+		SetPorts(conf.HTTP.Port, conf.HTTPS.Port).
 		SetMetricsEnabled(conf.Metrics.Enabled).
 		SetServePath(conf.ServePath, conf.Metrics.Path).
-		SetCertificateFile(conf.Https.Certificate.CertificateFilePath).
-		SetPrivateKey(conf.Https.Certificate.PrivateKeyFilePath).
+		SetCertificateFile(conf.HTTPS.Certificate.CertificateFilePath).
+		SetPrivateKey(conf.HTTPS.Certificate.PrivateKeyFilePath).
 		SetVerbose(conf.Verbose)
 	err = httpServer.SetDirectory(conf.Directory)
 	if err != nil {
@@ -41,18 +41,18 @@ func main() {
 }
 
 func createCertificate(conf *config.Config) error {
-	_, certErr := os.Stat(conf.Https.Certificate.CertificateFilePath)
-	_, privateKeyErr := os.Stat(conf.Https.Certificate.PrivateKeyFilePath)
-	if conf.Https.Certificate.ForceOverwrite || (os.IsNotExist(certErr) && os.IsNotExist(privateKeyErr)) {
+	_, certErr := os.Stat(conf.HTTPS.Certificate.CertificateFilePath)
+	_, privateKeyErr := os.Stat(conf.HTTPS.Certificate.PrivateKeyFilePath)
+	if conf.HTTPS.Certificate.ForceOverwrite || (os.IsNotExist(certErr) && os.IsNotExist(privateKeyErr)) {
 		certBuilder := cert.NewCertificateBuilder().
 			SetRsa2048().
-			SetValidDurationInDays(conf.Https.Certificate.CertificateValidDuration).
-			SetUseSelfAsCertificateAuthority(conf.Https.Certificate.ActAsCertificateAuthority)
-		err := certBuilder.WriteCertificate(conf.Https.Certificate.CertificateFilePath)
+			SetValidDurationInDays(conf.HTTPS.Certificate.CertificateValidDuration).
+			SetUseSelfAsCertificateAuthority(conf.HTTPS.Certificate.ActAsCertificateAuthority)
+		err := certBuilder.WriteCertificate(conf.HTTPS.Certificate.CertificateFilePath)
 		if err != nil {
 			return err
 		}
-		err = certBuilder.WritePrivateKey(conf.Https.Certificate.PrivateKeyFilePath)
+		err = certBuilder.WritePrivateKey(conf.HTTPS.Certificate.PrivateKeyFilePath)
 		if err != nil {
 			return err
 		}

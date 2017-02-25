@@ -67,13 +67,13 @@ testing/testassets.tar:
 
 testing/testassets.go: testing
 	@echo "package testing" > testing/testassets.go
-	@echo "const ZIP_ASSETS=\"$(shell base64 -w0 testing/testassets.zip)\"" >> testing/testassets.go
-	@echo "const TAR_ASSETS=\"$(shell base64 -w0 testing/testassets.tar)\"" >> testing/testassets.go
-	@echo "const TAR_GZ_ASSETS=\"$(shell base64 -w0 testing/testassets.tar.gz)\"" >> testing/testassets.go
-	@echo "const TAR_BZIP2_ASSETS=\"$(shell base64 -w0 testing/testassets.tar.bz2)\"" >> testing/testassets.go
+	@echo "const zipAssets=\"$(shell base64 -w0 testing/testassets.zip)\"" >> testing/testassets.go
+	@echo "const tarAssets=\"$(shell base64 -w0 testing/testassets.tar)\"" >> testing/testassets.go
+	@echo "const tarGzAssets=\"$(shell base64 -w0 testing/testassets.tar.gz)\"" >> testing/testassets.go
+	@echo "const tarBzip2Assets=\"$(shell base64 -w0 testing/testassets.tar.bz2)\"" >> testing/testassets.go
 	@gofmt -s -w ./testing/
 
-testing: testing/testassets.zip testing/testassets.tar.gz testing/testassets.tar.bz2 testing/testassets.tar
+testing: testing/testassets.zip testing/testassets.tar.gz testing/testassets.tar.bz2 testing/testassets.tar embedded/bindata_assetfs.go
 
 test: testing/testassets.go
 	$(GO) test -race ${SOURCE_DIRS}

@@ -10,10 +10,10 @@ import (
 	"strings"
 )
 
-const DIR_MODE = os.FileMode(0777)
+const fsDirMode = os.FileMode(0777)
 
 func createDirectory(path string) error {
-	return os.MkdirAll(dirPath(path), DIR_MODE)
+	return os.MkdirAll(dirPath(path), fsDirMode)
 }
 
 func stageRemoteFile(maybeRemoteFilePath string) (string, string, error) {

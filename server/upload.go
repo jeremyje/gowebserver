@@ -18,11 +18,11 @@ import (
 )
 
 const (
-	uploadHtmlPage     = "ajaxupload.html"
+	uploadHTMLPage     = "ajaxupload.html"
 	uploadFileFormName = "gowebserveruploadfile[]"
 )
 
-type uploadHttpHandler struct {
+type uploadHTTPHandler struct {
 	uploadServePath string
 	uploadDirectory string
 }
@@ -32,7 +32,7 @@ type uploadResponse struct {
 	Error   string `json:"error,omitempty"`
 }
 
-func (this *uploadHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		crutime := time.Now().Unix()
 		h := md5.New()
@@ -40,7 +40,7 @@ func (this *uploadHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		token := fmt.Sprintf("%x", h.Sum(nil))
 
 		tmpl := template.New("")
-		t, err := tmpl.Parse(string(embedded.MustAsset(uploadHtmlPage)))
+		t, err := tmpl.Parse(string(embedded.MustAsset(uploadHTMLPage)))
 		if err != nil {
 			fmt.Printf("Error parsing html template: %s", err)
 			w.Write([]byte(err.Error()))
@@ -50,14 +50,14 @@ func (this *uploadHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			UploadServePath    string
 			UploadToken        string
 			UploadFileFormName string
-		}{this.uploadServePath, token, uploadFileFormName}
+		}{uh.uploadServePath, token, uploadFileFormName}
 		t.Execute(w, params)
 	} else {
 		var resp uploadResponse
 		r.ParseMultipartForm(32 << 20)
 		m := r.MultipartForm
 		files := m.File[uploadFileFormName]
-		for i, _ := range files {
+		for i := range files {
 			fileName := files[i].Filename
 			file, err := files[i].Open()
 			if err != nil {
@@ -66,13 +66,13 @@ func (this *uploadHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 				return
 			}
 			defer file.Close()
-			err = os.MkdirAll(this.uploadDirectory, 0766)
+			err = os.MkdirAll(uh.uploadDirectory, 0766)
 			if err != nil {
-				resp.Error = fmt.Sprintf("InternalError: Cannot create directory to store file (%s), %s", this.uploadDirectory, err)
+				resp.Error = fmt.Sprintf("InternalError: Cannot create directory to store file (%s), %s", uh.uploadDirectory, err)
 				writeUploadResponse(w, resp)
 				return
 			}
-			localPath := filepath.Join(this.uploadDirectory, fileName)
+			localPath := filepath.Join(uh.uploadDirectory, fileName)
 			f, err := os.OpenFile(localPath, os.O_WRONLY|os.O_CREATE, 0666)
 			if err != nil {
 				resp.Error = fmt.Sprintf("InternalError: Cannot create file (%s), %s", localPath, err)
@@ -90,7 +90,7 @@ func (this *uploadHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 func newUploadHandler(uploadServePath string, uploadDirectory string) http.Handler {
-	return &uploadHttpHandler{
+	return &uploadHTTPHandler{
 		uploadServePath: uploadServePath,
 		uploadDirectory: uploadDirectory,
 	}

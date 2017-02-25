@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-const EMPTY_CONFIG_YAML = `verbose: false
+const emptyConfigYaml = `verbose: false
 directory: ""
 serve-path: ""
 upload-directory: ""
@@ -24,7 +24,7 @@ metrics:
   path: ""
 `
 
-const POPULATED_CONFIG_YAML = `verbose: true
+const populatedConfigYaml = `verbose: true
 directory: /home/directory
 serve-path: /serving
 upload-directory: /home/upload
@@ -49,7 +49,7 @@ func TestEmptyConfig(t *testing.T) {
 	conf := &Config{}
 	assert.NotNil(conf)
 
-	assert.Equal(conf.String(), EMPTY_CONFIG_YAML)
+	assert.Equal(conf.String(), emptyConfigYaml)
 }
 
 func TestPopulatedConfig(t *testing.T) {
@@ -61,17 +61,17 @@ func TestPopulatedConfig(t *testing.T) {
 	conf.ServePath = "/serving"
 	conf.UploadDirectory = "/home/upload"
 	conf.UploadServePath = "/postage"
-	conf.Http.Port = 1000
-	conf.Https.Port = 2000
-	conf.Https.Certificate.PrivateKeyFilePath = "private-key.pem"
-	conf.Https.Certificate.CertificateFilePath = "public-certificate.pem"
-	conf.Https.Certificate.CertificateHosts = "gowebserver.com"
-	conf.Https.Certificate.CertificateValidDuration = 9000
-	conf.Https.Certificate.ActAsCertificateAuthority = true
-	conf.Https.Certificate.OnlyGenerateCertificate = true
-	conf.Https.Certificate.ForceOverwrite = true
+	conf.HTTP.Port = 1000
+	conf.HTTPS.Port = 2000
+	conf.HTTPS.Certificate.PrivateKeyFilePath = "private-key.pem"
+	conf.HTTPS.Certificate.CertificateFilePath = "public-certificate.pem"
+	conf.HTTPS.Certificate.CertificateHosts = "gowebserver.com"
+	conf.HTTPS.Certificate.CertificateValidDuration = 9000
+	conf.HTTPS.Certificate.ActAsCertificateAuthority = true
+	conf.HTTPS.Certificate.OnlyGenerateCertificate = true
+	conf.HTTPS.Certificate.ForceOverwrite = true
 	conf.Metrics.Enabled = true
 	conf.Metrics.Path = "/prometheus"
 
-	assert.Equal(conf.String(), POPULATED_CONFIG_YAML)
+	assert.Equal(conf.String(), populatedConfigYaml)
 }
