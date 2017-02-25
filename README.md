@@ -35,17 +35,17 @@ Downloads
 
     OS    | Arch  | Link
 ----------|-------|-------------------------------------------------------------------------------------------
-Linux     | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.5/server-amd64
-Linux     | arm   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.5/server-arm
-Linux     | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.5/server-386
-Windows   | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.5/server-amd64.exe
-Windows   | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.5/server-386.exe
+Linux     | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.6/server-amd64
+Linux     | arm   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.6/server-arm
+Linux     | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.6/server-386
+Windows   | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.6/server-amd64.exe
+Windows   | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.6/server-386.exe
 
 
 Build
 -----
 
-Status: [![Build Status](https://secure.travis-ci.org/jeremyje/gowebserver.png)](http://travis-ci.org/jeremyje/gowebserver)
+Status: [![Build Status](https://secure.travis-ci.org/jeremyje/gowebserver.png)](http://travis-ci.org/jeremyje/gowebserver) [![Go Report Card](https://goreportcard.com/badge/github.com/jeremyje/gowebserver)](https://goreportcard.com/report/github.com/jeremyje/gowebserver)
 
 Install [Go 1.5+](https://golang.org/dl/).
 

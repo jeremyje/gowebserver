@@ -113,7 +113,6 @@ deps:
 tools:
 	$(GOGET) golang.org/x/tools/cmd/gorename
 	$(GOGET) github.com/golang/lint/golint
-	$(GOGET) golang.org/x/tools/cmd/oracle
 	$(GOGET) github.com/nsf/gocode
 	$(GOGET) github.com/rogpeppe/godef
 	$(GOGET) github.com/lukehoban/go-outline
