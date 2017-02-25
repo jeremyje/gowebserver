@@ -12,23 +12,6 @@ import (
 	"time"
 )
 
-// https://astaxie.gitbooks.io/build-web-application-with-golang/content/en/04.5.html
-const (
-	uploadPage = `<html>
-<head>
-       <title>Upload file</title>
-</head>
-<body>
-<form enctype="multipart/form-data" action="{{.UploadServePath}}" method="post">
-    <input type="file" name="uploadfile" />
-    <input type="hidden" name="token" value="{{.UploadToken}}"/>
-    <input type="submit" value="upload" />
-</form>
-</body>
-</html>
-`
-)
-
 type uploadHttpHandler struct {
 	uploadServePath string
 	uploadDirectory string
@@ -55,13 +38,18 @@ func (this *uploadHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		t.Execute(w, params)
 	} else {
 		r.ParseMultipartForm(32 << 20)
-		file, handler, err := r.FormFile("uploadfile")
+		file, handler, err := r.FormFile("file")
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 		defer file.Close()
 		fmt.Fprintf(w, "%v", handler.Header)
+		err = os.MkdirAll(this.uploadDirectory, 0766)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		localPath := filepath.Join(this.uploadDirectory, handler.Filename)
 		f, err := os.OpenFile(localPath, os.O_WRONLY|os.O_CREATE, 0666)
 		if err != nil {
