@@ -25,6 +25,8 @@ _testmain.go
 
 build/
 release/
+upload/
+
 
 gowebserver
 *.pem
@@ -33,4 +35,5 @@ testing/testassets.*
 packaging/parts/
 packaging/snap/
 packaging/stage/
+packaging/prime/
 packaging/*.snap

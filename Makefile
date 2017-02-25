@@ -36,7 +36,7 @@ gowebserver-%:
 	@GOOS=$(GOOS) GOARCH=$(GOARCH) GO15VENDOREXPERIMENT=1 go build "$(BINARY_NAME)-$(BINARY_SUFFIX).go"
 	@rm "$(BINARY_NAME)-$(BINARY_SUFFIX).go"
 
-gowebserver:
+gowebserver: embedded/bindata_assetfs.go
 	$(GO) build ${SERVER_MAIN}
 
 lint:
@@ -47,6 +47,8 @@ clean:
 	@rm -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz testing/*.zip testing/*.tar* testing/testassets.go
 	@rm -rf release/
 	@rm -rf packaging/parts/ packaging/prime/ packaging/snap/ packaging/stage/ packaging/*.snap
+	@rm -f embedded/bindata_assetfs.go
+	@rm -rf upload/
 
 check: test
 
@@ -104,6 +106,9 @@ deps:
 	$(GOGET) github.com/prometheus/client_golang/prometheus
 	$(GOGET) github.com/rs/cors
 	$(GOGET) github.com/stretchr/testify/assert
+	# Resources
+	$(GOGETBUILD) github.com/jteeuwen/go-bindata/...
+	$(GOGETBUILD) github.com/elazarl/go-bindata-assetfs/...
 
 tools:
 	$(GOGET) golang.org/x/tools/cmd/gorename
@@ -114,5 +119,9 @@ tools:
 	$(GOGET) github.com/lukehoban/go-outline
 	$(GOGET) github.com/newhook/go-symbols
 	$(GOGET) github.com/sqs/goreturns
+
+embedded/bindata_assetfs.go:
+	@rm -f embedded/bindata_assetfs.go
+	@cd embedded; go-bindata-assetfs -pkg embedded *
 
 .PHONY : all main-platforms extended-platforms dist build lint clean check testdata testing test test-10 coverage bench benchmark test-all package-legacy package install deps tools
