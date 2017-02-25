@@ -16,9 +16,9 @@ import (
 	"time"
 )
 
-// Creates X.509 certificates and private key pairs.
+// CertificateBuilder creates X.509 certificates and private key pairs.
 type CertificateBuilder interface {
-	// Set to build certificate and private key using RSA-1024.
+	// SetRsa1024 sets to build certificate and private key using RSA-1024.
 	SetRsa1024() CertificateBuilder
 	// Set to build certificate and private key using RSA-2048.
 	SetRsa2048() CertificateBuilder

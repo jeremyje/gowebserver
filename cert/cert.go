@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 )
 
-// Reads a certificate from a file.
+// ReadCertificateFromFile reads a certificate from a file.
 func ReadCertificateFromFile(certPath string) (*x509.Certificate, error) {
 	certData, err := ioutil.ReadFile(certPath)
 	if err != nil {
@@ -19,19 +19,19 @@ func ReadCertificateFromFile(certPath string) (*x509.Certificate, error) {
 	return ReadCertificateFromBytes(certData)
 }
 
-// Reads a certificate from a byte string.
+// ReadCertificateFromBytes reads a certificate from a byte string.
 func ReadCertificateFromBytes(certData []byte) (*x509.Certificate, error) {
 	pemData, extraBytes := pem.Decode(certData)
 	if len(pemData.Bytes) == 0 {
-		return nil, fmt.Errorf("Certificate is not encoded in PEM format, %d bytes.", len(certData))
+		return nil, fmt.Errorf("certificate is not encoded in PEM format, %d bytes", len(certData))
 	}
 	if len(extraBytes) > 0 {
-		return nil, fmt.Errorf("Certificate had additional information after the PEM encoded data, %d bytes.", len(extraBytes))
+		return nil, fmt.Errorf("certificate had additional information after the PEM encoded data, %d bytes", len(extraBytes))
 	}
 	return x509.ParseCertificate(pemData.Bytes)
 }
 
-// Writes a X.509 Certificate and RSA private key using default configuration.
+// WriteDefaultCertificate writes a X.509 Certificate and RSA private key using default configuration.
 func WriteDefaultCertificate(certPath string, privateKeyPath string) error {
 	certBuilder := NewCertificateBuilder()
 	err := certBuilder.WriteCertificate(certPath)
@@ -63,6 +63,6 @@ func pemBlockForKey(priv interface{}) (*pem.Block, error) {
 		}
 		return &pem.Block{Type: "EC PRIVATE KEY", Bytes: b}, nil
 	default:
-		return nil, errors.New("Invalid PEM format.")
+		return nil, errors.New("invalid PEM format")
 	}
 }

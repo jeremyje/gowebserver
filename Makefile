@@ -3,8 +3,8 @@ bindir = $(prefix)/bin
 sharedir = $(prefix)/share
 mandir = $(sharedir)/man
 man1dir = $(mandir)/man1
-GO := @go
-GOGET := @go get -u
+GO := go
+GOGET := go get -u
 GOGETBUILD := go get -u
 SOURCE_DIRS=$(shell GO15VENDOREXPERIMENT=1 go list ./... | grep -v '/vendor/')
 export PATH := $(PATH):/usr/local/go/bin:/usr/go/bin
@@ -42,6 +42,7 @@ gowebserver: embedded/bindata_assetfs.go
 lint:
 	$(GO) fmt ${SOURCE_DIRS}
 	$(GO) vet ${SOURCE_DIRS}
+	@golint ${SOURCE_DIRS}
 
 clean:
 	@rm -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz testing/*.zip testing/*.tar* testing/testassets.go

@@ -42,14 +42,14 @@ func GetTarFilePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	data, err := GetTarContents()
+	data, err := getTarContents()
 	if err != nil {
 		return "", err
 	}
 	return writeData(archivePath, data)
 }
 
-func GetTarContents() ([]byte, error) {
+func getTarContents() ([]byte, error) {
 	return base64.StdEncoding.DecodeString(TAR_ASSETS)
 }
 
@@ -58,30 +58,31 @@ func GetTarGzFilePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	data, err := GetTarGzContents()
+	data, err := getTarGzContents()
 	if err != nil {
 		return "", err
 	}
 	return writeData(archivePath, data)
 }
 
-func GetTarGzContents() ([]byte, error) {
+func getTarGzContents() ([]byte, error) {
 	return base64.StdEncoding.DecodeString(TAR_GZ_ASSETS)
 }
 
+// GetTarBzip2FilePath gets .tar.gz test asset file.
 func GetTarBzip2FilePath() (string, error) {
 	archivePath, err := createTempArchive(".tar.bz2")
 	if err != nil {
 		return "", err
 	}
-	data, err := GetTarBzip2Contents()
+	data, err := getTarBzip2Contents()
 	if err != nil {
 		return "", err
 	}
 	return writeData(archivePath, data)
 }
 
-func GetTarBzip2Contents() ([]byte, error) {
+func getTarBzip2Contents() ([]byte, error) {
 	return base64.StdEncoding.DecodeString(TAR_BZIP2_ASSETS)
 }
 

@@ -8,10 +8,10 @@
 package embedded
 
 import (
-	"github.com/elazarl/go-bindata-assetfs"
 	"bytes"
 	"compress/gzip"
 	"fmt"
+	"github.com/elazarl/go-bindata-assetfs"
 	"io"
 	"io/ioutil"
 	"os"
@@ -183,8 +183,8 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-	"ajaxupload.html": ajaxuploadHtml,
-	"basicupload.html": basicuploadHtml,
+	"ajaxupload.html":     ajaxuploadHtml,
+	"basicupload.html":    basicuploadHtml,
 	"multipleupload.html": multipleuploadHtml,
 }
 
@@ -227,9 +227,10 @@ type bintree struct {
 	Func     func() (*asset, error)
 	Children map[string]*bintree
 }
+
 var _bintree = &bintree{nil, map[string]*bintree{
-	"ajaxupload.html": &bintree{ajaxuploadHtml, map[string]*bintree{}},
-	"basicupload.html": &bintree{basicuploadHtml, map[string]*bintree{}},
+	"ajaxupload.html":     &bintree{ajaxuploadHtml, map[string]*bintree{}},
+	"basicupload.html":    &bintree{basicuploadHtml, map[string]*bintree{}},
 	"multipleupload.html": &bintree{multipleuploadHtml, map[string]*bintree{}},
 }}
 
@@ -279,7 +280,6 @@ func _filePath(dir, name string) string {
 	cannonicalName := strings.Replace(name, "\\", "/", -1)
 	return filepath.Join(append([]string{dir}, strings.Split(cannonicalName, "/")...)...)
 }
-
 
 func assetFS() *assetfs.AssetFS {
 	assetInfo := func(path string) (os.FileInfo, error) {
