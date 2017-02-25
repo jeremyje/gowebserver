@@ -29,4 +29,6 @@ func TestDefaultConfiguration(t *testing.T) {
 	assert.Equal(conf.Https.Certificate.ForceOverwrite, false)
 	assert.Equal(conf.Metrics.Enabled, true)
 	assert.Equal(conf.Metrics.Path, "/metrics")
+	assert.Equal(conf.UploadDirectory, "upload")
+	assert.Equal(conf.UploadServePath, "/upload")
 }

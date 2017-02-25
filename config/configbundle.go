@@ -34,6 +34,9 @@ type Config struct {
 	ServePath         string `yaml:"serve-path"`
 	ConfigurationFile string `yaml:"-"`
 
+	UploadDirectory string `yaml:"upload-directory"`
+	UploadServePath string `yaml:"upload-serve-path"`
+
 	Http    Http    `yaml:"http"`
 	Https   Https   `yaml:"https"`
 	Metrics Metrics `yaml:"metrics"`

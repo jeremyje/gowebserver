@@ -18,6 +18,7 @@ type WebServer interface {
 	SetCertificateFile(certificateFilePath string) WebServer
 	SetPrivateKey(privateKeyFilePath string) WebServer
 	SetVerbose(verbose bool) WebServer
+	SetUpload(uploadDirectory string, uploadServePath string) error
 	Serve()
 }
 
@@ -31,6 +32,8 @@ type WebServerImpl struct {
 	privateKeyFilePath  string
 	servingDirectory    string
 	verbose             bool
+	uploadDirectory     string
+	uploadServePath     string
 }
 
 func (this *WebServerImpl) SetPorts(httpPort, httpsPort int) WebServer {
@@ -77,6 +80,19 @@ func (this *WebServerImpl) SetVerbose(verbose bool) WebServer {
 	return this
 }
 
+func (this *WebServerImpl) SetUpload(uploadDirectory string, uploadServePath string) error {
+	if len(uploadDirectory) == 0 {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		uploadDirectory = cwd
+	}
+	this.uploadDirectory = uploadDirectory
+	this.uploadServePath = uploadServePath
+	return nil
+}
+
 func (this *WebServerImpl) Serve() {
 	log.Printf("Serving %s on %s and %s", this.servingDirectory, this.httpPort, this.httpsPort)
 	httpFs, err := filesystem.New(this.servingDirectory)
@@ -90,6 +106,10 @@ func (this *WebServerImpl) Serve() {
 		serverMux.HandleFunc(this.fileSystemServePath, prometheus.InstrumentHandler(this.fileSystemServePath, fsHandler))
 	} else {
 		serverMux.Handle(this.fileSystemServePath, fsHandler)
+	}
+	if len(this.uploadServePath) > 0 {
+		uploadHandler := newUploadHandler(this.uploadServePath, this.uploadDirectory)
+		serverMux.Handle(this.uploadServePath, uploadHandler)
 	}
 	corsHandler := cors.Default().Handler(serverMux)
 	httpHandler := newTracingHttpHandler(corsHandler, this.metricsEnabled, this.verbose)

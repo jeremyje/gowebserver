@@ -13,6 +13,10 @@ var servePathFlag = flag.String("servepath", "/", "The HTTP/HTTPS serving root p
 var configFileFlag = flag.String("configfile", "", "YAML formatted configuration file. (overrides flag values)")
 var verboseFlag = flag.Bool("verbose", false, "Print out extra information.")
 
+// Upload Flags
+var uploadDirectoryFlag = flag.String("upload.directory", "upload", "Enables server metrics for monitoring.")
+var uploadServePathFlag = flag.String("upload.servepath", "/upload", "The URL path for exporting server metrics for Prometheus monitoring.")
+
 // HTTP Flags
 var httpPortFlag *int
 
@@ -60,6 +64,8 @@ func loadFromFlags() *Config {
 		Directory:         *serveDirectoryFlag,
 		ServePath:         *servePathFlag,
 		ConfigurationFile: *configFileFlag,
+		UploadDirectory:   *uploadDirectoryFlag,
+		UploadServePath:   *uploadServePathFlag,
 		Http: Http{
 			Port: *httpPortFlag,
 		},

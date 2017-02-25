@@ -33,6 +33,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	err = httpServer.SetUpload(conf.UploadDirectory, conf.UploadServePath)
+	if err != nil {
+		log.Fatal(err)
+	}
 	httpServer.Serve()
 }
 

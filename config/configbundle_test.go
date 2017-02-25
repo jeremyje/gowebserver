@@ -8,6 +8,8 @@ import (
 const EMPTY_CONFIG_YAML = `verbose: false
 directory: ""
 serve-path: ""
+upload-directory: ""
+upload-serve-path: ""
 http:
   port: 0
 https:
@@ -25,6 +27,8 @@ metrics:
 const POPULATED_CONFIG_YAML = `verbose: true
 directory: /home/directory
 serve-path: /serving
+upload-directory: /home/upload
+upload-serve-path: /postage
 http:
   port: 1000
 https:
@@ -55,6 +59,8 @@ func TestPopulatedConfig(t *testing.T) {
 	conf.Verbose = true
 	conf.Directory = "/home/directory"
 	conf.ServePath = "/serving"
+	conf.UploadDirectory = "/home/upload"
+	conf.UploadServePath = "/postage"
 	conf.Http.Port = 1000
 	conf.Https.Port = 2000
 	conf.Https.Certificate.PrivateKeyFilePath = "private-key.pem"
