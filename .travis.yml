@@ -1,18 +1,9 @@
-sudo: required
-dist: trusty
 language: go
 go:
 - 1.5
-- 1.6.3
-- 1.7.1
+- 1.7.5
+- 1.8
 - tip
-addons:
-  apt:
-    sources:
-    - sourceline: 'ppa:snappy-dev/tools'
-    packages:
-    - snapcraft
-    - snap
 script:
 - make tools
 - make deps
@@ -20,8 +11,6 @@ script:
 - make all -j4
 - make test-all -j4
 - make dist -j4
-- snapcraft --version
-- make package-legacy
 deploy:
   provider: releases
   api_key:
@@ -32,7 +21,6 @@ deploy:
     - release/server-amd64
     - release/server-386.exe
     - release/server-amd64.exe
-    - gowebserver_1_amd64.snap
   skip_cleanup: true
   on:
     tags: true
