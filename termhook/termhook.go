@@ -27,30 +27,30 @@ func newSignalManager() *signalManager {
 	return manager
 }
 
-func (this *signalManager) startListening() {
+func (sm *signalManager) startListening() {
 	go func() {
-		if !this.isclosed.get() {
-			for sig := range this.channel {
-				for _, callback := range this.callbackList {
+		if !sm.isclosed.get() {
+			for sig := range sm.channel {
+				for _, callback := range sm.callbackList {
 					callback(sig)
 				}
-				if !this.intest.get() {
+				if !sm.intest.get() {
 					os.Exit(0xf)
 				} else {
-					this.testchan <- true
+					sm.testchan <- true
 				}
 			}
 		}
 	}()
 }
 
-func (this *signalManager) stopListening() {
-	this.isclosed.set(true)
-	close(this.channel)
+func (sm *signalManager) stopListening() {
+	sm.isclosed.set(true)
+	close(sm.channel)
 }
 
-func (this *signalManager) addCallback(callback SignalCallback) {
-	this.callbackList = append(this.callbackList, callback)
+func (sm *signalManager) addCallback(callback SignalCallback) {
+	sm.callbackList = append(sm.callbackList, callback)
 }
 
 func init() {

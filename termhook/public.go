@@ -4,6 +4,7 @@ import (
 	"os"
 )
 
+// SignalCallback is a callback for handling os signals.
 type SignalCallback func(os.Signal)
 
 // AddWithSignal enqueues a callback that will be run when the app is terminated.
