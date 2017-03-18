@@ -34,6 +34,7 @@ release.tar.gz
 testing/testassets.*
 packaging/parts/
 packaging/snap/
+uploaded-files/
 packaging/stage/
 packaging/prime/
 packaging/*.snap

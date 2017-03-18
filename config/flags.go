@@ -14,8 +14,8 @@ var configFileFlag = flag.String("configfile", "", "YAML formatted configuration
 var verboseFlag = flag.Bool("verbose", false, "Print out extra information.")
 
 // Upload Flags
-var uploadDirectoryFlag = flag.String("upload.directory", "upload", "Enables server metrics for monitoring.")
-var uploadServePathFlag = flag.String("upload.servepath", "/upload", "The URL path for exporting server metrics for Prometheus monitoring.")
+var uploadDirectoryFlag = flag.String("upload.directory", "uploaded-files", "Directory where uploaded files are placed.")
+var uploadServePathFlag = flag.String("upload.servepath", "/upload.asp", "The URL path for uploading files.")
 
 // HTTP Flags
 var httpPortFlag *int

@@ -7,9 +7,9 @@ import (
 )
 
 var (
-	httpRequestCount = prometheus.NewCounterVec(
+	httpRequestByMethodCount = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "http_request_count",
+			Name: "http_request_by_method_count",
 			Help: "RPC latency distributions.",
 		},
 		[]string{"method"},
@@ -18,7 +18,7 @@ var (
 
 func init() {
 	// Register the summary and the histogram with Prometheus's default registry.
-	prometheus.MustRegister(httpRequestCount)
+	prometheus.MustRegister(httpRequestByMethodCount)
 }
 
 func newTracingHTTPHandler(handler http.Handler, metricsEnabled bool, verbose bool) http.Handler {
@@ -37,7 +37,7 @@ type tracingHTTPHandler struct {
 
 func (thh *tracingHTTPHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	if thh.metricsEnabled {
-		httpRequestCount.WithLabelValues(request.Method).Inc()
+		httpRequestByMethodCount.WithLabelValues(request.Method).Inc()
 	}
 	if thh.verbose {
 		log.Printf("%s %s", request.Method, request.URL.Path)

@@ -97,6 +97,9 @@ package-legacy:
 package:
 	@cd packaging; snapcraft; cd ..
 
+run: clean gowebserver lint
+	@go run gowebserver.go
+
 install: gowebserver
 	@mkdir -p $(DESTDIR)$(bindir) $(DESTDIR)$(man1dir)
 	@install ${BINARY_NAME} $(DESTDIR)$(bindir)
@@ -124,4 +127,4 @@ embedded/bindata_assetfs.go:
 	@rm -f embedded/bindata_assetfs.go
 	@cd embedded; go-bindata-assetfs -pkg embedded *
 
-.PHONY : all main-platforms extended-platforms dist build lint clean check testdata testing test test-10 coverage bench benchmark test-all package-legacy package install deps tools
+.PHONY : all main-platforms extended-platforms dist build lint clean check testdata testing test test-10 coverage bench benchmark test-all package-legacy package install run deps tools

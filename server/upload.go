@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jeremyje/gowebserver/embedded"
+	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"log"
 	"net/http"
@@ -16,6 +17,26 @@ import (
 	"text/template"
 	"time"
 )
+
+var (
+	uploadedBytesTotal = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "uploaded_bytes_total",
+			Help: "Number of bytes uploaded.",
+		},
+	)
+	uploadedFilesTotal = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "uploaded_files_total",
+			Help: "Number of files uploaded.",
+		},
+	)
+)
+
+func init() {
+	prometheus.MustRegister(uploadedBytesTotal)
+	prometheus.MustRegister(uploadedFilesTotal)
+}
 
 const (
 	uploadHTMLPage     = "ajaxupload.html"
@@ -72,7 +93,7 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				writeUploadResponse(w, resp)
 				return
 			}
-			localPath := filepath.Join(uh.uploadDirectory, fileName)
+			localPath := filepath.Join(uh.uploadDirectory, filepath.Base(fileName))
 			f, err := os.OpenFile(localPath, os.O_WRONLY|os.O_CREATE, 0666)
 			if err != nil {
 				resp.Error = fmt.Sprintf("InternalError: Cannot create file (%s), %s", localPath, err)
@@ -80,7 +101,13 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			defer f.Close()
-			io.Copy(f, file)
+			bytesWritten, err := io.Copy(f, file)
+			if err != nil {
+				resp.Error = fmt.Sprintf("InternalError: Cannot write file (%s), %s", localPath, err)
+				writeUploadResponse(w, resp)
+			}
+			uploadedBytesTotal.Add(float64(bytesWritten))
+			uploadedFilesTotal.Inc()
 			log.Printf("Upload %s complete, wrote %s.", fileName, localPath)
 		}
 

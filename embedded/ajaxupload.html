@@ -285,6 +285,10 @@
           restart = form.querySelectorAll('.box__restart'),
           droppedFiles = false,
           showFiles = function(files) {
+            if (files.length == 0) {
+              label.textContent = "Nothing"
+              return;
+            }
             label.textContent = files.length > 1 ? (input.getAttribute('data-multiple-caption') || '').replace('{count}', files.length) : files[0].name;
           },
           triggerFormSubmit = function() {
@@ -361,6 +365,7 @@
 
             ajax.onload = function() {
               form.classList.remove('is-uploading');
+              console.log(ajax)
               if (ajax.status >= 200 && ajax.status < 400) {
                 var data = JSON.parse(ajax.responseText);
                 form.classList.add(data.success == true ? 'is-success' : 'is-error');
@@ -422,4 +427,5 @@
     }(document, window, 0));
   </script>
 </body>
+
 </html>
