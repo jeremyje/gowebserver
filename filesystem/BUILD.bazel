@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "git.go",
+        "native.go",
+        "public.go",
+        "tar.go",
+        "util.go",
+        "zip.go",
+    ],
+    importpath = "github.com/jeremyje/gowebserver/filesystem",
+    visibility = ["//visibility:public"],
+    deps = ["//termhook:go_default_library"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = [
+        "tar_test.go",
+        "util_test.go",
+        "zip_test.go",
+    ],
+    importpath = "github.com/jeremyje/gowebserver/filesystem",
+    library = ":go_default_library",
+    deps = [
+        "//testing:go_default_library",
+        "@com_github_stretchr_testify//assert:go_default_library",
+    ],
+)

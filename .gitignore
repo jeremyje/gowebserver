@@ -38,3 +38,9 @@ uploaded-files/
 packaging/stage/
 packaging/prime/
 packaging/*.snap
+
+bazel-bin
+bazel-genfiles
+bazel-gowebserver
+bazel-out
+bazel-testlogs

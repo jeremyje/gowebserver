@@ -3,12 +3,22 @@ go:
 #- 1.5
 - 1.7.5
 - 1.8
+- 1.9.1
 - tip
+addons:
+  apt:
+    sources:
+    - sourceline: 'deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8'
+      key_url: 'https://bazel.build/bazel-release.pub.gpg'
+    packages:
+    - bazel
 script:
 - make tools
 - make deps
 - make build -j4
 - make all -j4
+- bazel build //...
+- bazel test //...
 - make test-all -j4
 - make dist -j4
 deploy:

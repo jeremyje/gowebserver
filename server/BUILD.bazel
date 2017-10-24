@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "httpserver.go",
+        "tracing.go",
+        "upload.go",
+    ],
+    importpath = "github.com/jeremyje/gowebserver/server",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//embedded:go_default_library",
+        "//filesystem:go_default_library",
+        "@com_github_prometheus_client_golang//prometheus:go_default_library",
+        "@com_github_rs_cors//:go_default_library",
+    ],
+)
