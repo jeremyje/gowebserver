@@ -1,8 +1,6 @@
 language: go
 go:
-#- 1.5
-- 1.7.5
-- 1.8
+- 1.5
 - 1.9.1
 - tip
 addons:
@@ -17,10 +15,10 @@ script:
 - make deps
 - make build -j4
 - make all -j4
-- bazel build //...
-- bazel test //...
 - make test-all -j4
 - make dist -j4
+- bazel build //...
+- bazel test //...
 deploy:
   provider: releases
   api_key:

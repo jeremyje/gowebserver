@@ -19,6 +19,8 @@ func TestZipFs(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(localArchivePath, path)
 	assert.NotNil(handler)
+	
+	scanDir(dir, t)
 	verifyLocalFileFromDefaultAsset(dir, assert)
 }
 
@@ -59,4 +61,19 @@ func verifyLocalFile(dir string, assetPath string) error {
 		return fmt.Errorf("The test asset file does not contain it's relative file path as the body, File= %s, Body= %s", fullPath, string(data))
 	}
 	return nil
+}
+
+
+func scanDir(dir string, t *testing.T) {
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		t.Log(err)
+	}
+
+	for _, file := range files {
+		t.Logf("*** %s => %s", dir, file.Name())
+		if file.IsDir() {
+			scanDir(filepath.Join(dir, file.Name()), t)
+		}
+	}
 }

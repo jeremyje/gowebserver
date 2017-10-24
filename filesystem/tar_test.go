@@ -76,5 +76,6 @@ func runTarFsTest(t *testing.T, path string, err error) {
 	assert.Nil(err)
 	assert.Equal(localArchivePath, path)
 	assert.NotNil(handler)
+	scanDir(dir, t)
 	verifyLocalFileFromDefaultAsset(dir, assert)
 }
