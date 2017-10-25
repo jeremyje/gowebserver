@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"testing"
+	"log"
 )
 
 func TestZipFs(t *testing.T) {
@@ -20,8 +21,8 @@ func TestZipFs(t *testing.T) {
 	assert.Equal(localArchivePath, path)
 	assert.NotNil(handler)
 	
-	scanDir(dir, t)
-	verifyLocalFileFromDefaultAsset(dir, assert)
+	// zip does not support strip prefix so testing/testassets/ is required.
+	verifyLocalFileFromDefaultAsset(filepath.Join(dir, "testing", "testassets"), assert)
 }
 
 func TestIsSupportedZip(t *testing.T) {
@@ -64,16 +65,16 @@ func verifyLocalFile(dir string, assetPath string) error {
 }
 
 
-func scanDir(dir string, t *testing.T) {
+func scanDir(dir string, assert *assert.Assertions) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		t.Log(err)
+		log.Fatalf("ERROR: %s", err)
 	}
 
 	for _, file := range files {
-		t.Logf("*** %s => %s", dir, file.Name())
+		log.Printf("*** %s", filepath.Join(dir, file.Name()))
 		if file.IsDir() {
-			scanDir(filepath.Join(dir, file.Name()), t)
+			scanDir(filepath.Join(dir, file.Name()), assert)
 		}
 	}
 }

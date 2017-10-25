@@ -54,8 +54,6 @@ go_repository(
     tag = "v1.0.0",
 )
 
-
-
 go_repository(
     name = "com_github_prometheus_common",
     importpath = "github.com/prometheus/common",
@@ -78,4 +76,3 @@ go_repository(
     importpath = "gopkg.in/yaml.v2",
     commit = "eb3733d160e74a9c7e442f435eb3bea458e1d19f",
 )
-

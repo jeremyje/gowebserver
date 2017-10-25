@@ -12,7 +12,7 @@ gowebserver
 gowebserver --directory=${HOME}
 
 # Host a zip file from the internet.
-gowebserver --directory=https://github.com/jeremyje/gowebserver/archive/v1.5.zip
+gowebserver --directory=https://github.com/jeremyje/gowebserver/archive/v1.7.zip
 ```
 
 Features
@@ -45,7 +45,7 @@ Downloads
 Build
 -----
 
-Status: [![Build Status](https://secure.travis-ci.org/jeremyje/gowebserver.png)](http://travis-ci.org/jeremyje/gowebserver) [![Go Report Card](https://goreportcard.com/badge/github.com/jeremyje/gowebserver)](https://goreportcard.com/report/github.com/jeremyje/gowebserver)
+Status: [![Build Status](https://secure.travis-ci.org/jeremyje/gowebserver.png)](http://travis-ci.org/jeremyje/gowebserver) [![Go Report Card](https://goreportcard.com/badge/github.com/jeremyje/gowebserver)](https://goreportcard.com/report/github.com/jeremyje/gowebserver)[![GoDoc](https://godoc.org/github.com/jeremyje/gowebserver?status.svg)](https://godoc.org/github.com/jeremyje/gowebserver)
 
 Install [Go 1.5+](https://golang.org/dl/).
 

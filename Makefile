@@ -54,7 +54,7 @@ clean:
 check: test
 
 testing/testassets.zip:
-	@cd testing/testassets/; zip -qr9 ../testassets.zip *
+	@zip -qr9 testing/testassets.zip testing/*
 
 testing/testassets.tar.gz:
 	@cd testing/testassets/; GZIP=-9 tar czf ../testassets.tar.gz *

@@ -59,6 +59,10 @@ func newTarFs(filePath string) (http.FileSystem, string, string, error) {
 				return nil, localFilePath, tmpDir, err
 			}
 		case tar.TypeReg:
+			err = createDirectory(filepath.Dir(localPath))
+			if err != nil {
+				return nil, localFilePath, tmpDir, err
+			}
 			fsf, err := os.Create(localPath)
 			if err != nil {
 				return nil, localFilePath, tmpDir, err

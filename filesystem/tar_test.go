@@ -4,6 +4,7 @@ import (
 	test "github.com/jeremyje/gowebserver/testing"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"log"
 )
 
 func TestIsSupportedTar(t *testing.T) {
@@ -73,9 +74,9 @@ func runTarFsTest(t *testing.T, path string, err error) {
 	assert.Nil(err)
 
 	handler, localArchivePath, dir, err := newTarFs(path)
+	log.Printf("Local: %s    Dir: %s, Error %s", localArchivePath, dir, err)
 	assert.Nil(err)
 	assert.Equal(localArchivePath, path)
 	assert.NotNil(handler)
-	scanDir(dir, t)
 	verifyLocalFileFromDefaultAsset(dir, assert)
 }
