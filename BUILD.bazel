@@ -1,9 +1,11 @@
-load("@io_bazel_rules_go//go:def.bzl", "gazelle", "go_binary", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "gazelle", "go_binary", "go_library", "go_path", "go_vet_test")
 
 gazelle(
     name = "gazelle",
     prefix = "github.com/jeremyje/gowebserver",
 )
+
+licenses(["notice"])  # Apache v2
 
 
 go_library(
@@ -23,4 +25,23 @@ go_binary(
     importpath = "github.com/jeremyje/gowebserver",
     library = ":go_default_library",
     visibility = ["//visibility:public"],
+)
+
+go_path(
+    name = "all_srcs",
+    deps = [
+        "//:go_default_library",
+        "//cert:go_default_library",
+        "//config:go_default_library",
+        "//embedded:go_default_library",
+        "//filesystem:go_default_library",
+        "//server:go_default_library",
+        "//termhook:go_default_library",
+        "//testing:go_default_library",
+    ],
+)
+
+go_vet_test(
+    name = "vet",
+    data = [":all_srcs"],
 )
