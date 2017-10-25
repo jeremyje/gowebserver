@@ -35,11 +35,11 @@ Downloads
 
 |    OS    | Arch  | Link
 |----------|-------|-------------------------------------------------------------------------------------------
-|Linux     | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.6/server-amd64
-|Linux     | arm   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.6/server-arm
-|Linux     | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.6/server-386
-|Windows   | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.6/server-amd64.exe
-|Windows   | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.6/server-386.exe
+|Linux     | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.7.0/server-amd64
+|Linux     | arm   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.7.0/server-arm
+|Linux     | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.7.0/server-386
+|Windows   | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.7.0/server-amd64.exe
+|Windows   | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.7.0/server-386.exe
 
 
 Build
@@ -74,6 +74,15 @@ Add the following to your WORKSPACE file.
 go_repository(
     name = "com_github_jeremyje_gowebserver",
     importpath = "github.com/jeremyje/gowebserver",
-    commit = "d93a4056c74c2948bec5b805078019aa807c50a9",
+    tag = "v1.7.0",
 )
+
+bazel test @com_github_jeremyje_gowebserver//...
+```
+
+Likewise in your workspace you can run the tests or builds.
+```
+bazel build @com_github_jeremyje_gowebserver//server:go_default_library
+bazel test @com_github_jeremyje_gowebserver//...
+
 ```
