@@ -7,7 +7,6 @@ gazelle(
 
 licenses(["notice"])  # Apache v2
 
-
 go_library(
     name = "go_default_library",
     srcs = ["gowebserver.go"],

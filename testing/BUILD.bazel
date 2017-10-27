@@ -7,7 +7,7 @@ exports_files(["LICENSE"])
 go_library(
     name = "testassets_go_lib",
     srcs = [
-      ":testassets.go",
+        ":testassets.go",
     ],
     importpath = "github.com/jeremyje/gowebserver/testing",
     visibility = ["//visibility:public"],
@@ -19,7 +19,7 @@ go_library(
         "testassets.go",
         "util.go",
     ],
-    
+
     #deps = [
     #  ":testassets_go_lib",
     #],
@@ -35,32 +35,31 @@ filegroup(
 )
 
 genrule(
-  name = "testassets_tar",
-  outs = ["testassets.tar"],
-  srcs = [":testassets_fg"],
-  cmd = "tar cfh $@ $(locations :testassets_fg) --transform='s/testing\/testassets\///g'",
-)
-
-
-genrule(
-  name = "testassets_tar_gz",
-  outs = ["testassets.tar.gz"],
-  srcs = [":testassets_fg"],
-  cmd = "tar czfh $@ $(locations :testassets_fg) --transform='s/testing\/testassets\///g'",
+    name = "testassets_tar",
+    srcs = [":testassets_fg"],
+    outs = ["testassets.tar"],
+    cmd = "tar cfh $@ $(locations :testassets_fg) --transform='s/testing\/testassets\///g'",
 )
 
 genrule(
-  name = "testassets_tar_bz2",
-  outs = ["testassets.tar.bz2"],
-  srcs = [":testassets_fg"],
-  cmd = "tar cjfh $@ $(locations :testassets_fg) --transform='s/testing\/testassets\///g'",
+    name = "testassets_tar_gz",
+    srcs = [":testassets_fg"],
+    outs = ["testassets.tar.gz"],
+    cmd = "tar czfh $@ $(locations :testassets_fg) --transform='s/testing\/testassets\///g'",
 )
 
 genrule(
-  name = "testassets_zip",
-  outs = ["testassets.zip"],
-  srcs = [":testassets_fg"],
-  cmd = "zip -qr9 $@ $(locations :testassets_fg)",
+    name = "testassets_tar_bz2",
+    srcs = [":testassets_fg"],
+    outs = ["testassets.tar.bz2"],
+    cmd = "tar cjfh $@ $(locations :testassets_fg) --transform='s/testing\/testassets\///g'",
+)
+
+genrule(
+    name = "testassets_zip",
+    srcs = [":testassets_fg"],
+    outs = ["testassets.zip"],
+    cmd = "zip -qr9 $@ $(locations :testassets_fg)",
 )
 
 genrule(
