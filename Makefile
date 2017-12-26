@@ -10,7 +10,7 @@ SOURCE_DIRS=$(shell GO15VENDOREXPERIMENT=1 go list ./... | grep -v '/vendor/')
 export PATH := $(PATH):/usr/local/go/bin:/usr/go/bin
 BINARY_NAME=gowebserver
 MAN_PAGE_NAME=${BINARY_NAME}.1
-SERVER_MAIN=gowebserver.go
+BINARY_MAIN=gowebserver.go
 
 build: gowebserver
 all: gowebserver extended-platforms main-platforms
@@ -39,7 +39,7 @@ gowebserver-%:
 	@rm "$(BINARY_NAME)-$(BINARY_SUFFIX).go"
 
 gowebserver: embedded/bindata_assetfs.go
-	$(GO) build ${SERVER_MAIN}
+	$(GO) build ${BINARY_MAIN}
 
 lint:
 	$(GO) fmt ${SOURCE_DIRS}
@@ -130,4 +130,4 @@ embedded/bindata_assetfs.go:
 	@rm -f embedded/bindata_assetfs.go
 	@cd embedded; go-bindata-assetfs -pkg embedded *
 
-.PHONY : all main-platforms extended-platforms dist build lint clean check testdata testing test test-10 coverage bench benchmark test-all package-legacy package install run deps tools
+.PHONY : all main-platforms extended-platforms dist build lint clean check testdata testing test test-10 coverage bench benchmark test-all package-legacy package install run deps tools snapbuild

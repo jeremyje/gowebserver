@@ -5,6 +5,9 @@ A simple, convenient, reliable, well tested HTTP/HTTPS web server to host static
 It can host a local directory or contents of a zip file.
 
 ```
+# Download (linux amd64, see Downloads for other builds)
+curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/download/v1.7.0/server-amd64; chmod +x gowebserver
+
 # Host the directory you're currently in.
 gowebserver
 
