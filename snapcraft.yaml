@@ -1,17 +1,15 @@
 name: gowebserver
-version: 1
+version: 1.7
 summary: Go Web Server
 description: Standalone HTTP/HTTPS web server to host files on your file system.
+type: app
 confinement: strict
-icon: packaging/setup/gui/icon.png
-vendor: Jeremy Edwards <jeremyje@gmail.com>
+icon: snap/gui/icon.png
+grade: devel
 
 apps:
   gowebserver:
-    command: gowebserver --config.file=/var/lib/gowebserver.yaml
-    daemon: simple
-    plugs:
-    - network-bind
+    command: gowebserver
 
 parts:
   gowebserver:
@@ -21,6 +19,3 @@ parts:
     make-parameters: [build]
     artifacts:
     - gowebserver
-    filesets:
-      config:
-        - var/lib/gowebserver/

@@ -39,6 +39,11 @@ packaging/stage/
 packaging/prime/
 packaging/*.snap
 
+stage/
+prime/
+snap/.snapcraft/
+*.snap
+
 bazel-bin
 bazel-genfiles
 bazel-gowebserver

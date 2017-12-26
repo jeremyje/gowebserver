@@ -45,11 +45,12 @@ lint:
 	@golint ${SOURCE_DIRS}
 
 clean:
-	@rm -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz testing/*.zip testing/*.tar* testing/testassets.go
+	@rm -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz testing/*.zip testing/*.tar* testing/testassets.go *.tar.bz2 *.snap
 	@rm -rf release/
-	@rm -rf packaging/parts/ packaging/prime/ packaging/snap/ packaging/stage/ packaging/*.snap
+	@rm -rf parts/ prime/ snap/.snapcraft/ stage/ *.snap
 	@rm -f embedded/bindata_assetfs.go
 	@rm -rf upload/
+	@bazel clean
 
 check: test
 
@@ -95,7 +96,7 @@ package-legacy:
 	@snapcraft
 
 package:
-	@cd packaging; snapcraft; cd ..
+	@LC_ALL=C.UTF-8 LANG=C.UTF-8 snapcraft
 
 run: clean gowebserver lint
 	@go run gowebserver.go
