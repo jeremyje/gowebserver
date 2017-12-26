@@ -13,9 +13,11 @@ apps:
 
 parts:
   gowebserver:
-    plugin: make
     source: .
-    makefile: Makefile
-    make-parameters: [build]
-    artifacts:
-    - gowebserver
+    plugin: go
+    go-packages:
+    - github.com/elazarl/go-bindata-assetfs
+    - gopkg.in/yaml.v2
+    - github.com/prometheus/client_golang/prometheus
+    - github.com/rs/cors
+    go-importpath: github.com/jeremyje/gowebserver

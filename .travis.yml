@@ -17,7 +17,6 @@ script:
 - make all -j4
 - make test-all -j4
 - make dist -j4
-- make package
 - bazel build //...
 - bazel test //...
 deploy:
