@@ -5,9 +5,9 @@ import (
 	test "github.com/jeremyje/gowebserver/testing"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	"log"
 	"path/filepath"
 	"testing"
-	"log"
 )
 
 func TestZipFs(t *testing.T) {
@@ -20,7 +20,7 @@ func TestZipFs(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(localArchivePath, path)
 	assert.NotNil(handler)
-	
+
 	// zip does not support strip prefix so testing/testassets/ is required.
 	verifyLocalFileFromDefaultAsset(filepath.Join(dir, "testing", "testassets"), assert)
 }
@@ -63,7 +63,6 @@ func verifyLocalFile(dir string, assetPath string) error {
 	}
 	return nil
 }
-
 
 func scanDir(dir string, assert *assert.Assertions) {
 	files, err := ioutil.ReadDir(dir)

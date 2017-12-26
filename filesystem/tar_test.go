@@ -3,8 +3,8 @@ package filesystem
 import (
 	test "github.com/jeremyje/gowebserver/testing"
 	"github.com/stretchr/testify/assert"
-	"testing"
 	"log"
+	"testing"
 )
 
 func TestIsSupportedTar(t *testing.T) {

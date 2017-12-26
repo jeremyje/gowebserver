@@ -6,7 +6,7 @@ man1dir = $(mandir)/man1
 GO := go
 GOGET := go get -u
 GOGETBUILD := go get -u
-SOURCE_DIRS=$(shell GO15VENDOREXPERIMENT=1 go list ./... | grep -v '/vendor/')
+SOURCE_DIRS=$(shell go list ./... | grep -v '/vendor/')
 export PATH := $(PATH):/usr/local/go/bin:/usr/go/bin
 BINARY_NAME=gowebserver
 MAN_PAGE_NAME=${BINARY_NAME}.1
