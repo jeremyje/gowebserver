@@ -15,6 +15,8 @@ SERVER_MAIN=gowebserver.go
 build: gowebserver
 all: gowebserver extended-platforms main-platforms
 
+snapbuild: tools deps gowebserver
+
 main-platforms: gowebserver-linux-386 gowebserver-linux-amd64 gowebserver-linux-arm gowebserver-windows-386 gowebserver-windows-amd64
 extended-platforms: gowebserver-linux-arm64 gowebserver-darwin-amd64 gowebserver-netbsd-amd64 gowebserver-openbsd-amd64 gowebserver-freebsd-amd64 gowebserver-dragonfly-amd64
 
