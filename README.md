@@ -51,7 +51,7 @@ Build
 
 Status: [![Build Status](https://secure.travis-ci.org/jeremyje/gowebserver.png)](http://travis-ci.org/jeremyje/gowebserver) [![Go Report Card](https://goreportcard.com/badge/github.com/jeremyje/gowebserver)](https://goreportcard.com/report/github.com/jeremyje/gowebserver) [![GoDoc](https://godoc.org/github.com/jeremyje/gowebserver?status.svg)](https://godoc.org/github.com/jeremyje/gowebserver) [![Snap Status](https://build.snapcraft.io/badge/jeremyje/gowebserver.svg)](https://build.snapcraft.io/user/jeremyje/gowebserver) [![codebeat badge](https://codebeat.co/badges/de86a882-9038-4994-afe2-fea7d93f63cb)](https://codebeat.co/projects/github-com-jeremyje-gowebserver-master) [![codecov](https://codecov.io/gh/jeremyje/gowebserver/branch/master/graph/badge.svg)](https://codecov.io/gh/jeremyje/gowebserver)
 
-Install [Go 1.6+](https://golang.org/dl/).
+Install [Go 1.7 or newer](https://golang.org/dl/).
 
 ```
 git clone git@github.com:jeremyje/gowebserver.git --recursive
