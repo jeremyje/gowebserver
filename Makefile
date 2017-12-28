@@ -11,19 +11,22 @@ export PATH := $(PATH):/usr/local/go/bin:/usr/go/bin
 BINARY_NAME=gowebserver
 MAN_PAGE_NAME=${BINARY_NAME}.1
 BINARY_MAIN=gowebserver.go
+GOAPP := $(shell command -v go 2> /dev/null)
 
 build: gowebserver
 all: gowebserver extended-platforms main-platforms
 
 snapbuild: tools deps gowebserver
 
-snapcraft.io: install-go snapbuild
+snapcraft.io: install-go tools deps gowebserver
 
 install-go:
-	#sudo add-apt-repository ppa:gophers/archive
-	#sudo apt update
-	#sudo apt-get install golang-1.9-go
-	snap install --classic go
+ifndef GOAPP
+		sudo add-apt-repository ppa:gophers/archive
+		sudo apt update
+		sudo apt-get install golang-1.9-go
+    #snap install --classic go
+endif
 
 main-platforms: gowebserver-linux-386 gowebserver-linux-amd64 gowebserver-linux-arm gowebserver-windows-386 gowebserver-windows-amd64
 extended-platforms: gowebserver-linux-arm64 gowebserver-darwin-amd64 gowebserver-netbsd-amd64 gowebserver-openbsd-amd64 gowebserver-freebsd-amd64 gowebserver-dragonfly-amd64
@@ -117,7 +120,7 @@ install: gowebserver
 	@install ${BINARY_NAME} $(DESTDIR)$(bindir)
 	@install -m 0644 ${MAN_PAGE_NAME} $(DESTDIR)$(man1dir)
 
-deps:
+deps: install-go
 	$(GOGET) gopkg.in/yaml.v2
 	$(GOGET) github.com/prometheus/client_golang/prometheus
 	$(GOGET) github.com/rs/cors
@@ -126,7 +129,7 @@ deps:
 	$(GOGETBUILD) github.com/jteeuwen/go-bindata/...
 	$(GOGETBUILD) github.com/elazarl/go-bindata-assetfs/...
 
-tools:
+tools: install-go
 	$(GOGET) golang.org/x/tools/cmd/gorename
 	$(GOGET) github.com/golang/lint/golint
 	$(GOGET) github.com/nsf/gocode

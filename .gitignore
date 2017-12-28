@@ -43,6 +43,7 @@ stage/
 prime/
 snap/.snapcraft/
 *.snap
+embedded/bindata_assetfs.go
 
 bazel-bin
 bazel-genfiles
