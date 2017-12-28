@@ -42,43 +42,46 @@ func newTarFs(filePath string) (http.FileSystem, string, string, error) {
 	}
 	tr := tar.NewReader(r)
 
+	err = processTarEntries(tr, tmpDir)
+	if err != nil {
+		return nil, localFilePath, tmpDir, err
+	}
+	handler, err := newNative(tmpDir)
+	return handler, localFilePath, tmpDir, err
+}
+
+func processTarEntries(tr *tar.Reader, tmpDir string) error {
 	for {
 		header, err := tr.Next()
 		if err == io.EOF {
 			break
 		}
-
 		if err != nil {
-			return nil, localFilePath, tmpDir, err
+			return fmt.Errorf("Cannot get next tar entry, %s", err)
 		}
+
 		localPath := filepath.Join(tmpDir, header.Name)
 		switch header.Typeflag {
 		case tar.TypeDir:
 			err = createDirectory(localPath)
-			if err != nil {
-				return nil, localFilePath, tmpDir, err
-			}
 		case tar.TypeReg:
-			err = createDirectory(filepath.Dir(localPath))
-			if err != nil {
-				return nil, localFilePath, tmpDir, err
-			}
-			fsf, err := os.Create(localPath)
-			if err != nil {
-				return nil, localFilePath, tmpDir, err
-			}
-			defer fsf.Close()
-
-			_, err = io.Copy(fsf, tr)
-			if err != nil {
-				return nil, localFilePath, tmpDir, err
-			}
+			err = writeFileFromTarEntry(localPath, tmpDir, tr)
 		default:
 			log.Printf("WARNING: Tar entry type not supported. Name= %s, Header= %v", header.Name, header)
 		}
+		if err != nil {
+			return fmt.Errorf("Error processing tar entry %v, %s", header.Typeflag, err)
+		}
 	}
-	handler, err := newNative(tmpDir)
-	return handler, localFilePath, tmpDir, err
+	return nil
+}
+
+func writeFileFromTarEntry(localPath string, tmpDir string, tr *tar.Reader) error {
+	err := createDirectory(filepath.Dir(localPath))
+	if err != nil {
+		return err
+	}
+	return copyFile(tr, localPath)
 }
 
 func isSupportedTar(filePath string) bool {

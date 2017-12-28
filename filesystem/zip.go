@@ -2,10 +2,9 @@ package filesystem
 
 import (
 	"archive/zip"
-	"io"
+	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -40,18 +39,7 @@ func newZipFs(filePath string) (http.FileSystem, string, string, error) {
 				return nil, localFilePath, tmpDir, err
 			}
 
-			zf, err := f.Open()
-			if err != nil {
-				return nil, localFilePath, tmpDir, err
-			}
-			defer zf.Close()
-			fsf, err := os.Create(filePath)
-			if err != nil {
-				return nil, localFilePath, tmpDir, err
-			}
-			defer fsf.Close()
-
-			_, err = io.Copy(fsf, zf)
+			err := writeFileFromZipEntry(f, filePath)
 			if err != nil {
 				return nil, localFilePath, tmpDir, err
 			}
@@ -59,6 +47,15 @@ func newZipFs(filePath string) (http.FileSystem, string, string, error) {
 	}
 	handler, err := newNative(tmpDir)
 	return handler, localFilePath, tmpDir, err
+}
+
+func writeFileFromZipEntry(f *zip.File, filePath string) error {
+	zf, err := f.Open()
+	if err != nil {
+		return fmt.Errorf("Cannot open input file: %s", err)
+	}
+	defer zf.Close()
+	return copyFile(zf, filePath)
 }
 
 func isSupportedZip(filePath string) bool {

@@ -45,6 +45,7 @@ lint:
 	$(GO) fmt ${SOURCE_DIRS}
 	$(GO) vet ${SOURCE_DIRS}
 	@golint ${SOURCE_DIRS}
+	@gocyclo -over 10 .
 
 clean:
 	@rm -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz testing/*.zip testing/*.tar* testing/testassets.go *.tar.bz2 *.snap
@@ -125,6 +126,7 @@ tools:
 	$(GOGET) github.com/lukehoban/go-outline
 	$(GOGET) github.com/newhook/go-symbols
 	$(GOGET) github.com/sqs/goreturns
+	$(GOGET) github.com/fzipp/gocyclo
 
 embedded/bindata_assetfs.go:
 	@rm -f embedded/bindata_assetfs.go

@@ -1,6 +1,7 @@
 package filesystem
 
 import (
+	"fmt"
 	"github.com/jeremyje/gowebserver/termhook"
 	"io"
 	"io/ioutil"
@@ -26,18 +27,33 @@ func stageRemoteFile(maybeRemoteFilePath string) (string, string, error) {
 		return "", "", err
 	}
 
-	termhook.Add(func() {
-		err := os.RemoveAll(tmpDir)
-		if err != nil {
-			log.Fatalf("Cannot delete directory: %s, Error= %v", tmpDir, err)
-		}
-	})
-
 	return localFilePath, tmpDir, nil
 }
 
 func createTempDirectory() (string, error) {
-	return ioutil.TempDir(os.TempDir(), "gowebserver")
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "gowebserver")
+
+	if err != nil {
+		return "", fmt.Errorf("cannot create temp directory, %s", err)
+	}
+	termhook.Add(func() {
+		tryDeleteDirectory(tmpDir)
+	})
+	return tmpDir, nil
+}
+
+func tryDeleteDirectory(path string) {
+	err := os.RemoveAll(path)
+	if err != nil {
+		log.Fatalf("cannot delete directory: %s, Error= %v", path, err)
+	}
+}
+
+func tryDeleteFile(path string) {
+	err := os.Remove(path)
+	if err != nil {
+		log.Fatalf("cannot delete file: %s, Error= %v", path, err)
+	}
 }
 
 func downloadFile(path string) (string, error) {
@@ -65,4 +81,18 @@ func exists(path string) bool {
 
 func dirPath(dirPath string) string {
 	return strings.TrimRight(dirPath, "/") + "/"
+}
+
+func copyFile(reader io.Reader, filePath string) error {
+	fsf, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("Cannot create target file %s, %s", filePath, err)
+	}
+	defer fsf.Close()
+
+	_, err = io.Copy(fsf, reader)
+	if err != nil {
+		return fmt.Errorf("Cannot copy to target file %s, %s", filePath, err)
+	}
+	return nil
 }

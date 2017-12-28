@@ -12,20 +12,24 @@ go_library(
     ],
     importpath = "github.com/jeremyje/gowebserver/filesystem",
     visibility = ["//visibility:public"],
-    deps = ["//termhook:go_default_library"],
+    deps = [
+        "//termhook:go_default_library",
+        "@in_gopkg_src_d_go_git_v4//:go_default_library",
+    ],
 )
 
 go_test(
     name = "go_default_test",
     srcs = [
+        "git_test.go",
         "tar_test.go",
         "util_test.go",
         "zip_test.go",
     ],
+    embed = [":go_default_library"],
     importpath = "github.com/jeremyje/gowebserver/filesystem",
-    library = ":go_default_library",
     deps = [
-        "//testing:go_default_library",
         "@com_github_stretchr_testify//assert:go_default_library",
+        "//testing:go_default_library",
     ],
 )

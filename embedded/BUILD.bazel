@@ -3,13 +3,17 @@ load("@io_bazel_rules_go//examples/bindata:bindata.bzl", "bindata")
 
 bindata(
     name = "data",
-    srcs = glob(["*"], exclude=["BUILD.bazel"]),
+    srcs = glob(
+        ["*"],
+        exclude = ["BUILD.bazel"],
+    ),
     package = "embedded",
 )
 
 go_library(
     name = "go_default_library",
     srcs = [":data"],
-    visibility = ["//visibility:public"],
     importpath = "github.com/jeremyje/gowebserver/embedded",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_elazarl_go_bindata_assetfs//:go_default_library"],
 )

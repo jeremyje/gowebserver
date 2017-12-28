@@ -64,6 +64,22 @@ func verifyLocalFile(dir string, assetPath string) error {
 	return nil
 }
 
+func verifyFileExist(dir string, assetPath string) error {
+	fullPath := filepath.Join(dir, assetPath)
+	if !exists(fullPath) {
+		return fmt.Errorf("%s does not exist when it's expected to", fullPath)
+	}
+	return nil
+}
+
+func verifyFileMissing(dir string, assetPath string) error {
+	fullPath := filepath.Join(dir, assetPath)
+	if exists(fullPath) {
+		return fmt.Errorf("%s exists when it's expected to be deleted", fullPath)
+	}
+	return nil
+}
+
 func scanDir(dir string, assert *assert.Assertions) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {

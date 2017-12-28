@@ -17,8 +17,11 @@ script:
 - make all -j4
 - make test-all -j4
 - make dist -j4
-- bazel build //...
-- bazel test //...
+- bazel build --batch //...
+- bazel test --batch --test_output=errors --features=race //...
+- go test -race -coverprofile=coverage.txt -covermode=atomic
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 deploy:
   provider: releases
   api_key:

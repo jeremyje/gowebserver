@@ -12,7 +12,9 @@ func New(path string) (http.FileSystem, error) {
 	} else if isSupportedTar(path) {
 		handler, _, _, err := newTarFs(path)
 		return handler, err
-	} else {
-		return newNative(path)
+	} else if isSupportedGit(path) {
+		handler, _, _, err := newGitFs(path)
+		return handler, err
 	}
+	return newNative(path)
 }
