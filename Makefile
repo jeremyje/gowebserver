@@ -3,7 +3,7 @@ bindir = $(prefix)/bin
 sharedir = $(prefix)/share
 mandir = $(sharedir)/man
 man1dir = $(mandir)/man1
-GO := go
+GO := @go
 GOGET := go get -u
 GOGETBUILD := go get -u
 SOURCE_DIRS=$(shell go list ./... | grep -v '/vendor/')
@@ -16,6 +16,14 @@ build: gowebserver
 all: gowebserver extended-platforms main-platforms
 
 snapbuild: tools deps gowebserver
+
+snapcraft.io: install-go snapbuild
+
+install-go:
+	#sudo add-apt-repository ppa:gophers/archive
+	#sudo apt update
+	#sudo apt-get install golang-1.9-go
+	snap install --classic go
 
 main-platforms: gowebserver-linux-386 gowebserver-linux-amd64 gowebserver-linux-arm gowebserver-windows-386 gowebserver-windows-amd64
 extended-platforms: gowebserver-linux-arm64 gowebserver-darwin-amd64 gowebserver-netbsd-amd64 gowebserver-openbsd-amd64 gowebserver-freebsd-amd64 gowebserver-dragonfly-amd64
@@ -132,4 +140,4 @@ embedded/bindata_assetfs.go:
 	@rm -f embedded/bindata_assetfs.go
 	@cd embedded; go-bindata-assetfs -pkg embedded *
 
-.PHONY : all main-platforms extended-platforms dist build lint clean check testdata testing test test-10 coverage bench benchmark test-all package-legacy package install run deps tools snapbuild
+.PHONY : all main-platforms extended-platforms dist build lint clean check testdata testing test test-10 coverage bench benchmark test-all package-legacy package install run deps tools snapbuild snapcraft.io install-go

@@ -1,5 +1,5 @@
 name: gowebserver
-version: 1.7
+version: 1.8
 summary: Go Web Server
 description: Standalone HTTP/HTTPS web server to host files on your file system.
 type: app
@@ -16,6 +16,6 @@ parts:
     plugin: make
     source: .
     makefile: Makefile
-    make-parameters: [snapbuild]
+    make-parameters: [snapcraft.io]
     artifacts:
     - gowebserver
