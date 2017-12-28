@@ -51,9 +51,9 @@ Build
 
 Status: [![Build Status](https://secure.travis-ci.org/jeremyje/gowebserver.png)](http://travis-ci.org/jeremyje/gowebserver) [![Go Report Card](https://goreportcard.com/badge/github.com/jeremyje/gowebserver)](https://goreportcard.com/report/github.com/jeremyje/gowebserver) [![GoDoc](https://godoc.org/github.com/jeremyje/gowebserver?status.svg)](https://godoc.org/github.com/jeremyje/gowebserver) [![Snap Status](https://build.snapcraft.io/badge/jeremyje/gowebserver.svg)](https://build.snapcraft.io/user/jeremyje/gowebserver) [![codebeat badge](https://codebeat.co/badges/de86a882-9038-4994-afe2-fea7d93f63cb)](https://codebeat.co/projects/github-com-jeremyje-gowebserver-master) [![codecov](https://codecov.io/gh/jeremyje/gowebserver/branch/master/graph/badge.svg)](https://codecov.io/gh/jeremyje/gowebserver)
 
-Install [Go 1.7 or newer](https://golang.org/dl/).
+Install [Go 1.9 or newer](https://golang.org/dl/).
 
-```
+```bash
 git clone git@github.com:jeremyje/gowebserver.git --recursive
 make
 
@@ -65,7 +65,7 @@ go build gowebserver
 Test
 ----
 
-```
+```bash
 make test
 make bench
 ```
@@ -74,19 +74,63 @@ Bazel
 -----
 Add the following to your WORKSPACE file.
 
-```
+```python
+# Add to WORKSPACE
 go_repository(
     name = "com_github_jeremyje_gowebserver",
     importpath = "github.com/jeremyje/gowebserver",
     tag = "v1.8.0",
 )
 
-bazel test @com_github_jeremyje_gowebserver//...
+# Add dependency in Bazel
+go_library(
+    name = "go_default_library",
+    deps = [
+        "@com_github_jeremyje_gowebserver//server:go_default_library",
+    ],
+)
 ```
 
-Likewise in your workspace you can run the tests or builds.
-```
-bazel build @com_github_jeremyje_gowebserver//server:go_default_library
+```bash
+# Test package.
 bazel test @com_github_jeremyje_gowebserver//...
+
+# Run the server
+bazel run @com_github_jeremyje_gowebserver//:gowebserver
+```
+
+Sample
+------
+Sample code for embedding a HTTP/HTTPS server in your application.
+
+```go
+import (
+    "github.com/jeremyje/gowebserver/server"
+	"github.com/jeremyje/gowebserver/cert"
+)
+func main() {
+	certBuilder := cert.NewCertificateBuilder().
+		SetRsa2048().
+		SetValidDurationInDays(365)
+	checkError(certBuilder.WriteCertificate("public.cert"))
+	checkError(certBuilder.WritePrivateKey("private.key"))
+
+	httpServer := server.NewWebServer().
+		SetPorts(80, 443).
+		SetMetricsEnabled(true).
+		SetServePath("/", "/metrics").
+		SetCertificateFile("public.cert").
+		SetPrivateKey("private.key").
+		SetVerbose(true)
+	checkError(httpServer.SetDirectory("."))
+	checkError(httpServer.SetUpload("./upload", "/upload.html"))
+	httpServer.Serve()
+}
+
+func checkError(err error) {
+    if err != nil {
+		log.Fatal(err)
+	}
+}
 
 ```
