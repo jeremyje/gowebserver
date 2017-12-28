@@ -97,8 +97,13 @@ coverage: testing/testassets.go
 	$(GO) test -cover ${SOURCE_DIRS}
 	
 coverage.txt: testing/testassets.go
-	$(GO) test -race ${SOURCE_DIRS} -coverprofile=coverage.txt -covermode=atomic
-
+	@for sfile in ${SOURCE_DIRS} ; do \
+		go test -race "$$sfile" -coverprofile=package.coverage -covermode=atomic; \
+		if [ -f package.coverage ]; then \
+			cat package.coverage >> coverage.txt; \
+			rm package.coverage; \
+		fi; \
+	done
 bench: benchmark
 
 benchmark: testing/testassets.go

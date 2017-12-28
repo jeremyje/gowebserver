@@ -28,6 +28,8 @@ release/
 upload/
 
 
+package.coverage
+coverage.txt
 gowebserver
 *.pem
 release.tar.gz
