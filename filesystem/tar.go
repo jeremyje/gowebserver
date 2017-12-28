@@ -7,25 +7,26 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-func newTarFs(filePath string) (http.FileSystem, string, string, error) {
+func newTarFs(filePath string) createFsResult {
 	if !isSupportedTar(filePath) {
-		return nil, "", "", fmt.Errorf("%s is not a valid tarball", filePath)
+		return createFsResult{
+			err: fmt.Errorf("%s is not a valid tarball", filePath),
+		}
 	}
-	localFilePath, tmpDir, err := stageRemoteFile(filePath)
-	if err != nil {
-		return nil, localFilePath, tmpDir, err
+	staged := stageRemoteFile(filePath)
+	if staged.err != nil {
+		return staged
 	}
 
 	var r io.Reader
-	f, err := os.Open(localFilePath)
+	f, err := os.Open(staged.localFilePath)
 	if err != nil {
-		return nil, localFilePath, tmpDir, err
+		return staged.withError(err)
 	}
 	defer f.Close()
 	r = f
@@ -33,7 +34,7 @@ func newTarFs(filePath string) (http.FileSystem, string, string, error) {
 	if isTarGzip(filePath) {
 		gzf, err := gzip.NewReader(f)
 		if err != nil {
-			return nil, localFilePath, tmpDir, err
+			return staged.withError(err)
 		}
 		r = gzf
 	} else if isTarBzip2(filePath) {
@@ -42,12 +43,11 @@ func newTarFs(filePath string) (http.FileSystem, string, string, error) {
 	}
 	tr := tar.NewReader(r)
 
-	err = processTarEntries(tr, tmpDir)
+	err = processTarEntries(tr, staged.tmpDir)
 	if err != nil {
-		return nil, localFilePath, tmpDir, err
+		return staged.withError(err)
 	}
-	handler, err := newNative(tmpDir)
-	return handler, localFilePath, tmpDir, err
+	return staged.withHandler(newNative(staged.tmpDir))
 }
 
 func processTarEntries(tr *tar.Reader, tmpDir string) error {

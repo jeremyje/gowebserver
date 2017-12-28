@@ -73,10 +73,10 @@ func runTarFsTest(t *testing.T, path string, err error) {
 	assert := assert.New(t)
 	assert.Nil(err)
 
-	handler, localArchivePath, dir, err := newTarFs(path)
-	log.Printf("Local: %s    Dir: %s, Error %s", localArchivePath, dir, err)
-	assert.Nil(err)
-	assert.Equal(localArchivePath, path)
-	assert.NotNil(handler)
-	verifyLocalFileFromDefaultAsset(dir, assert)
+	staged := newTarFs(path)
+	log.Printf("Local: %s    Dir: %s, Error %s", staged.localFilePath, staged.tmpDir, staged.err)
+	assert.Nil(staged.err)
+	assert.Equal(staged.localFilePath, path)
+	assert.NotNil(staged.handler)
+	verifyLocalFileFromDefaultAsset(staged.tmpDir, assert)
 }

@@ -16,13 +16,13 @@ func TestZipFs(t *testing.T) {
 	path, err := test.GetZipFilePath()
 	assert.Nil(err)
 
-	handler, localArchivePath, dir, err := newZipFs(path)
+	staged := newZipFs(path)
 	assert.Nil(err)
-	assert.Equal(localArchivePath, path)
-	assert.NotNil(handler)
+	assert.Equal(staged.localFilePath, path)
+	assert.NotNil(staged.handler)
 
 	// zip does not support strip prefix so testing/testassets/ is required.
-	verifyLocalFileFromDefaultAsset(filepath.Join(dir, "testing", "testassets"), assert)
+	verifyLocalFileFromDefaultAsset(filepath.Join(staged.tmpDir, "testing", "testassets"), assert)
 }
 
 func TestIsSupportedZip(t *testing.T) {

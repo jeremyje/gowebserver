@@ -3,50 +3,45 @@ package filesystem
 import (
 	"archive/zip"
 	"fmt"
-	"log"
-	"net/http"
 	"path/filepath"
 	"strings"
 )
 
-func newZipFs(filePath string) (http.FileSystem, string, string, error) {
-	localFilePath, tmpDir, err := stageRemoteFile(filePath)
-	if err != nil {
-		return nil, localFilePath, tmpDir, err
+func newZipFs(filePath string) createFsResult {
+	staged := stageRemoteFile(filePath)
+	if staged.err != nil {
+		return staged
 	}
 	// Extract archive
-	r, err := zip.OpenReader(localFilePath)
+	r, err := zip.OpenReader(staged.localFilePath)
 	if err != nil {
-		return nil, localFilePath, tmpDir, err
+		return staged.withError(err)
 	}
 	defer r.Close()
 
 	// Iterate through the files in the archive,
 	// printing some of their contents.
 	for _, f := range r.File {
-		filePath := filepath.Join(tmpDir, f.Name)
+		filePath := filepath.Join(staged.tmpDir, f.Name)
 		if f.FileInfo().IsDir() {
 			err = createDirectory(filePath)
 			if err != nil {
-				log.Fatalf("Cannot create directory: %s, Error= %v", filePath, err)
-				return nil, localFilePath, tmpDir, err
+				return staged.withError(fmt.Errorf("cannot create directory: %s, %s", filePath, err))
 			}
 		} else {
 			dirPath := filepath.Dir(filePath)
 			err = createDirectory(dirPath)
 			if err != nil {
-				log.Fatalf("Cannot create directory: %s, Error= %v", dirPath, err)
-				return nil, localFilePath, tmpDir, err
+				return staged.withError(fmt.Errorf("cannot create directory: %s, %s", dirPath, err))
 			}
 
 			err := writeFileFromZipEntry(f, filePath)
 			if err != nil {
-				return nil, localFilePath, tmpDir, err
+				return staged.withError(fmt.Errorf("cannot write zip file entry: %s, %s", f.Name, err))
 			}
 		}
 	}
-	handler, err := newNative(tmpDir)
-	return handler, localFilePath, tmpDir, err
+	return staged.withHandler(newNative(staged.tmpDir))
 }
 
 func writeFileFromZipEntry(f *zip.File, filePath string) error {

@@ -13,21 +13,43 @@ import (
 
 const fsDirMode = os.FileMode(0777)
 
+type createFsResult struct {
+	handler       http.FileSystem
+	localFilePath string
+	tmpDir        string
+	err           error
+}
+
+func (r createFsResult) withError(err error) createFsResult {
+	r.err = err
+	return r
+}
+
+func (r createFsResult) withHandler(handler http.FileSystem, err error) createFsResult {
+	r.handler = handler
+	r.err = err
+	return r
+}
+
 func createDirectory(path string) error {
 	return os.MkdirAll(dirPath(path), fsDirMode)
 }
 
-func stageRemoteFile(maybeRemoteFilePath string) (string, string, error) {
+func stageRemoteFile(maybeRemoteFilePath string) createFsResult {
 	localFilePath, err := downloadFile(maybeRemoteFilePath)
 	if err != nil {
-		return "", "", err
+		return createFsResult{err: fmt.Errorf("cannot download file %s, %s", maybeRemoteFilePath, err)}
 	}
 	tmpDir, err := createTempDirectory()
 	if err != nil {
-		return "", "", err
+		return createFsResult{err: fmt.Errorf("cannot create temp directory, %s", err)}
 	}
 
-	return localFilePath, tmpDir, nil
+	return createFsResult{
+		localFilePath: localFilePath,
+		tmpDir:        tmpDir,
+		err:           nil,
+	}
 }
 
 func createTempDirectory() (string, error) {

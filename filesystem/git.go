@@ -3,21 +3,24 @@ package filesystem
 import (
 	"fmt"
 	git "gopkg.in/src-d/go-git.v4"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-func newGitFs(filePath string) (http.FileSystem, string, string, error) {
+func newGitFs(filePath string) createFsResult {
+	staged := createFsResult{
+		localFilePath: filePath,
+	}
 	if !isSupportedGit(filePath) {
-		return nil, "", "", fmt.Errorf("%s is not a valid git repository", filePath)
+		return staged.withError(fmt.Errorf("%s is not a valid git repository", filePath))
 	}
 
 	tmpDir, err := createTempDirectory()
 	if err != nil {
-		return nil, "", "", err
+		return staged.withError(fmt.Errorf("cannot create temp directory, %s", err))
 	}
+	staged.tmpDir = tmpDir
 	_, err = git.PlainClone(tmpDir, false, &git.CloneOptions{
 		URL:          filePath,
 		Progress:     os.Stdout,
@@ -25,13 +28,12 @@ func newGitFs(filePath string) (http.FileSystem, string, string, error) {
 		SingleBranch: true,
 	})
 	if err != nil {
-		return nil, "", "", fmt.Errorf("could not clone %s, %s", filePath, err)
+		return staged.withError(fmt.Errorf("could not clone %s, %s", filePath, err))
 	}
 	tryDeleteDirectory(filepath.Join(tmpDir, ".git"))
 	tryDeleteFile(filepath.Join(tmpDir, ".gitignore"))
 	tryDeleteFile(filepath.Join(tmpDir, ".gitmodules"))
-	handler, err := newNative(tmpDir)
-	return handler, filePath, tmpDir, err
+	return staged.withHandler(newNative(tmpDir))
 }
 
 func isSupportedGit(filePath string) bool {
