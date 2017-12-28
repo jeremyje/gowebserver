@@ -17,7 +17,6 @@ build: gowebserver
 all: gowebserver extended-platforms main-platforms
 
 install-go:
-	@echo "> install-go"
 ifndef GOAPP
 	snap install --classic go
 endif
@@ -44,7 +43,6 @@ gowebserver-%:
 	@rm "$(BINARY_NAME)-$(BINARY_SUFFIX).go"
 
 gowebserver: embedded/bindata_assetfs.go
-	@echo "> gowebserver"
 	$(GO) build ${BINARY_MAIN}
 
 lint:
@@ -116,7 +114,6 @@ install: gowebserver
 	@install -m 0644 ${MAN_PAGE_NAME} $(DESTDIR)$(man1dir)
 
 deps:
-	@echo "> deps"
 	$(GOGET) gopkg.in/yaml.v2
 	$(GOGET) github.com/prometheus/client_golang/prometheus
 	$(GOGET) github.com/rs/cors
@@ -125,10 +122,8 @@ deps:
 	# Resources
 	$(GOGETBUILD) github.com/jteeuwen/go-bindata/...
 	$(GOGETBUILD) github.com/elazarl/go-bindata-assetfs/...
-	@echo "> done"
 
 tools:
-	@echo "> tools"
 	$(GOGET) golang.org/x/tools/cmd/gorename
 	$(GOGET) github.com/golang/lint/golint
 	$(GOGET) github.com/nsf/gocode
@@ -139,7 +134,6 @@ tools:
 	$(GOGET) github.com/fzipp/gocyclo
 
 embedded/bindata_assetfs.go:
-	@echo "> embedded/bindata_assetfs.go"
 	@rm -f embedded/bindata_assetfs.go
 	@cd embedded; go-bindata-assetfs -pkg embedded *
 

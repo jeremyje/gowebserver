@@ -1,8 +1,8 @@
 language: go
 go:
-#- 1.9
+- 1.9
 - 1.9.2
-#- tip
+- tip
 addons:
   apt:
     sources:
@@ -15,26 +15,15 @@ script:
 - make deps
 - make build -j4
 - make all -j4
-#- make test-all -j4
+- make test-all -j4
 - make dist -j4
-#- bazel --batch build //...
-#- bazel --batch test //... --test_output=errors --features=race
-#- go test -race -coverprofile=coverage.txt -covermode=atomic
+- bazel --batch build //...
+- bazel --batch test //... --test_output=errors --features=race
+- go test -race -coverprofile=coverage.txt -covermode=atomic
 after_success:
-- openssl aes-256-cbc -K $encrypted_cf9953bb3844_key -iv $encrypted_cf9953bb3844_iv
-  -in .snapcraft/travis_snapcraft.cfg -out .snapcraft/snapcraft.cfg -d
 - bash <(curl -s https://codecov.io/bash)
 deploy:
-- provider: script
-  on:
-    branch: master
-  script: docker run -v $(pwd):$(pwd) -t snapcore/snapcraft sh -c "apt update -qq
-    && cd $(pwd) && snapcraft && snapcraft push *.snap --release edge"
-  skip_cleanup: true
-- provider: releases
-  on:
-    tags: true
-    repo: jeremyje/gowebserver
+  provider: releases
   api_key:
     secure: J8P3HFbyp7gkGJPMMKVbcLKt7HywiyblL+xPXLYxhXcY33aZP01HpU37kD6n8XvnHdWR5SELdFJiLYeoSy9cz6oU6zLNTTXJoat+6F/WBJfJY132NbyK7geH4HtE6mvekrMNKe49PLD91zpN7441qFrUfEmY4+f1pqREClzm0KpJDNIdPdHrrJAup4vLdsCf5dTpy8HQ2y1pnPi8OMZKHQ+p85fhSaey+P3x2xsD569BHsHq99qXs9psp8y+iXMJZ7uaOEBFxd//8apmZDMOS26CTwQ1nxOFagh27dA6AiRU1U4EyCu7O+iTsEVu9XgTLZ53D5/AG075mCagu3A/l+BojBs9afCjs8XmkpbSG/e2Gqkrn2RTpLF9DKlGtp+jB93SNVfdFKgngbfSqyRlFx/xHIWNlV7bd/MBq/MF96fdYcNbuKhf+OcIhXhLnNbYI9t2/+6UHOv5L8cwlD9ifzLAsttoaeBh4O1Sv8Kf0itf9OyMESAorEVVTZ8Np2Rx5rwy9YoLh40fGW5UTELJRLapzU+seO/iA8gWHFYVKJbRvo0QK3EVJCJB39DsiAhXPHE80pPQsPfhtsvhK8GaPEkw4gKbyojjnCw39PEbOD5HwwHxqUzG3LfTk96YRxLF58pfwdnc+ESfjZB1CCXvMS70Wae53c+LDGNz+hTTQ2I=
   file:
@@ -44,6 +33,6 @@ deploy:
     - release/server-386.exe
     - release/server-amd64.exe
   skip_cleanup: true
-sudo: required
-services:
-- docker ZKHQ+p85fhSaey+P3x2xsD569BHsHq99qXs9psp8y+iXMJZ7uaOEBFxd//8apmZDMOS26CTwQ1nxOFagh27dA6AiRU1U4EyCu7O+iTsEVu9XgTLZ53D5/AG075mCagu3A/l+BojBs9afCjs8XmkpbSG/e2Gqkrn2RTpLF9DKlGtp+jB93SNVfdFKgngbfSqyRlFx/xHIWNlV7bd/MBq/MF96fdYcNbuKhf+OcIhXhLnNbYI9t2/+6UHOv5L8cwlD9ifzLAsttoaeBh4O1Sv8Kf0itf9OyMESAorEVVTZ8Np2Rx5rwy9YoLh40fGW5UTELJRLapzU+seO/iA8gWHFYVKJbRvo0QK3EVJCJB39DsiAhXPHE80pPQsPfhtsvhK8GaPEkw4gKbyojjnCw39PEbOD5HwwHxqUzG3LfTk96YRxLF58pfwdnc+ESfjZB1CCXvMS70Wae53c+LDGNz+hTTQ2I=
+  on:
+    tags: true
+    repo: jeremyje/gowebserver
