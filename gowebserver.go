@@ -15,10 +15,7 @@ func main() {
 		fmt.Printf("%v", conf)
 	}
 
-	err := createCertificate(conf)
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkError(createCertificate(conf))
 	if conf.HTTPS.Certificate.OnlyGenerateCertificate {
 		return
 	}
@@ -29,15 +26,15 @@ func main() {
 		SetCertificateFile(conf.HTTPS.Certificate.CertificateFilePath).
 		SetPrivateKey(conf.HTTPS.Certificate.PrivateKeyFilePath).
 		SetVerbose(conf.Verbose)
-	err = httpServer.SetDirectory(conf.Directory)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = httpServer.SetUpload(conf.UploadDirectory, conf.UploadServePath)
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkError(httpServer.SetPath(conf.Path))
+	checkError(httpServer.SetUpload(conf.UploadPath, conf.UploadServePath))
 	httpServer.Serve()
+}
+
+func checkError(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func createCertificate(conf *config.Config) error {
@@ -50,11 +47,11 @@ func createCertificate(conf *config.Config) error {
 			SetUseSelfAsCertificateAuthority(conf.HTTPS.Certificate.ActAsCertificateAuthority)
 		err := certBuilder.WriteCertificate(conf.HTTPS.Certificate.CertificateFilePath)
 		if err != nil {
-			return err
+			return fmt.Errorf("cannot write public certificate, %s", err)
 		}
 		err = certBuilder.WritePrivateKey(conf.HTTPS.Certificate.PrivateKeyFilePath)
 		if err != nil {
-			return err
+			return fmt.Errorf("cannot write private key, %s", err)
 		}
 	}
 	return nil

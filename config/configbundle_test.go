@@ -6,9 +6,9 @@ import (
 )
 
 const emptyConfigYaml = `verbose: false
-directory: ""
+path: ""
 serve-path: ""
-upload-directory: ""
+upload-path: ""
 upload-serve-path: ""
 http:
   port: 0
@@ -25,9 +25,9 @@ metrics:
 `
 
 const populatedConfigYaml = `verbose: true
-directory: /home/directory
+path: /home/folder
 serve-path: /serving
-upload-directory: /home/upload
+upload-path: /home/upload
 upload-serve-path: /postage
 http:
   port: 1000
@@ -57,9 +57,9 @@ func TestPopulatedConfig(t *testing.T) {
 
 	conf := &Config{}
 	conf.Verbose = true
-	conf.Directory = "/home/directory"
+	conf.Path = "/home/folder"
 	conf.ServePath = "/serving"
-	conf.UploadDirectory = "/home/upload"
+	conf.UploadPath = "/home/upload"
 	conf.UploadServePath = "/postage"
 	conf.HTTP.Port = 1000
 	conf.HTTPS.Port = 2000

@@ -8,7 +8,7 @@ import (
 )
 
 const noDefaultsConfigFile = `verbose: true
-directory: "/home/example"
+path: "/home/example"
 serve-path: /serving
 configurationfile: "/something.yaml"
 http:
@@ -40,7 +40,7 @@ func TestNoDefaultConfig(t *testing.T) {
 	assert.Nil(err)
 
 	assert.Equal(conf.Verbose, true)
-	assert.Equal(conf.Directory, "/home/example")
+	assert.Equal(conf.Path, "/home/example")
 	assert.Equal(conf.ServePath, "/serving")
 	assert.Equal(conf.HTTP.Port, 1)
 	assert.Equal(conf.HTTPS.Port, 2)
@@ -64,7 +64,7 @@ func TestPopulatedYamlConfig(t *testing.T) {
 	assert.Nil(err)
 
 	assert.Equal(conf.Verbose, true)
-	assert.Equal(conf.Directory, "/home/directory")
+	assert.Equal(conf.Path, "/home/folder")
 	assert.Equal(conf.ServePath, "/serving")
 	assert.Equal(conf.HTTP.Port, 1000)
 	assert.Equal(conf.HTTPS.Port, 2000)

@@ -15,7 +15,7 @@ func TestDefaultConfiguration(t *testing.T) {
 	assert.NotNil(conf)
 
 	assert.Equal(conf.Verbose, false)
-	assert.Equal(conf.Directory, "")
+	assert.Equal(conf.Path, "")
 	assert.Equal(conf.ServePath, "/")
 	assert.Equal(conf.ConfigurationFile, "")
 	assert.Equal(conf.HTTP.Port, 8080)
@@ -29,6 +29,6 @@ func TestDefaultConfiguration(t *testing.T) {
 	assert.Equal(conf.HTTPS.Certificate.ForceOverwrite, false)
 	assert.Equal(conf.Metrics.Enabled, true)
 	assert.Equal(conf.Metrics.Path, "/metrics")
-	assert.Equal(conf.UploadDirectory, "uploaded-files")
+	assert.Equal(conf.UploadPath, "uploaded-files")
 	assert.Equal(conf.UploadServePath, "/upload.asp")
 }

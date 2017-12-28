@@ -7,7 +7,7 @@ GO := @go
 GOGET := go get -u
 GOGETBUILD := go get -u
 SOURCE_DIRS=$(shell go list ./... | grep -v '/vendor/')
-export PATH := $(PATH):/usr/local/go/bin:/usr/go/bin
+export PATH := $(PATH):/usr/lib/go-1.9/bin:/usr/local/go/bin:/usr/go/bin
 BINARY_NAME=gowebserver
 MAN_PAGE_NAME=${BINARY_NAME}.1
 BINARY_MAIN=gowebserver.go
@@ -18,7 +18,11 @@ all: gowebserver extended-platforms main-platforms
 
 install-go:
 ifndef GOAPP
-	snap install --classic go
+	sudo apt update
+	sudo apt install -y software-properties-common python-software-properties
+	sudo add-apt-repository ppa:gophers/archive
+	sudo apt update
+	sudo apt install -y golang-1.9-go
 endif
 
 main-platforms: gowebserver-linux-386 gowebserver-linux-amd64 gowebserver-linux-arm gowebserver-windows-386 gowebserver-windows-amd64

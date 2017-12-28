@@ -8,13 +8,13 @@ import (
 )
 
 // Serving Flags
-var serveDirectoryFlag = flag.String("directory", "", "The directory on the local filesystem to serve.")
-var servePathFlag = flag.String("servepath", "/", "The HTTP/HTTPS serving root path for the hosted filesystem directory.")
+var pathFlag = flag.String("path", "", "Path to serve (local filesystem, git, zip, tarball files).")
+var servePathFlag = flag.String("servepath", "/", "The HTTP/HTTPS serving root path for the hosted path.")
 var configFileFlag = flag.String("configfile", "", "YAML formatted configuration file. (overrides flag values)")
 var verboseFlag = flag.Bool("verbose", false, "Print out extra information.")
 
 // Upload Flags
-var uploadDirectoryFlag = flag.String("upload.directory", "uploaded-files", "Directory where uploaded files are placed.")
+var uploadPathFlag = flag.String("upload.path", "uploaded-files", "Local filesystem path where uploaded files are placed.")
 var uploadServePathFlag = flag.String("upload.servepath", "/upload.asp", "The URL path for uploading files.")
 
 // HTTP Flags
@@ -61,10 +61,10 @@ func init() {
 func loadFromFlags() *Config {
 	return &Config{
 		Verbose:           *verboseFlag,
-		Directory:         *serveDirectoryFlag,
+		Path:         *pathFlag,
 		ServePath:         *servePathFlag,
 		ConfigurationFile: *configFileFlag,
-		UploadDirectory:   *uploadDirectoryFlag,
+		UploadPath:   *uploadPathFlag,
 		UploadServePath:   *uploadServePathFlag,
 		HTTP: HTTP{
 			Port: *httpPortFlag,

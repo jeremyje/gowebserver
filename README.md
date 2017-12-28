@@ -105,7 +105,7 @@ Sample code for embedding a HTTP/HTTPS server in your application.
 
 ```go
 import (
-    "github.com/jeremyje/gowebserver/server"
+	"github.com/jeremyje/gowebserver/server"
 	"github.com/jeremyje/gowebserver/cert"
 )
 func main() {
@@ -128,9 +128,8 @@ func main() {
 }
 
 func checkError(err error) {
-    if err != nil {
+	if err != nil {
 		log.Fatal(err)
 	}
 }
-
 ```

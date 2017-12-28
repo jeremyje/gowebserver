@@ -18,8 +18,8 @@ type WebServer interface {
 	SetMetricsEnabled(enabled bool) WebServer
 	// SetServePath specifies the path to serve the file system.
 	SetServePath(fileSystemServePath string, metricsServePath string) WebServer
-	// SetDirectory sets the directory to serve.
-	SetDirectory(dir string) error
+	// SetPath sets the directory to serve.
+	SetPath(path string) error
 	// SetCertificateFile sets the certificates that should be used to serve HTTPS traffic.
 	SetCertificateFile(certificateFilePath string) WebServer
 	// SetPrivateKey sets the private key file path for HTTPS traffic encryption.
@@ -27,7 +27,7 @@ type WebServer interface {
 	// SetVerbose sets verbose logging.
 	SetVerbose(verbose bool) WebServer
 	// SetUpload sets the upload endpoint and upload directory.
-	SetUpload(uploadDirectory string, uploadServePath string) error
+	SetUpload(uploadPath string, uploadServePath string) error
 	// Serve starts serving the HTTP/HTTPS server synchronously.
 	Serve()
 }
@@ -40,9 +40,9 @@ type webServerImpl struct {
 	metricsServePath    string
 	certificateFilePath string
 	privateKeyFilePath  string
-	servingDirectory    string
+	servingPath    string
 	verbose             bool
-	uploadDirectory     string
+	uploadPath     string
 	uploadServePath     string
 }
 
@@ -63,15 +63,15 @@ func (ws *webServerImpl) SetServePath(fileSystemServePath string, metricsServePa
 	return ws
 }
 
-func (ws *webServerImpl) SetDirectory(dir string) error {
-	if len(dir) == 0 {
+func (ws *webServerImpl) SetPath(path string) error {
+	if len(path) == 0 {
 		cwd, err := os.Getwd()
 		if err != nil {
 			return err
 		}
-		dir = cwd
+		path = cwd
 	}
-	ws.servingDirectory = dir
+	ws.servingPath = path
 	return nil
 }
 
@@ -90,15 +90,15 @@ func (ws *webServerImpl) SetVerbose(verbose bool) WebServer {
 	return ws
 }
 
-func (ws *webServerImpl) SetUpload(uploadDirectory string, uploadServePath string) error {
-	if len(uploadDirectory) == 0 {
+func (ws *webServerImpl) SetUpload(uploadPath string, uploadServePath string) error {
+	if len(uploadPath) == 0 {
 		cwd, err := os.Getwd()
 		if err != nil {
 			return err
 		}
-		uploadDirectory = cwd
+		uploadPath = cwd
 	}
-	ws.uploadDirectory = uploadDirectory
+	ws.uploadPath = uploadPath
 	ws.uploadServePath = uploadServePath
 	return nil
 }
@@ -112,8 +112,8 @@ func (ws *webServerImpl) addHandler(serverMux *http.ServeMux, servePath string, 
 }
 
 func (ws *webServerImpl) Serve() {
-	log.Printf("Serving %s on %s and %s", ws.servingDirectory, ws.httpPort, ws.httpsPort)
-	httpFs, err := filesystem.New(ws.servingDirectory)
+	log.Printf("Serving %s on %s and %s", ws.servingPath, ws.httpPort, ws.httpsPort)
+	httpFs, err := filesystem.New(ws.servingPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -128,7 +128,7 @@ func (ws *webServerImpl) Serve() {
 	ws.addHandler(serverMux, ws.fileSystemServePath, fsHandler)
 
 	if len(ws.uploadServePath) > 0 {
-		uploadHandler := newUploadHandler(ws.uploadServePath, ws.uploadDirectory)
+		uploadHandler := newUploadHandler(ws.uploadServePath, ws.uploadPath)
 		ws.addHandler(serverMux, ws.uploadServePath, uploadHandler)
 		//serverMux.Handle(ws.uploadServePath, uploadHandler)
 	}
@@ -160,6 +160,6 @@ func NewWebServer() WebServer {
 		metricsServePath:    "/metrics",
 		certificateFilePath: "",
 		privateKeyFilePath:  "",
-		servingDirectory:    "",
+		servingPath:    "",
 	}
 }
