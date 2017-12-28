@@ -125,7 +125,7 @@ deps:
 	$(GOGET) github.com/prometheus/client_golang/prometheus
 	$(GOGET) github.com/rs/cors
 	$(GOGET) github.com/stretchr/testify/assert
-	$(GOGET) gopkg.in/src-d/go-git.v4"
+	$(GOGET) gopkg.in/src-d/go-git.v4
 	# Resources
 	$(GOGETBUILD) github.com/jteeuwen/go-bindata/...
 	$(GOGETBUILD) github.com/elazarl/go-bindata-assetfs/...
