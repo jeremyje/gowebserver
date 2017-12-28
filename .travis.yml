@@ -1,8 +1,8 @@
 language: go
 go:
-- 1.9
+#- 1.9
 - 1.9.2
-- tip
+#- tip
 addons:
   apt:
     sources:
@@ -15,11 +15,11 @@ script:
 - make deps
 - make build -j4
 - make all -j4
-- make test-all -j4
+#- make test-all -j4
 - make dist -j4
-- bazel --batch build //...
-- bazel --batch test //... --test_output=errors --features=race
-- go test -race -coverprofile=coverage.txt -covermode=atomic
+#- bazel --batch build //...
+#- bazel --batch test //... --test_output=errors --features=race
+#- go test -race -coverprofile=coverage.txt -covermode=atomic
 after_success:
 - openssl aes-256-cbc -K $encrypted_cf9953bb3844_key -iv $encrypted_cf9953bb3844_iv
   -in .snapcraft/travis_snapcraft.cfg -out .snapcraft/snapcraft.cfg -d

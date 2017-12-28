@@ -24,12 +24,7 @@ snapbuild:
 install-go:
 	@echo "> install-go"
 ifndef GOAPP
-	#sudo apt update
-	#sudo apt install -y software-properties-common python-software-properties
-	#sudo add-apt-repository ppa:gophers/archive
-	#sudo apt update
-	#sudo apt install -y golang-1.9-go
-  snap install --classic go
+	snap install --classic go
 endif
 
 main-platforms: gowebserver-linux-386 gowebserver-linux-amd64 gowebserver-linux-arm gowebserver-windows-386 gowebserver-windows-amd64
