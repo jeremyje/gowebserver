@@ -1,6 +1,7 @@
 language: go
 go:
 - 1.6
+- 1.7
 - 1.9.2
 - tip
 addons:
@@ -17,8 +18,8 @@ script:
 - make all -j4
 - make test-all -j4
 - make dist -j4
-- bazel build --batch //...
-- bazel test --batch --test_output=errors --features=race //...
+- bazel --batch build //...
+- bazel --batch test //... --test_output=errors --features=race
 - go test -race -coverprofile=coverage.txt -covermode=atomic
 after_success:
   - bash <(curl -s https://codecov.io/bash)
