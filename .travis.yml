@@ -19,7 +19,7 @@ script:
 - make dist -j4
 - bazel --batch build //...
 - bazel --batch test //... --test_output=errors --features=race
-- go test -race -coverprofile=coverage.txt -covermode=atomic
+- make coverage.txt
 after_success:
 - bash <(curl -s https://codecov.io/bash)
 deploy:

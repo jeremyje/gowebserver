@@ -95,6 +95,9 @@ test-10: testing/testassets.go
 
 coverage: testing/testassets.go
 	$(GO) test -cover ${SOURCE_DIRS}
+	
+coverage.txt: testing/testassets.go
+	$(GO) test -race -coverprofile=coverage.txt -covermode=atomic
 
 bench: benchmark
 
