@@ -16,7 +16,7 @@ GOAPP := $(shell command -v go 2> /dev/null)
 build: gowebserver
 all: gowebserver extended-platforms main-platforms
 
-snapbuild: tools deps gowebserver
+snapbuild: | install-go tools deps gowebserver
 
 install-go:
 ifndef GOAPP
@@ -120,16 +120,17 @@ install: gowebserver
 	@install ${BINARY_NAME} $(DESTDIR)$(bindir)
 	@install -m 0644 ${MAN_PAGE_NAME} $(DESTDIR)$(man1dir)
 
-deps: install-go
+deps:
 	$(GOGET) gopkg.in/yaml.v2
 	$(GOGET) github.com/prometheus/client_golang/prometheus
 	$(GOGET) github.com/rs/cors
 	$(GOGET) github.com/stretchr/testify/assert
+	$(GOGET) gopkg.in/src-d/go-git.v4"
 	# Resources
 	$(GOGETBUILD) github.com/jteeuwen/go-bindata/...
 	$(GOGETBUILD) github.com/elazarl/go-bindata-assetfs/...
 
-tools: install-go
+tools:
 	$(GOGET) golang.org/x/tools/cmd/gorename
 	$(GOGET) github.com/golang/lint/golint
 	$(GOGET) github.com/nsf/gocode
