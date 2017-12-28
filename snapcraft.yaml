@@ -16,6 +16,6 @@ parts:
     plugin: make
     source: .
     makefile: Makefile
-    make-parameters: [snapcraft.io]
+    make-parameters: [snapbuild]
     artifacts:
     - gowebserver

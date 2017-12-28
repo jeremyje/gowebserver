@@ -18,8 +18,6 @@ all: gowebserver extended-platforms main-platforms
 
 snapbuild: tools deps gowebserver
 
-snapcraft.io: install-go tools deps gowebserver
-
 install-go:
 ifndef GOAPP
 		sudo add-apt-repository ppa:gophers/archive
@@ -143,4 +141,4 @@ embedded/bindata_assetfs.go:
 	@rm -f embedded/bindata_assetfs.go
 	@cd embedded; go-bindata-assetfs -pkg embedded *
 
-.PHONY : all main-platforms extended-platforms dist build lint clean check testdata testing test test-10 coverage bench benchmark test-all package-legacy package install run deps tools snapbuild snapcraft.io install-go
+.PHONY : all main-platforms extended-platforms dist build lint clean check testdata testing test test-10 coverage bench benchmark test-all package-legacy package install run deps tools snapbuild install-go
