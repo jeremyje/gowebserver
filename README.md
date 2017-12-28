@@ -12,10 +12,10 @@ curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/downl
 gowebserver
 
 # Host your home directory.
-gowebserver --directory=${HOME}
+gowebserver --path=${HOME}
 
 # Host a zip file from the internet.
-gowebserver --directory=https://github.com/jeremyje/gowebserver/archive/v1.8.0.zip
+gowebserver --path=https://github.com/jeremyje/gowebserver/archive/v1.8.0.zip
 ```
 
 Features
@@ -122,7 +122,7 @@ func main() {
 		SetCertificateFile("public.cert").
 		SetPrivateKey("private.key").
 		SetVerbose(true)
-	checkError(httpServer.SetDirectory("."))
+	checkError(httpServer.SetPath("."))
 	checkError(httpServer.SetUpload("./upload", "/upload.html"))
 	httpServer.Serve()
 }

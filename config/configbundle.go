@@ -35,11 +35,11 @@ type Metrics struct {
 // Config is the root of the server configuration.
 type Config struct {
 	Verbose           bool   `yaml:"verbose"`
-	Path         string `yaml:"path"`
+	Path              string `yaml:"path"`
 	ServePath         string `yaml:"serve-path"`
 	ConfigurationFile string `yaml:"-"`
 
-	UploadPath string `yaml:"upload-path"`
+	UploadPath      string `yaml:"upload-path"`
 	UploadServePath string `yaml:"upload-serve-path"`
 
 	HTTP    HTTP    `yaml:"http"`

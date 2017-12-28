@@ -40,9 +40,9 @@ type webServerImpl struct {
 	metricsServePath    string
 	certificateFilePath string
 	privateKeyFilePath  string
-	servingPath    string
+	servingPath         string
 	verbose             bool
-	uploadPath     string
+	uploadPath          string
 	uploadServePath     string
 }
 
@@ -114,40 +114,31 @@ func (ws *webServerImpl) addHandler(serverMux *http.ServeMux, servePath string, 
 func (ws *webServerImpl) Serve() {
 	log.Printf("Serving %s on %s and %s", ws.servingPath, ws.httpPort, ws.httpsPort)
 	httpFs, err := filesystem.New(ws.servingPath)
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkError(err)
 	fsHandler := http.FileServer(httpFs)
 	serverMux := http.NewServeMux()
 	if ws.metricsEnabled {
 		serverMux.Handle(ws.metricsServePath, prometheus.Handler())
-		//serverMux.HandleFunc(ws.fileSystemServePath, prometheus.InstrumentHandler(ws.fileSystemServePath, fsHandler))
-	} else {
-		//serverMux.Handle(ws.fileSystemServePath, fsHandler)
 	}
 	ws.addHandler(serverMux, ws.fileSystemServePath, fsHandler)
 
 	if len(ws.uploadServePath) > 0 {
 		uploadHandler := newUploadHandler(ws.uploadServePath, ws.uploadPath)
 		ws.addHandler(serverMux, ws.uploadServePath, uploadHandler)
-		//serverMux.Handle(ws.uploadServePath, uploadHandler)
 	}
 	corsHandler := cors.Default().Handler(serverMux)
 	httpHandler := newTracingHTTPHandler(corsHandler, ws.metricsEnabled, ws.verbose)
+	ws.serveInternal(httpHandler)
+	waitForever()
+}
+
+func (ws *webServerImpl) serveInternal(httpHandler http.Handler) {
 	go func() {
-		err := http.ListenAndServeTLS(ws.httpsPort, ws.certificateFilePath, ws.privateKeyFilePath, httpHandler)
-		if err != nil {
-			log.Fatal(err)
-		}
+		checkError(http.ListenAndServeTLS(ws.httpsPort, ws.certificateFilePath, ws.privateKeyFilePath, httpHandler))
 	}()
 	go func() {
-		err := http.ListenAndServe(ws.httpPort, httpHandler)
-		if err != nil {
-			log.Fatal(err)
-		}
+		checkError(http.ListenAndServe(ws.httpPort, httpHandler))
 	}()
-	ch := make(chan bool)
-	<-ch
 }
 
 // NewWebServer creates a new web server instance.
@@ -160,6 +151,6 @@ func NewWebServer() WebServer {
 		metricsServePath:    "/metrics",
 		certificateFilePath: "",
 		privateKeyFilePath:  "",
-		servingPath:    "",
+		servingPath:         "",
 	}
 }

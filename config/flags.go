@@ -61,10 +61,10 @@ func init() {
 func loadFromFlags() *Config {
 	return &Config{
 		Verbose:           *verboseFlag,
-		Path:         *pathFlag,
+		Path:              *pathFlag,
 		ServePath:         *servePathFlag,
 		ConfigurationFile: *configFileFlag,
-		UploadPath:   *uploadPathFlag,
+		UploadPath:        *uploadPathFlag,
 		UploadServePath:   *uploadServePathFlag,
 		HTTP: HTTP{
 			Port: *httpPortFlag,

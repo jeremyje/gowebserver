@@ -111,99 +111,84 @@ func NewCertificateBuilder() CertificateBuilder {
 func (cb *certificateBuilderImpl) SetRsa1024() CertificateBuilder {
 	cb.rsaBits = 1024
 	cb.ecdsaCurve = nil
-	cb.isDirty = true
-	return cb
+	return cb.dirty()
 }
 
 func (cb *certificateBuilderImpl) SetRsa2048() CertificateBuilder {
 	cb.rsaBits = 2048
 	cb.ecdsaCurve = nil
-	cb.isDirty = true
-	return cb
+	return cb.dirty()
 }
 
 func (cb *certificateBuilderImpl) SetRsa4096() CertificateBuilder {
 	cb.rsaBits = 4096
 	cb.ecdsaCurve = nil
-	cb.isDirty = true
-	return cb
+	return cb.dirty()
 }
 
 func (cb *certificateBuilderImpl) SetEcdsaP224() CertificateBuilder {
 	cb.rsaBits = 0
 	cb.ecdsaCurve = elliptic.P224()
-	cb.isDirty = true
-	return cb
+	return cb.dirty()
 }
 
 func (cb *certificateBuilderImpl) SetEcdsaP256() CertificateBuilder {
 	cb.rsaBits = 0
 	cb.ecdsaCurve = elliptic.P256()
-	cb.isDirty = true
-	return cb
+	return cb.dirty()
 }
 
 func (cb *certificateBuilderImpl) SetEcdsaP384() CertificateBuilder {
 	cb.rsaBits = 0
 	cb.ecdsaCurve = elliptic.P384()
-	cb.isDirty = true
-	return cb
+	return cb.dirty()
 }
 
 func (cb *certificateBuilderImpl) SetEcdsaP521() CertificateBuilder {
 	cb.rsaBits = 0
 	cb.ecdsaCurve = elliptic.P521()
-	cb.isDirty = true
-	return cb
+	return cb.dirty()
 }
 
 func (cb *certificateBuilderImpl) SetValidDurationInDays(numDays int) CertificateBuilder {
 	cb.validDuration = time.Duration(time.Hour * 24 * 365)
-	cb.isDirty = true
-	return cb
+	return cb.dirty()
 }
 
 func (cb *certificateBuilderImpl) SetStartValidTime(startTime time.Time) CertificateBuilder {
 	cb.certValidStart = startTime
-	cb.isDirty = true
-	return cb
+	return cb.dirty()
 }
 
 func (cb *certificateBuilderImpl) SetHostName(hostName string) CertificateBuilder {
 	cb.hostName = hostName
-	cb.isDirty = true
-	return cb
+	return cb.dirty()
 }
 
 func (cb *certificateBuilderImpl) SetUseSelfAsCertificateAuthority(useSelf bool) CertificateBuilder {
 	cb.useSelfAsCertificateAuthority = useSelf
-	cb.isDirty = true
-	return cb
+	return cb.dirty()
 }
 
 func (cb *certificateBuilderImpl) SetOrganization(organization string, unit string) CertificateBuilder {
 	cb.organization = organization
 	cb.organizationUnit = unit
-	cb.isDirty = true
-	return cb
+	return cb.dirty()
 }
 
 func (cb *certificateBuilderImpl) SetCountry(country string) CertificateBuilder {
 	cb.country = country
-	cb.isDirty = true
-	return cb
+	return cb.dirty()
 }
 
 func (cb *certificateBuilderImpl) SetLocality(locality string) CertificateBuilder {
 	cb.locality = locality
-	cb.isDirty = true
-	return cb
+	return cb.dirty()
 }
 
 func (cb *certificateBuilderImpl) SetProvince(province string) CertificateBuilder {
 	cb.province = province
-	cb.isDirty = true
-	return cb
+	return cb.dirty()
 }
 
 func (cb *certificateBuilderImpl) GetCertificate() ([]byte, error) {
@@ -258,8 +243,7 @@ func (cb *certificateBuilderImpl) buildCertificate() error {
 		privateKey, err = ecdsa.GenerateKey(cb.ecdsaCurve, rand.Reader)
 	}
 	if err != nil {
-		cb.buildError = err
-		return err
+		return cb.saveError(err)
 	}
 
 	certValidEnd := cb.certValidStart.Add(cb.validDuration)
@@ -267,8 +251,7 @@ func (cb *certificateBuilderImpl) buildCertificate() error {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		cb.buildError = err
-		return err
+		return cb.saveError(err)
 	}
 	certName := pkix.Name{
 		Country:            []string{cb.country},
@@ -305,18 +288,28 @@ func (cb *certificateBuilderImpl) buildCertificate() error {
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, publicKey(privateKey), privateKey)
 	if err != nil {
-		cb.buildError = err
-		return err
+		return cb.saveError(err)
 	}
 
 	cb.x509PemBytes = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 
 	pemPriv, err := pemBlockForKey(privateKey)
 	if err != nil {
-		cb.buildError = err
-		return err
+		return cb.saveError(err)
 	}
 	cb.privateKeyPemBytes = pem.EncodeToMemory(pemPriv)
 	cb.isDirty = false
 	return nil
+}
+
+func (cb *certificateBuilderImpl) saveError(err error) error {
+	if err != nil {
+		cb.buildError = err
+	}
+	return err
+}
+
+func (cb *certificateBuilderImpl) dirty() *certificateBuilderImpl {
+	cb.isDirty = true
+	return cb
 }

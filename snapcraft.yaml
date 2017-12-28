@@ -19,11 +19,16 @@ parts:
     make-parameters: [gowebserver]
     prepare: |
       make install-go
+      echo "SYSTEM VARS!!"
+      echo "> PATH"
+      echo $PATH
+      echo "> GOPATH"
       echo $GOPATH
+      echo "> GOROOT"
       echo $GOROOT
       make tools
-      find / -type f -print
       make deps
+      echo "> FINDING"
       find / -type f -print
     artifacts:
     - gowebserver
