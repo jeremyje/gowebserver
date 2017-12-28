@@ -16,6 +16,10 @@ parts:
     plugin: make
     source: .
     makefile: Makefile
-    make-parameters: [snapbuild]
+    make-parameters: [gowebserver]
+    prepare: |
+      make install-go
+      make tools
+      make deps
     artifacts:
     - gowebserver

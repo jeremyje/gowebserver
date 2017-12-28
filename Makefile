@@ -16,11 +16,6 @@ GOAPP := $(shell command -v go 2> /dev/null)
 build: gowebserver
 all: gowebserver extended-platforms main-platforms
 
-snapbuild:
-	make install-go
-	make tools deps
-	make gowebserver
-
 install-go:
 	@echo "> install-go"
 ifndef GOAPP
@@ -148,4 +143,4 @@ embedded/bindata_assetfs.go:
 	@rm -f embedded/bindata_assetfs.go
 	@cd embedded; go-bindata-assetfs -pkg embedded *
 
-.PHONY : all main-platforms extended-platforms dist build lint clean check testdata testing test test-10 coverage bench benchmark test-all package-legacy package install run deps tools snapbuild install-go
+.PHONY : all main-platforms extended-platforms dist build lint clean check testdata testing test test-10 coverage bench benchmark test-all package-legacy package install run deps tools install-go
