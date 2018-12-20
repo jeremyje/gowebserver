@@ -28,8 +28,5 @@ go_test(
     ],
     embed = [":go_default_library"],
     importpath = "github.com/jeremyje/gowebserver/filesystem",
-    deps = [
-        "@com_github_stretchr_testify//assert:go_default_library",
-        "//testing:go_default_library",
-    ],
+    deps = ["@com_github_stretchr_testify//assert:go_default_library"],
 )

@@ -6,9 +6,7 @@ exports_files(["LICENSE"])
 
 go_library(
     name = "testassets_go_lib",
-    srcs = [
-        ":testassets.go",
-    ],
+    srcs = [":testassets.go"],
     importpath = "github.com/jeremyje/gowebserver/testing",
     visibility = ["//visibility:public"],
 )
