@@ -81,14 +81,14 @@ func createTempDirectory() (string, error) {
 
 func tryDeleteDirectory(path string) {
 	err := os.RemoveAll(path)
-	if err != nil {
+	if err != nil && err != os.ErrNotExist {
 		log.Fatalf("cannot delete directory: %s, Error= %v", path, err)
 	}
 }
 
 func tryDeleteFile(path string) {
 	err := os.Remove(path)
-	if err != nil {
+	if err != nil && err != os.ErrNotExist {
 		log.Fatalf("cannot delete file: %s, Error= %v", path, err)
 	}
 }
