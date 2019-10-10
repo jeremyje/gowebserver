@@ -17,9 +17,9 @@ bindir = $(prefix)/bin
 sharedir = $(prefix)/share
 mandir = $(sharedir)/man
 man1dir = $(mandir)/man1
-GO := @go
-GOGET := go get -u
-GOGETBUILD := go get -u
+GO := @GO111MODULE=on go
+GOGET := @GO111MODULE=on go get -u
+GOGETBUILD := @GO111MODULE=on go get -u
 SOURCE_DIRS=$(shell go list ./... | grep -v '/vendor/')
 export PATH := $(PWD)/toolchain:$(PATH):/root/go/bin:/usr/lib/go-1.9/bin:/usr/local/go/bin:/usr/go/bin
 BINARY_NAME=gowebserver
