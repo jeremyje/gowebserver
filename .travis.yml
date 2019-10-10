@@ -1,15 +1,24 @@
+# Copyright 2019 Jeremy Edwards
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 language: go
+dist: bionic
 go:
-- 1.9
-- 1.9.2
+- 1.11
+- 1.12
+- 1.13.1
 - tip
-addons:
-  apt:
-    sources:
-    - sourceline: 'deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8'
-      key_url: 'https://bazel.build/bazel-release.pub.gpg'
-    packages:
-    - bazel
 script:
 - make tools
 - make deps
@@ -17,8 +26,6 @@ script:
 - make all -j4
 - make test-all -j4
 - make dist -j4
-- bazel --batch build //...
-- bazel --batch test //... --test_output=errors --features=race
 - make coverage.txt
 after_success:
 - bash <(curl -s https://codecov.io/bash)
@@ -30,6 +37,7 @@ deploy:
     - release/server-386
     - release/server-arm
     - release/server-amd64
+    - release/server-darwin-amd64
     - release/server-386.exe
     - release/server-amd64.exe
   skip_cleanup: true
