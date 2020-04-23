@@ -9,7 +9,7 @@ require (
 	github.com/lukehoban/go-outline v0.0.0-20161011150102-e78556874252 // indirect
 	github.com/newhook/go-symbols v0.0.0-20151212134530-b75dfefa0d23 // indirect
 	github.com/nsf/gocode v0.0.0-20190302080247-5bee97b48836 // indirect
-	github.com/prometheus/client_golang v0.9.2
+	github.com/prometheus/client_golang v0.9.4
 	github.com/rogpeppe/godef v1.1.1 // indirect
 	github.com/rs/cors v1.6.0
 	github.com/sqs/goreturns v0.0.0-20181028201513-538ac6014518 // indirect
