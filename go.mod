@@ -13,7 +13,7 @@ require (
 	github.com/rogpeppe/godef v1.1.1 // indirect
 	github.com/rs/cors v1.6.0
 	github.com/sqs/goreturns v0.0.0-20181028201513-538ac6014518 // indirect
-	github.com/stretchr/testify v1.2.2
+	github.com/stretchr/testify v1.5.1
 	golang.org/x/lint v0.0.0-20190930215403-16217165b5de // indirect
 	golang.org/x/tools v0.0.0-20191009213438-b090f1f24028 // indirect
 	gopkg.in/src-d/go-git.v4 v4.8.1
