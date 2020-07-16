@@ -2,7 +2,7 @@ module github.com/jeremyje/gowebserver
 
 require (
 	9fans.net/go v0.0.2 // indirect
-	github.com/elazarl/go-bindata-assetfs v1.0.0
+	github.com/elazarl/go-bindata-assetfs v1.0.1
 	github.com/fzipp/gocyclo v0.0.0-20150627053110-6acd4345c835 // indirect
 	github.com/jteeuwen/go-bindata v3.0.7+incompatible // indirect
 	github.com/kevinburke/go-bindata v3.14.0+incompatible // indirect
