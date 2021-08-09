@@ -15,13 +15,14 @@
 package server
 
 import (
-	"github.com/jeremyje/gowebserver/filesystem"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rs/cors"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
+
+	"github.com/jeremyje/gowebserver/filesystem"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/cors"
 )
 
 // WebServer is a convience wrapper for Go's HTTP/HTTPS Web serving API.
@@ -118,11 +119,11 @@ func (ws *webServerImpl) SetUpload(uploadPath string, uploadServePath string) er
 }
 
 func (ws *webServerImpl) addHandler(serverMux *http.ServeMux, servePath string, handler http.Handler) {
-	if ws.metricsEnabled {
-		serverMux.HandleFunc(servePath, prometheus.InstrumentHandler(servePath, handler))
-	} else {
-		serverMux.Handle(servePath, handler)
-	}
+	//	if ws.metricsEnabled {
+	//		serverMux.HandleFunc(servePath, promhttp.InstrumentHandler(servePath, handler))
+	//} else {
+	serverMux.Handle(servePath, handler)
+	//}
 }
 
 func (ws *webServerImpl) Serve() {
@@ -132,7 +133,7 @@ func (ws *webServerImpl) Serve() {
 	fsHandler := http.FileServer(httpFs)
 	serverMux := http.NewServeMux()
 	if ws.metricsEnabled {
-		serverMux.Handle(ws.metricsServePath, prometheus.Handler())
+		serverMux.Handle(ws.metricsServePath, promhttp.Handler())
 	}
 	ws.addHandler(serverMux, ws.fileSystemServePath, fsHandler)
 

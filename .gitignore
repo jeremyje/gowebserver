@@ -44,7 +44,6 @@ upload/
 
 package.coverage
 coverage.txt
-gowebserver
 gowebserver-*
 *.pem
 release.tar.gz
@@ -70,3 +69,4 @@ bazel-testlogs
 
 .snapcraft/
 toolchain/
+bin/

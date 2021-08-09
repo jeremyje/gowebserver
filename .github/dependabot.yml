@@ -1,4 +1,4 @@
-# Copyright 2019 Jeremy Edwards
+# Copyright 2021 Jeremy Edwards
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM alpine:latest
-MAINTAINER Jeremy Edwards <jeremyje@gmail.com>
-COPY gowebserver gowebserver
-
-EXPOSE 80
-CMD ["gowebserver"]
+version: 2
+updates:
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"

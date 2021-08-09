@@ -54,7 +54,7 @@ func init() {
 }
 
 const (
-	uploadHTMLPage     = "ajaxupload.html"
+	uploadHTMLPage     = "data/ajaxupload.html"
 	uploadFileFormName = "gowebserveruploadfile[]"
 )
 
