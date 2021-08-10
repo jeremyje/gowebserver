@@ -69,3 +69,4 @@ jobs:
           make all
           make test
           make coverage.txt
+          make image

@@ -25,7 +25,7 @@ RM = rm
 ZIP = zip
 TAR = tar
 
-BASE_VERSION = 0.0.4-dev
+BASE_VERSION = 0.0.0-dev
 SHORT_SHA = $(shell git rev-parse --short=7 HEAD | tr -d [:punct:])
 VERSION_SUFFIX = $(SHORT_SHA)
 VERSION = $(BASE_VERSION)-$(VERSION_SUFFIX)
@@ -164,11 +164,12 @@ image: bin/image-artifacts/windows/amd64/gowebserver.exe $(foreach platform,$(LI
 	
 	for winver in $(WINDOWS_VERSIONS) ; do \
 		$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform windows/amd64 -f cmd/gowebserver/Dockerfile.windows --build-arg WINDOWS_VERSION=$$winver -t $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$$winver . $(DOCKER_PUSH) ; \
+		$(DOCKER) manifest inspect $(GOWEBSERVER_IMAGE):$(TAG) ; \
+		$(DOCKER) manifest create $(GOWEBSERVER_IMAGE):$(TAG) --amend $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$$winver ; \
 	done
 
 #ifeq ($(DOCKER_PUSH),--push)
-	$(DOCKER) manifest inspect $(GOWEBSERVER_IMAGE):$(TAG)
-	$(DOCKER) manifest create $(GOWEBSERVER_IMAGE):$(TAG) $(foreach winver,$(WINDOWS_VERSIONS),--amend $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$(winver))
+	
 	$(DOCKER) manifest inspect $(GOWEBSERVER_IMAGE):$(TAG)
 	for winver in $(WINDOWS_VERSIONS) ; do \
 		windows_version=`$(DOCKER) manifest inspect mcr.microsoft.com/windows/nanoserver:$${winver} | jq -r '.manifests[0].platform["os.version"]'`; \
@@ -180,6 +181,6 @@ image: bin/image-artifacts/windows/amd64/gowebserver.exe $(foreach platform,$(LI
 #endif
 
 push-image: DOCKER_PUSH = --push
-push-image: images
+push-image: image
 
 .PHONY : all assets dist lint clean check test test-10 coverage bench benchmark test-all package-legacy package install run deps
