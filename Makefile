@@ -20,9 +20,12 @@ bindir = $(prefix)/bin
 sharedir = $(prefix)/share
 mandir = $(sharedir)/man
 man1dir = $(mandir)/man1
-RM = rm
 
-BASE_VERSION = 0.0.0-dev
+RM = rm
+ZIP = zip
+TAR = tar
+
+BASE_VERSION = 0.0.4-dev
 SHORT_SHA = $(shell git rev-parse --short=7 HEAD | tr -d [:punct:])
 VERSION_SUFFIX = $(SHORT_SHA)
 VERSION = $(BASE_VERSION)-$(VERSION_SUFFIX)
@@ -30,7 +33,7 @@ BUILD_DATE = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 TAG := $(VERSION)
 
 SOURCE_DIRS=$(shell go list ./... | grep -v '/vendor/')
-export PATH := $(PWD)/toolchain:$(PATH):/root/go/bin:/usr/lib/go-1.9/bin:/usr/local/go/bin:/usr/go/bin
+export PATH := $(PWD)/bin/toolchain:$(PATH):/root/go/bin:/usr/lib/go-1.9/bin:/usr/local/go/bin:/usr/go/bin
 BINARY_NAME=gowebserver
 MAN_PAGE_NAME=${BINARY_NAME}.1
 REPOSITORY_ROOT := $(patsubst %/,%,$(dir $(abspath Makefile)))
@@ -46,6 +49,12 @@ ALL_APPS = gowebserver
 ALL_ASSETS = $(ASSETS) testing/testassets.go
 
 ALL_BINARIES = $(foreach app,$(ALL_APPS),$(foreach platform,$(ALL_PLATFORMS),bin/go/$(platform)/$(app)$(if $(findstring windows_,$(platform)),.exe,)))
+TEST_ASSETS = testing/testassets.zip testing/testassets.tar.gz testing/testassets.tar.bz2 testing/testassets.tar embedded/bindata_assetfs.go
+WINDOWS_VERSIONS = 1809 2004 20H2
+BUILDX_BUILDER = buildx-builder
+LINUX_PLATFORMS = amd64 arm64 ppc64le s390x arm/v5 arm/v6 arm/v7
+space := $(null) #
+comma := ,
 
 bin/go/%: CGO_ENABLED=0
 bin/go/%: $(ASSETS)
@@ -67,7 +76,7 @@ dist: bin/release.tar.gz
 
 bin/release.tar.gz: $(ALL_BINARIES)
 	@mkdir -p bin/release/
-	cd bin/; @tar -zcf bin/release.tar.gz go/ 
+	cd bin/; $(TAR) -zcf bin/release.tar.gz go/ 
 
 lint: $(ALL_ASSETS)
 	$(GO) fmt ${SOURCE_DIRS}
@@ -84,18 +93,16 @@ clean:
 check: test
 
 testing/testassets.zip:
-	@zip -qr9 testing/testassets.zip testing/*
+	$(ZIP) -qr9 testing/testassets.zip testing/*
 
 testing/testassets.tar.gz:
-	@cd testing/testassets/; GZIP=-9 tar czf ../testassets.tar.gz *
+	@cd testing/testassets/; GZIP=-9 $(TAR) czf ../testassets.tar.gz *
 	
 testing/testassets.tar.bz2:
-	@cd testing/testassets/; BZIP=-9 tar cjf ../testassets.tar.bz2 *
+	@cd testing/testassets/; BZIP=-9 $(TAR) cjf ../testassets.tar.bz2 *
 	
 testing/testassets.tar:
-	@cd testing/testassets/; tar cf ../testassets.tar *
-
-TEST_ASSETS = testing/testassets.zip testing/testassets.tar.gz testing/testassets.tar.bz2 testing/testassets.tar embedded/bindata_assetfs.go
+	@cd testing/testassets/; $(TAR) cf ../testassets.tar *
 
 testing/testassets.go: $(TEST_ASSETS)
 	@echo "package testing" > testing/testassets.go
@@ -147,31 +154,32 @@ deps:
 	$(GO) mod tidy
 	$(GO) mod download
 
-BUILDX_BUILDER = buildx-builder
-LINUX_PLATFORMS = amd64 arm64 ppc64le s390x arm/v5 arm/v6 arm/v7
-space := $(null) #
-comma := ,
-
 ensure-builder:
 	-$(DOCKER) buildx create --name $(BUILDX_BUILDER)
 
 # https://github.com/docker-library/official-images#architectures-other-than-amd64
-linux-images: ensure-builder $(foreach platform,$(LINUX_PLATFORMS),bin/image-artifacts/linux/$(platform)/gowebserver)
+image: bin/image-artifacts/windows/amd64/gowebserver.exe $(foreach platform,$(LINUX_PLATFORMS),bin/image-artifacts/linux/$(platform)/gowebserver) ensure-builder
+	-$(DOCKER) manifest rm $(GOWEBSERVER_IMAGE):$(TAG)
 	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform $(subst $(space),$(comma),$(strip $(foreach platform,$(LINUX_PLATFORMS),linux/$(platform)))) -f cmd/gowebserver/Dockerfile -t $(GOWEBSERVER_IMAGE):$(TAG) . $(DOCKER_PUSH)
-
-WINDOWS_VERSIONS = 1809 2004 20H2
-windows-images: bin/image-artifacts/windows/amd64/gowebserver.exe
+	
 	for winver in $(WINDOWS_VERSIONS) ; do \
 		$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform windows/amd64 -f cmd/gowebserver/Dockerfile.windows --build-arg WINDOWS_VERSION=$$winver -t $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$$winver . $(DOCKER_PUSH) ; \
 	done
 
-ifeq ($(DOCKER_PUSH),--push)
-	$(DOCKER) manifest create $(GOWEBSERVER_IMAGE):$(TAG) $(foreach winver,$(WINDOWS_VERSIONS),$(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$(winver))
-	$(DOCKER) manifest push $(GOWEBSERVER_IMAGE):$(TAG) $(GOWEBSERVER_IMAGE):$(TAG)
-endif
+#ifeq ($(DOCKER_PUSH),--push)
+	$(DOCKER) manifest inspect $(GOWEBSERVER_IMAGE):$(TAG)
+	$(DOCKER) manifest create $(GOWEBSERVER_IMAGE):$(TAG) $(foreach winver,$(WINDOWS_VERSIONS),--amend $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$(winver))
+	$(DOCKER) manifest inspect $(GOWEBSERVER_IMAGE):$(TAG)
+	for winver in $(WINDOWS_VERSIONS) ; do \
+		windows_version=`$(DOCKER) manifest inspect mcr.microsoft.com/windows/nanoserver:$${winver} | jq -r '.manifests[0].platform["os.version"]'`; \
+		$(DOCKER) manifest annotate --os-version $${windows_version} $(GOWEBSERVER_IMAGE):$(TAG) $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$${winver} ; \
+	done
+	$(DOCKER) manifest inspect $(GOWEBSERVER_IMAGE):$(TAG)
+	$(DOCKER) manifest push $(GOWEBSERVER_IMAGE):$(TAG)
+	$(DOCKER) manifest inspect $(GOWEBSERVER_IMAGE):$(TAG)
+#endif
 
 push-image: DOCKER_PUSH = --push
-push-image: linux-images windows-images
-	
+push-image: images
 
 .PHONY : all assets dist lint clean check test test-10 coverage bench benchmark test-all package-legacy package install run deps
