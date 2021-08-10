@@ -38,7 +38,7 @@ BINARY_NAME=gowebserver
 MAN_PAGE_NAME=${BINARY_NAME}.1
 REPOSITORY_ROOT := $(patsubst %/,%,$(dir $(abspath Makefile)))
 
-REGISTRY = gcr.io/jeremyje
+REGISTRY = docker.io/jeremyje
 GOWEBSERVER_IMAGE = $(REGISTRY)/gowebserver
 
 NICHE_PLATFORMS = freebsd openbsd netbsd darwin
@@ -75,7 +75,7 @@ assets: $(ASSETS)
 dist: bin/release.tar.gz
 
 bin/release.tar.gz: $(ALL_BINARIES)
-	@mkdir -p bin/release/
+	mkdir -p bin/release/
 	cd bin/; $(TAR) -zcf bin/release.tar.gz go/ 
 
 lint: $(ALL_ASSETS)
@@ -96,21 +96,21 @@ testing/testassets.zip:
 	$(ZIP) -qr9 testing/testassets.zip testing/*
 
 testing/testassets.tar.gz:
-	@cd testing/testassets/; GZIP=-9 $(TAR) czf ../testassets.tar.gz *
+	cd testing/testassets/; GZIP=-9 $(TAR) czf ../testassets.tar.gz *
 	
 testing/testassets.tar.bz2:
-	@cd testing/testassets/; BZIP=-9 $(TAR) cjf ../testassets.tar.bz2 *
+	cd testing/testassets/; BZIP=-9 $(TAR) cjf ../testassets.tar.bz2 *
 	
 testing/testassets.tar:
-	@cd testing/testassets/; $(TAR) cf ../testassets.tar *
+	cd testing/testassets/; $(TAR) cf ../testassets.tar *
 
 testing/testassets.go: $(TEST_ASSETS)
-	@echo "package testing" > testing/testassets.go
-	@echo "const zipAssets=\"$(shell base64 -w0 testing/testassets.zip)\"" >> testing/testassets.go
-	@echo "const tarAssets=\"$(shell base64 -w0 testing/testassets.tar)\"" >> testing/testassets.go
-	@echo "const tarGzAssets=\"$(shell base64 -w0 testing/testassets.tar.gz)\"" >> testing/testassets.go
-	@echo "const tarBzip2Assets=\"$(shell base64 -w0 testing/testassets.tar.bz2)\"" >> testing/testassets.go
-	@gofmt -s -w ./testing/
+	echo "package testing" > testing/testassets.go
+	echo "const zipAssets=\"$(shell base64 -w0 testing/testassets.zip)\"" >> testing/testassets.go
+	echo "const tarAssets=\"$(shell base64 -w0 testing/testassets.tar)\"" >> testing/testassets.go
+	echo "const tarGzAssets=\"$(shell base64 -w0 testing/testassets.tar.gz)\"" >> testing/testassets.go
+	echo "const tarBzip2Assets=\"$(shell base64 -w0 testing/testassets.tar.bz2)\"" >> testing/testassets.go
+	gofmt -s -w ./testing/
 
 test: testing/testassets.go
 	$(GO) test -race ${SOURCE_DIRS}
@@ -122,7 +122,7 @@ coverage: testing/testassets.go
 	$(GO) test -cover ${SOURCE_DIRS}
 
 coverage.txt: testing/testassets.go
-	@for sfile in ${SOURCE_DIRS} ; do \
+	for sfile in ${SOURCE_DIRS} ; do \
 		go test -race "$$sfile" -coverprofile=package.coverage -covermode=atomic; \
 		if [ -f package.coverage ]; then \
 			cat package.coverage >> coverage.txt; \
@@ -137,18 +137,18 @@ benchmark: testing/testassets.go
 test-all: test test-10 benchmark coverage
 
 package-legacy:
-	@snapcraft
+	snapcraft
 
 package:
-	@LC_ALL=C.UTF-8 LANG=C.UTF-8 snapcraft
+	LC_ALL=C.UTF-8 LANG=C.UTF-8 snapcraft
 
 run: clean $(ALL_ASSETS) lint
 	$(GO) run cmd/gowebserver/gowebserver.go -http.port 8181
 
 install: gowebserver
-	@mkdir -p $(DESTDIR)$(bindir) $(DESTDIR)$(man1dir)
-	@install ${BINARY_NAME} $(DESTDIR)$(bindir)
-	@install -m 0644 ${MAN_PAGE_NAME} $(DESTDIR)$(man1dir)
+	mkdir -p $(DESTDIR)$(bindir) $(DESTDIR)$(man1dir)
+	install ${BINARY_NAME} $(DESTDIR)$(bindir)
+	install -m 0644 ${MAN_PAGE_NAME} $(DESTDIR)$(man1dir)
 
 deps:
 	$(GO) mod tidy
@@ -158,27 +158,21 @@ ensure-builder:
 	-$(DOCKER) buildx create --name $(BUILDX_BUILDER)
 
 # https://github.com/docker-library/official-images#architectures-other-than-amd64
-image: bin/image-artifacts/windows/amd64/gowebserver.exe $(foreach platform,$(LINUX_PLATFORMS),bin/image-artifacts/linux/$(platform)/gowebserver) ensure-builder
+image: $(foreach platform,$(LINUX_PLATFORMS),bin/image-artifacts/linux/$(platform)/gowebserver) ensure-builder
 	-$(DOCKER) manifest rm $(GOWEBSERVER_IMAGE):$(TAG)
 	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform $(subst $(space),$(comma),$(strip $(foreach platform,$(LINUX_PLATFORMS),linux/$(platform)))) -f cmd/gowebserver/Dockerfile -t $(GOWEBSERVER_IMAGE):$(TAG) . $(DOCKER_PUSH)
-	
+
+windows-image: bin/image-artifacts/windows/amd64/gowebserver.exe ensure-builder
 	for winver in $(WINDOWS_VERSIONS) ; do \
 		$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform windows/amd64 -f cmd/gowebserver/Dockerfile.windows --build-arg WINDOWS_VERSION=$$winver -t $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$$winver . $(DOCKER_PUSH) ; \
-		$(DOCKER) manifest inspect $(GOWEBSERVER_IMAGE):$(TAG) ; \
-		$(DOCKER) manifest create $(GOWEBSERVER_IMAGE):$(TAG) --amend $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$$winver ; \
 	done
 
-#ifeq ($(DOCKER_PUSH),--push)
-	
-	$(DOCKER) manifest inspect $(GOWEBSERVER_IMAGE):$(TAG)
+	$(DOCKER) manifest create $(GOWEBSERVER_IMAGE):$(TAG)-windows $(foreach winver,$(WINDOWS_VERSIONS),$(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$(winver))
 	for winver in $(WINDOWS_VERSIONS) ; do \
 		windows_version=`$(DOCKER) manifest inspect mcr.microsoft.com/windows/nanoserver:$${winver} | jq -r '.manifests[0].platform["os.version"]'`; \
-		$(DOCKER) manifest annotate --os-version $${windows_version} $(GOWEBSERVER_IMAGE):$(TAG) $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$${winver} ; \
+		$(DOCKER) manifest annotate --os-version $${windows_version} $(GOWEBSERVER_IMAGE):$(TAG)-windows $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$${winver} ; \
 	done
-	$(DOCKER) manifest inspect $(GOWEBSERVER_IMAGE):$(TAG)
-	$(DOCKER) manifest push $(GOWEBSERVER_IMAGE):$(TAG)
-	$(DOCKER) manifest inspect $(GOWEBSERVER_IMAGE):$(TAG)
-#endif
+	$(DOCKER) manifest push $(GOWEBSERVER_IMAGE):$(TAG)-windows
 
 push-image: DOCKER_PUSH = --push
 push-image: image

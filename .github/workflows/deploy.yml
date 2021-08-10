@@ -69,4 +69,5 @@ jobs:
           make all
           make test
           make coverage.txt
-          make image
+          make push-image
+          make REGISTRY=ghcr.io/jeremyje push-image
