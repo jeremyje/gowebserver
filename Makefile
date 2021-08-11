@@ -79,8 +79,8 @@ assets: $(ASSETS)
 dist: bin/release.tar.gz
 
 bin/release.tar.gz: $(ALL_BINARIES)
-	mkdir -p bin/release/
-	cd bin/; $(TAR) -zcf bin/release.tar.gz go/ 
+	mkdir -p bin/
+	cd bin/go/; $(TAR) -zcf ../release.tar.gz *
 
 lint: $(ALL_ASSETS)
 	$(GO) fmt ${SOURCE_DIRS}
