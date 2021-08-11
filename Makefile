@@ -44,8 +44,8 @@ GOWEBSERVER_IMAGE = $(REGISTRY)/gowebserver
 
 NICHE_PLATFORMS = freebsd openbsd netbsd darwin
 
-LINUX_PLATFORMS = linux_386 linux_amd64 linux_arm_v5 linux_arm_v6 linux_arm_v7 linux_arm64 linux_s390x linux_ppc64le
-LINUX_NICHE_PLATFORMS = linux_riscv64 linux_mips64le linux_mips linux_mipsle linux_mips64
+LINUX_PLATFORMS = linux_386 linux_amd64 linux_arm_v5 linux_arm_v6 linux_arm_v7 linux_arm64 linux_s390x linux_ppc64le linux_riscv64 linux_mips64le linux_mips linux_mipsle linux_mips64
+LINUX_NICHE_PLATFORMS = 
 WINDOWS_PLATFORMS = windows_386 windows_amd64
 ALL_PLATFORMS = $(LINUX_PLATFORMS) $(LINUX_NICHE_PLATFORMS) $(WINDOWS_PLATFORMS) $(foreach niche,$(NICHE_PLATFORMS),$(niche)_amd64 $(niche)_arm64)
 ASSETS = embedded/bindata_assetfs.go
@@ -54,7 +54,7 @@ ALL_ASSETS = $(ASSETS) testing/testassets.go
 
 ALL_BINARIES = $(foreach app,$(ALL_APPS),$(foreach platform,$(ALL_PLATFORMS),bin/go/$(platform)/$(app)$(if $(findstring windows_,$(platform)),.exe,)))
 TEST_ASSETS = testing/testassets.zip testing/testassets.tar.gz testing/testassets.tar.bz2 testing/testassets.tar embedded/bindata_assetfs.go
-WINDOWS_VERSIONS = 1809 2004 20H2
+WINDOWS_VERSIONS = 1809 1903 1909 2004 20H2
 BUILDX_BUILDER = buildx-builder
 LINUX_CPU_PLATFORMS = amd64 arm64 ppc64le s390x arm/v5 arm/v6 arm/v7
 space := $(null) #
@@ -166,6 +166,21 @@ image: $(foreach platform,$(LINUX_CPU_PLATFORMS),bin/image-artifacts/linux/$(pla
 	-$(DOCKER) manifest rm $(GOWEBSERVER_IMAGE):$(TAG)
 	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform $(subst $(space),$(comma),$(strip $(foreach platform,$(LINUX_CPU_PLATFORMS),linux/$(platform)))) -f cmd/gowebserver/Dockerfile -t $(GOWEBSERVER_IMAGE):$(TAG) . $(DOCKER_PUSH)
 
+windows-image: bin/image-artifacts/windows/amd64/gowebserver.exe ensure-builder
+	for winver in $(WINDOWS_VERSIONS) ; do \
+		$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform windows/amd64 -f cmd/gowebserver/Dockerfile.windows --build-arg WINDOWS_VERSION=$$winver -t $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$$winver . $(DOCKER_PUSH) ; \
+	done
+
+	$(DOCKER) manifest create $(GOWEBSERVER_IMAGE):$(TAG)-windows $(foreach winver,$(WINDOWS_VERSIONS),$(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$(winver))
+	for winver in $(WINDOWS_VERSIONS) ; do \
+		windows_version=`$(DOCKER) manifest inspect mcr.microsoft.com/windows/nanoserver:$${winver} | jq -r '.manifests[0].platform["os.version"]'`; \
+		$(DOCKER) manifest annotate --os-version $${windows_version} $(GOWEBSERVER_IMAGE):$(TAG)-windows $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$${winver} ; \
+	done
+	$(DOCKER) manifest push $(GOWEBSERVER_IMAGE):$(TAG)-windows
+
+push-image: DOCKER_PUSH = --push
+push-image: image
+
 images: linux-images windows-images
 	-$(DOCKER) manifest rm $(GOWEBSERVER_IMAGE):$(TAG)
 	$(DOCKER) manifest create $(GOWEBSERVER_IMAGE):$(TAG) $(foreach winver,$(WINDOWS_VERSIONS),$(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$(winver)) $(foreach platform,$(LINUX_PLATFORMS),$(GOWEBSERVER_IMAGE):$(TAG)-$(platform))
@@ -183,22 +198,7 @@ linux-image-%: bin/go/%/gowebserver ensure-builder
 
 windows-images: $(foreach winver,$(WINDOWS_VERSIONS),windows-image-$(winver))
 
-windows-image-%: bin/image-artifacts/windows/amd64/gowebserver.exe ensure-builder
+windows-image-%: bin/go/windows_amd64/gowebserver.exe ensure-builder
 	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform windows/amd64 -f cmd/gowebserver/Dockerfile.windows --build-arg WINDOWS_VERSION=$* -t $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$* . $(DOCKER_PUSH)
-
-windows-image: bin/image-artifacts/windows/amd64/gowebserver.exe ensure-builder
-	for winver in $(WINDOWS_VERSIONS) ; do \
-		$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform windows/amd64 -f cmd/gowebserver/Dockerfile.windows --build-arg WINDOWS_VERSION=$$winver -t $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$$winver . $(DOCKER_PUSH) ; \
-	done
-
-	$(DOCKER) manifest create $(GOWEBSERVER_IMAGE):$(TAG)-windows $(foreach winver,$(WINDOWS_VERSIONS),$(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$(winver))
-	for winver in $(WINDOWS_VERSIONS) ; do \
-		windows_version=`$(DOCKER) manifest inspect mcr.microsoft.com/windows/nanoserver:$${winver} | jq -r '.manifests[0].platform["os.version"]'`; \
-		$(DOCKER) manifest annotate --os-version $${windows_version} $(GOWEBSERVER_IMAGE):$(TAG)-windows $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$${winver} ; \
-	done
-	$(DOCKER) manifest push $(GOWEBSERVER_IMAGE):$(TAG)-windows
-
-push-image: DOCKER_PUSH = --push
-push-image: image
 
 .PHONY : all assets dist lint clean check test test-10 coverage bench benchmark test-all package-legacy package install run deps

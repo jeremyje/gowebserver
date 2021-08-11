@@ -16,7 +16,7 @@ ARG WINDOWS_VERSION=1809
 
 FROM mcr.microsoft.com/windows/nanoserver:${WINDOWS_VERSION}
 
-COPY bin/image-artifacts/windows/amd64/gowebserver.exe /app/gowebserver.exe
+COPY bin/go/windows_amd64/gowebserver.exe /app/gowebserver.exe
 COPY LICENSE /app/LICENSE
 
 USER ContainerUser
