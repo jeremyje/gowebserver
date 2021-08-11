@@ -16,6 +16,7 @@ package server
 
 import (
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -44,7 +45,7 @@ type WebServer interface {
 	// SetUpload sets the upload endpoint and upload directory.
 	SetUpload(uploadPath string, uploadServePath string) error
 	// Serve starts serving the HTTP/HTTPS server synchronously.
-	Serve()
+	Serve(<-chan error) error
 }
 
 type webServerImpl struct {
@@ -126,10 +127,12 @@ func (ws *webServerImpl) addHandler(serverMux *http.ServeMux, servePath string, 
 	//}
 }
 
-func (ws *webServerImpl) Serve() {
+func (ws *webServerImpl) Serve(termCh <-chan error) error {
 	log.Printf("Serving %s on %s and %s", ws.servingPath, ws.httpPort, ws.httpsPort)
 	httpFs, err := filesystem.New(ws.servingPath)
-	checkError(err)
+	if err != nil {
+		return err
+	}
 	fsHandler := http.FileServer(httpFs)
 	serverMux := http.NewServeMux()
 	if ws.metricsEnabled {
@@ -143,17 +146,30 @@ func (ws *webServerImpl) Serve() {
 	}
 	corsHandler := cors.Default().Handler(serverMux)
 	httpHandler := newTracingHTTPHandler(corsHandler, ws.metricsEnabled, ws.verbose)
-	ws.serveInternal(httpHandler)
-	waitForever()
-}
 
-func (ws *webServerImpl) serveInternal(httpHandler http.Handler) {
+	httpSocket, err := net.Listen("tcp", ws.httpPort)
+	if err != nil {
+		return err
+	}
+
+	defer httpSocket.Close()
+
+	httpsSocket, err := net.Listen("tcp", ws.httpsPort)
+	if err != nil {
+		return err
+	}
+
+	defer httpsSocket.Close()
+
 	go func() {
-		checkError(http.ListenAndServeTLS(ws.httpsPort, ws.certificateFilePath, ws.privateKeyFilePath, httpHandler))
+		checkError(http.ServeTLS(httpSocket, httpHandler, ws.certificateFilePath, ws.privateKeyFilePath))
 	}()
 	go func() {
-		checkError(http.ListenAndServe(ws.httpPort, httpHandler))
+		checkError(http.Serve(httpSocket, httpHandler))
 	}()
+
+	<-termCh
+	return nil
 }
 
 // NewWebServer creates a new web server instance.
