@@ -69,5 +69,5 @@ jobs:
           make all
           make test
           make coverage.txt
-          make push-image
-          make REGISTRY=ghcr.io/jeremyje push-image
+          make DOCKER_PUSH=--push REGISTRY=docker.io/jeremyje images
+          make DOCKER_PUSH=--push REGISTRY=ghcr.io/jeremyje images
