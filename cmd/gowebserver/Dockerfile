@@ -14,12 +14,11 @@
 
 FROM --platform=$BUILDPLATFORM gcr.io/distroless/static:nonroot
 
-ARG TARGETPLATFORM
-ARG BUILDPLATFORM
+ARG BINARY_PATH
 
 WORKDIR /app/
 
-COPY --chown=nonroot bin/image-artifacts/$TARGETPLATFORM/gowebserver /app/gowebserver
+COPY --chown=nonroot $BINARY_PATH /app/gowebserver
 COPY --chown=nonroot LICENSE /app/LICENSE
 
 EXPOSE 80
