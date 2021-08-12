@@ -34,7 +34,7 @@ var elog debug.Log
 func platformMain() error {
 	runAsService, err := svc.IsWindowsService()
 	if err != nil {
-		log.Printf("cannot determine if runnning as a service, %v, assuming standalone", err)
+		log.Printf("cannot determine if running as a service, %v, assuming standalone", err)
 		runAsService = false
 	}
 
