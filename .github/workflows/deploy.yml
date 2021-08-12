@@ -72,3 +72,9 @@ jobs:
           make DOCKER_PUSH=--push REGISTRY=docker.io/jeremyje images
           make DOCKER_PUSH=--push REGISTRY=ghcr.io/jeremyje images
           make bin/release.tar.gz
+
+      - name: Publish Application
+        uses: actions/upload-artifact@v2
+        with:
+          name: code-coverage-report
+          path: bin/release.tar.gz
