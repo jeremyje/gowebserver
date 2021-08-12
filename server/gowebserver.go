@@ -26,7 +26,13 @@ func Run() {
 	platformMain()
 }
 
-func runInteractive(termCh <-chan error) error {
+func runInteractive() error {
+	terminateCh := make(chan error, 1)
+	defer close(terminateCh)
+	return runApplication(terminateCh)
+}
+
+func runApplication(termCh <-chan error) error {
 	conf := config.Load()
 	if conf.Verbose {
 		fmt.Printf("%v", conf)

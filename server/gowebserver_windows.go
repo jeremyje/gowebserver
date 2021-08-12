@@ -1,3 +1,5 @@
+// +build windows
+//
 // Copyright 2019 Jeremy Edwards
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,16 +17,19 @@
 package server
 
 import (
+	"errors"
 	"fmt"
-	"os"
-
-	"github.com/jeremyje/gowebserver/cert"
-	"github.com/jeremyje/gowebserver/config"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
-	"golang.org/x/sys/windows/svc/mgr"
+	"log"
 )
+
+const (
+	appName = "gowebserver"
+)
+
+var elog debug.Log
 
 func platformMain() error {
 	runAsService, err := svc.IsWindowsService()
@@ -58,7 +63,7 @@ func (m *serviceHandler) Execute(args []string, r <-chan svc.ChangeRequest, chan
 	}()
 
 	go func() {
-		err := runInteractive(terminateCh)
+		err := runApplication(terminateCh)
 		resultCh <- err
 	}()
 
@@ -68,7 +73,7 @@ func (m *serviceHandler) Execute(args []string, r <-chan svc.ChangeRequest, chan
 		case err := <-resultCh:
 			if err != nil {
 				elog.Info(1, fmt.Sprintf("service died because %v", err))
-				return true, util.StringHashUint32(err.Error())
+				return true, 1
 			}
 			return false, 0
 		case c := <-r:
@@ -93,30 +98,20 @@ func (m *serviceHandler) Execute(args []string, r <-chan svc.ChangeRequest, chan
 	}
 }
 
-func runService(app *Application, isDebug bool) error {
-	var err error
-	if isDebug {
-		elog = debug.New(app.Name)
-	} else {
-		elog, err = eventlog.Open(app.Name)
-		if err != nil {
-			return err
-		}
+func runService() error {
+	elog, err := eventlog.Open(appName)
+	if err != nil {
+		return err
 	}
 	defer elog.Close()
 
-	elog.Info(1, fmt.Sprintf("starting %s service", app.Name))
+	elog.Info(1, fmt.Sprintf("starting %s service", appName))
 	run := svc.Run
-	if isDebug {
-		run = debug.Run
-	}
-	err = run(app.Name, &serviceHandler{
-		app: app,
-	})
+	err = run(appName, &serviceHandler{})
 	if err != nil {
-		elog.Error(1, fmt.Sprintf("%s service failed: %v", app.Name, err))
+		elog.Error(1, fmt.Sprintf("%s service failed: %v", appName, err))
 		return err
 	}
-	elog.Info(1, fmt.Sprintf("%s service stopped", app.Name))
+	elog.Info(1, fmt.Sprintf("%s service stopped", appName))
 	return nil
 }

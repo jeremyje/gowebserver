@@ -17,7 +17,5 @@
 package server
 
 func platformMain() error {
-	terminateCh := make(chan error, 1)
-	defer close(terminateCh)
-	return runInteractive(terminateCh)
+	return runInteractive()
 }
