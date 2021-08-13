@@ -69,8 +69,8 @@ jobs:
           make all
           make test
           make coverage.txt
-          make DOCKER_PUSH=--push REGISTRY=docker.io/jeremyje TAG=${{ github.ref }} images
-          make DOCKER_PUSH=--push REGISTRY=ghcr.io/jeremyje TAG=${{ github.ref }} images
+          make DOCKER_PUSH=--push REGISTRY=docker.io/jeremyje TAG=${{ github.event.inputs.tag }} images
+          make DOCKER_PUSH=--push REGISTRY=ghcr.io/jeremyje TAG=${{ github.event.inputs.tag }} images
           make bin/release.tar.gz
 
       - name: Publish Application
