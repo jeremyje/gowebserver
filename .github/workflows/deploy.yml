@@ -69,12 +69,38 @@ jobs:
           make all
           make test
           make coverage.txt
+          make bin/release.tar.gz
+
+      - name: Push Images (Commit)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        run: |
           make DOCKER_PUSH=--push REGISTRY=docker.io/jeremyje images
           make DOCKER_PUSH=--push REGISTRY=ghcr.io/jeremyje images
           make bin/release.tar.gz
 
+      - name: Push Images (Release)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          make DOCKER_PUSH=--push REGISTRY=docker.io/jeremyje TAG=${{ github.event.inputs.tag }} images
+          make DOCKER_PUSH=--push REGISTRY=ghcr.io/jeremyje TAG=${{ github.event.inputs.tag }} images
+          make bin/release.tar.gz
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          draft: true
+          prerelease: false
+          files: |
+            LICENSE.md
+            bin/go/windows_amd64/gowebserver.exe
+            bin/go/linux_amd64/gowebserver
+
       - name: Publish Application
         uses: actions/upload-artifact@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: code-coverage-report
-          path: bin/release.tar.gz
+          name: release.tar.gz
+          path: |
+            bin/release.tar.gz
+            bin/go/**/*.tar.gz
