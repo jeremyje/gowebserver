@@ -70,3 +70,4 @@ bazel-testlogs
 .snapcraft/
 toolchain/
 bin/
+.vscode/
