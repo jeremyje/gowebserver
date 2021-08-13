@@ -69,8 +69,6 @@ jobs:
           make all
           make test
           make coverage.txt
-          make DOCKER_PUSH=--push REGISTRY=docker.io/jeremyje images
-          make DOCKER_PUSH=--push REGISTRY=ghcr.io/jeremyje images
           make bin/release.tar.gz
 
       - name: Push Images (Commit)
