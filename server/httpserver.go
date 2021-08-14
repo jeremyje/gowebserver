@@ -162,7 +162,7 @@ func (ws *webServerImpl) Serve(termCh <-chan error) error {
 	defer httpsSocket.Close()
 
 	go func() {
-		checkError(http.ServeTLS(httpSocket, httpHandler, ws.certificateFilePath, ws.privateKeyFilePath))
+		checkError(http.ServeTLS(httpsSocket, httpHandler, ws.certificateFilePath, ws.privateKeyFilePath))
 	}()
 	go func() {
 		checkError(http.Serve(httpSocket, httpHandler))
