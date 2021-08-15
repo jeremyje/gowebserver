@@ -101,6 +101,7 @@ jobs:
             LICENSE.md
             bin/go/windows_amd64/gowebserver.exe
             bin/go/linux_amd64/gowebserver
+            bin/release.tar.gz
 
       - name: Publish Application
         uses: actions/upload-artifact@v2
