@@ -76,6 +76,7 @@ jobs:
           make test
           make coverage.txt
           make bin/release.tar.gz
+          make release-binaries
 
       - name: Push Images (Commit)
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
@@ -99,9 +100,15 @@ jobs:
           prerelease: false
           files: |
             LICENSE.md
-            bin/go/windows_amd64/gowebserver.exe
-            bin/go/linux_amd64/gowebserver
             bin/release.tar.gz
+            bin/release/server-386
+            bin/release/server-386.exe
+            bin/release/server-amd64
+            bin/release/server-amd64-darwin
+            bin/release/server-amd64.exe
+            bin/release/server-arm
+            bin/release/server-arm64
+            bin/release/server-arm64-darwin
 
       - name: Publish Application
         uses: actions/upload-artifact@v2
@@ -110,4 +117,4 @@ jobs:
           name: release.tar.gz
           path: |
             bin/release.tar.gz
-            bin/go/**/*.tar.gz
+            bin/release/*
