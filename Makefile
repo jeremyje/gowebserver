@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include golang.mk
-include docker.mk
-
 prefix = /usr
 bindir = $(prefix)/bin
 sharedir = $(prefix)/share
@@ -25,7 +22,10 @@ RM = rm
 ZIP = zip
 TAR = tar
 ECHO = @echo
+GO = GO111MODULE=on go
+DOCKER = DOCKER_CLI_EXPERIMENTAL=enabled docker
 
+EXE_EXTENSION =
 BASE_VERSION = 0.0.0-dev
 SHORT_SHA = $(shell git rev-parse --short=7 HEAD | tr -d [:punct:])
 VERSION_SUFFIX = $(SHORT_SHA)
@@ -41,6 +41,11 @@ REPOSITORY_ROOT := $(patsubst %/,%,$(dir $(abspath Makefile)))
 
 REGISTRY = docker.io/jeremyje
 GOWEBSERVER_IMAGE = $(REGISTRY)/gowebserver
+
+GO_TOOLCHAIN_DIR = $(dir $(abspath golang.mk))bin/toolchain
+
+# Constant modtime value so that the created files are consistent.
+BINDATA_MODTIME := 1557978307
 
 NICHE_PLATFORMS = freebsd openbsd netbsd darwin
 
@@ -60,21 +65,81 @@ LINUX_CPU_PLATFORMS = amd64 arm64 ppc64le s390x arm/v5 arm/v6 arm/v7
 space := $(null) #
 comma := ,
 
-bin/go/%: CGO_ENABLED=0
-bin/go/%: $(ASSETS)
-
-.SECONDEXPANSION:
-
-bin/image-artifacts/%/gowebserver: bin/go/$$(subst /,_,%)/gowebserver
-	mkdir -p $(dir $@)
-	cp -f $< $@
-
-bin/image-artifacts/%/gowebserver.exe: bin/go/$$(subst /,_,%)/gowebserver.exe
-	mkdir -p $(dir $@)
-	cp -f $< $@
+ifeq ($(OS),Windows_NT)
+	HOST_OS = windows
+	HOST_PLATFORM = windows_amd64
+	EXE_EXTENSION = .exe
+else
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Linux)
+		HOST_OS = linux
+		ifeq ($(UNAME_ARCH),arm)
+			HOST_PLATFORM = linux_arm
+		else
+			HOST_PLATFORM = linux_amd64
+		endif
+	endif
+	ifeq ($(UNAME_S),Darwin)
+		HOST_OS = darwin
+		HOST_PLATFORM = darwin_amd64
+	endif
+endif
 
 all: $(ALL_BINARIES)
 assets: $(ASSETS)
+
+bin/toolchain/go-bindata$(EXE_EXTENSION):
+	mkdir -p $(dir $(abspath $@))
+	cd $(dir $(abspath $@)) && $(GO) build -pkgdir . github.com/go-bindata/go-bindata/go-bindata
+	touch $@
+
+bin/toolchain/go-bindata-assetfs$(EXE_EXTENSION):
+	mkdir -p $(dir $(abspath $@))
+	cd $(dir $(abspath $@)) && $(GO) build -pkgdir . github.com/elazarl/go-bindata-assetfs/go-bindata-assetfs
+	touch $@
+
+bin/go/%: $(ASSETS)
+	GOOS=$(firstword $(subst _, ,$(notdir $(abspath $(dir $@))))) GOARCH=$(word 2, $(subst _, ,$(notdir $(abspath $(dir $@))))) GOARM=$(subst v,,$(word 3, $(subst _, ,$(notdir $(abspath $(dir $@)))))) CGO_ENABLED=0 $(GO) build -o $@ cmd/$(basename $(notdir $@))/$(basename $(notdir $@)).go
+	touch $@
+
+%/bindata.go: bin/toolchain/go-bindata$(EXE_EXTENSION)
+	cd $(dir $@); $(GO_TOOLCHAIN_DIR)/go-bindata$(EXE_EXTENSION) -modtime $(BINDATA_MODTIME) -pkg $(notdir $(abspath $(dir $@))) -o bindata.go data/...
+	$(GO) fmt $@
+	touch $@
+
+%/bindata_assetfs.go: %/bindata.go bin/toolchain/go-bindata-assetfs$(EXE_EXTENSION)
+	cd $(dir $@); $(GO_TOOLCHAIN_DIR)/go-bindata-assetfs$(EXE_EXTENSION) -modtime $(BINDATA_MODTIME) -pkg $(notdir $(abspath $(dir $@))) -o bindata_assetfs.go data/...
+	rm -f $*/bindata.go
+	$(GO) fmt $@
+	touch $@
+
+RELEASE_BINARIES = amd64 arm arm64 386 arm amd64-darwin arm64-darwin amd64.exe 386.exe
+
+release-binaries: $(foreach relbin,$(RELEASE_BINARIES),bin/release/server-$(relbin))
+
+bin/release/server-amd64: bin/go/linux_amd64/gowebserver
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/server-arm: bin/go/linux_arm_v7/gowebserver
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/server-arm64: bin/go/linux_arm64/gowebserver
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/server-386: bin/go/linux_386/gowebserver
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/server-amd64-darwin: bin/go/darwin_amd64/gowebserver
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/server-arm64-darwin: bin/go/darwin_arm64/gowebserver
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/server-amd64.exe: bin/go/windows_amd64/gowebserver.exe
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/server-386.exe: bin/go/windows_386/gowebserver.exe
+	mkdir -p bin/release/ && cp $< $@
 
 dist: bin/release.tar.gz
 
@@ -162,25 +227,6 @@ ensure-builder:
 	-$(DOCKER) buildx create --name $(BUILDX_BUILDER)
 
 # https://github.com/docker-library/official-images#architectures-other-than-amd64
-image: $(foreach platform,$(LINUX_CPU_PLATFORMS),bin/image-artifacts/linux/$(platform)/gowebserver) ensure-builder $(foreach platform,$(LINUX_CPU_PLATFORMS),bin/image-artifacts/linux/$(platform)/gowebserver)
-	-$(DOCKER) manifest rm $(GOWEBSERVER_IMAGE):$(TAG)
-	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform $(subst $(space),$(comma),$(strip $(foreach platform,$(LINUX_CPU_PLATFORMS),linux/$(platform)))) -f cmd/gowebserver/Dockerfile -t $(GOWEBSERVER_IMAGE):$(TAG) . $(DOCKER_PUSH)
-
-windows-image: bin/image-artifacts/windows/amd64/gowebserver.exe ensure-builder
-	for winver in $(WINDOWS_VERSIONS) ; do \
-		$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform windows/amd64 -f cmd/gowebserver/Dockerfile.windows --build-arg WINDOWS_VERSION=$$winver -t $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$$winver . $(DOCKER_PUSH) ; \
-	done
-
-	$(DOCKER) manifest create $(GOWEBSERVER_IMAGE):$(TAG)-windows $(foreach winver,$(WINDOWS_VERSIONS),$(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$(winver))
-	for winver in $(WINDOWS_VERSIONS) ; do \
-		windows_version=`$(DOCKER) manifest inspect mcr.microsoft.com/windows/nanoserver:$${winver} | jq -r '.manifests[0].platform["os.version"]'`; \
-		$(DOCKER) manifest annotate --os-version $${windows_version} $(GOWEBSERVER_IMAGE):$(TAG)-windows $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$${winver} ; \
-	done
-	$(DOCKER) manifest push $(GOWEBSERVER_IMAGE):$(TAG)-windows
-
-push-image: DOCKER_PUSH = --push
-push-image: image
-
 images: linux-images windows-images
 	-$(DOCKER) manifest rm $(GOWEBSERVER_IMAGE):$(TAG)
 	$(DOCKER) manifest create $(GOWEBSERVER_IMAGE):$(TAG) $(foreach winver,$(WINDOWS_VERSIONS),$(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$(winver)) $(foreach platform,$(LINUX_PLATFORMS),$(GOWEBSERVER_IMAGE):$(TAG)-$(platform))
