@@ -29,7 +29,7 @@ import (
 const fsDirMode = os.FileMode(0777)
 
 type createFsResult struct {
-	handler       http.FileSystem
+	handler       http.Handler
 	localFilePath string
 	tmpDir        string
 	err           error
@@ -41,6 +41,12 @@ func (r createFsResult) withError(err error) createFsResult {
 }
 
 func (r createFsResult) withHandler(handler http.FileSystem, err error) createFsResult {
+	r.handler = http.FileServer(handler)
+	r.err = err
+	return r
+}
+
+func (r createFsResult) withHTTPHandler(handler http.Handler, err error) createFsResult {
 	r.handler = handler
 	r.err = err
 	return r

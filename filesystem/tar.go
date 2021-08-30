@@ -61,7 +61,7 @@ func newTarFs(filePath string) createFsResult {
 	if err != nil {
 		return staged.withError(err)
 	}
-	return staged.withHandler(newNative(staged.tmpDir))
+	return staged.withHTTPHandler(newNative(staged.tmpDir))
 }
 
 func processTarEntries(tr *tar.Reader, tmpDir string) error {

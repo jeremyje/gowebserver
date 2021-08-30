@@ -19,10 +19,10 @@ import (
 	"path/filepath"
 )
 
-func newNative(directory string) (http.FileSystem, error) {
+func newNative(directory string) (http.Handler, error) {
 	dir, err := filepath.Abs(directory)
 	if err != nil {
 		return nil, err
 	}
-	return http.Dir(dirPath(dir)), nil
+	return http.FileServer(http.Dir(dirPath(dir))), nil
 }

@@ -19,7 +19,7 @@ import (
 )
 
 // New creates a filesystem for the HTTP server from an archive file.
-func New(path string) (http.FileSystem, error) {
+func New(path string) (http.Handler, error) {
 	if isSupportedZip(path) {
 		staged := newZipFs(path)
 		return staged.handler, staged.err
@@ -28,6 +28,9 @@ func New(path string) (http.FileSystem, error) {
 		return staged.handler, staged.err
 	} else if isSupportedGit(path) {
 		staged := newGitFs(path)
+		return staged.handler, staged.err
+	} else if isSupportedHTTP(path) {
+		staged := newHTTPReverseProxy(path)
 		return staged.handler, staged.err
 	}
 	return newNative(path)

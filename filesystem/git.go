@@ -16,10 +16,11 @@ package filesystem
 
 import (
 	"fmt"
-	git "gopkg.in/src-d/go-git.v4"
 	"os"
 	"path/filepath"
 	"strings"
+
+	git "gopkg.in/src-d/go-git.v4"
 )
 
 func newGitFs(filePath string) createFsResult {
@@ -47,7 +48,7 @@ func newGitFs(filePath string) createFsResult {
 	tryDeleteDirectory(filepath.Join(tmpDir, ".git"))
 	tryDeleteFile(filepath.Join(tmpDir, ".gitignore"))
 	tryDeleteFile(filepath.Join(tmpDir, ".gitmodules"))
-	return staged.withHandler(newNative(tmpDir))
+	return staged.withHTTPHandler(newNative(tmpDir))
 }
 
 func isSupportedGit(filePath string) bool {

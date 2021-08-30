@@ -129,11 +129,10 @@ func (ws *webServerImpl) addHandler(serverMux *http.ServeMux, servePath string, 
 
 func (ws *webServerImpl) Serve(termCh <-chan error) error {
 	log.Printf("Serving %s on %s and %s", ws.servingPath, ws.httpPort, ws.httpsPort)
-	httpFs, err := filesystem.New(ws.servingPath)
+	fsHandler, err := filesystem.New(ws.servingPath)
 	if err != nil {
 		return err
 	}
-	fsHandler := http.FileServer(httpFs)
 	serverMux := http.NewServeMux()
 	if ws.metricsEnabled {
 		serverMux.Handle(ws.metricsServePath, promhttp.Handler())

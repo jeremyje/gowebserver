@@ -55,13 +55,13 @@ func newZipFs(filePath string) createFsResult {
 			}
 		}
 	}
-	return staged.withHandler(newNative(staged.tmpDir))
+	return staged.withHTTPHandler(newNative(staged.tmpDir))
 }
 
 func writeFileFromZipEntry(f *zip.File, filePath string) error {
 	zf, err := f.Open()
 	if err != nil {
-		return fmt.Errorf("Cannot open input file: %s", err)
+		return fmt.Errorf("cannot open input file: %s", err)
 	}
 	defer zf.Close()
 	return copyFile(zf, filePath)
