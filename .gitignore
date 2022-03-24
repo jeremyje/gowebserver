@@ -48,6 +48,7 @@ gowebserver-*
 *.pem
 release.tar.gz
 testing/testassets.*
+internal/gowebserver/testing/testassets.*
 packaging/parts/
 packaging/snap/
 uploaded-files/
@@ -71,3 +72,6 @@ bazel-testlogs
 toolchain/
 bin/
 .vscode/
+
+*.key
+*.cert

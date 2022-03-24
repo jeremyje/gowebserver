@@ -21,6 +21,7 @@ man1dir = $(mandir)/man1
 RM = rm
 ZIP = zip
 TAR = tar
+SEVENZIP = 7z
 ECHO = @echo
 GO = GO111MODULE=on go
 DOCKER = DOCKER_CLI_EXPERIMENTAL=enabled docker
@@ -40,28 +41,33 @@ MAN_PAGE_NAME=${BINARY_NAME}.1
 REPOSITORY_ROOT := $(patsubst %/,%,$(dir $(abspath Makefile)))
 
 REGISTRY = docker.io/jeremyje
+CERTTOOL_IMAGE = $(REGISTRY)/certtool
 GOWEBSERVER_IMAGE = $(REGISTRY)/gowebserver
+HTTPPROBE_IMAGE = $(REGISTRY)/httpprobe
 
 GO_TOOLCHAIN_DIR = $(dir $(abspath golang.mk))bin/toolchain
 
-# Constant modtime value so that the created files are consistent.
-BINDATA_MODTIME := 1557978307
-
 NICHE_PLATFORMS = freebsd openbsd netbsd darwin
 
-LINUX_PLATFORMS = linux_386 linux_amd64 linux_arm_v5 linux_arm_v6 linux_arm_v7 linux_arm64 linux_s390x linux_ppc64le linux_riscv64 linux_mips64le linux_mips linux_mipsle linux_mips64
+LINUX_PLATFORMS = linux_386 linux_amd64 linux_arm_v5 linux_arm_v6 linux_arm_v7 linux_arm64 linux_s390x linux_ppc64 linux_ppc64le linux_riscv64 linux_mips64le linux_mips linux_mipsle linux_mips64
 LINUX_NICHE_PLATFORMS = 
-WINDOWS_PLATFORMS = windows_386 windows_amd64
+WINDOWS_PLATFORMS = windows_386 windows_amd64 windows_arm64
+MAIN_PLATFORMS = windows_amd64 linux_amd64 linux_arm64
 ALL_PLATFORMS = $(LINUX_PLATFORMS) $(LINUX_NICHE_PLATFORMS) $(WINDOWS_PLATFORMS) $(foreach niche,$(NICHE_PLATFORMS),$(niche)_amd64 $(niche)_arm64)
-ASSETS = embedded/bindata_assetfs.go
-ALL_APPS = gowebserver
-ALL_ASSETS = $(ASSETS) testing/testassets.go
+TEST_ARCHIVES = internal/gowebserver/testing/testassets.zip
+TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.gz
+TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.bz2
+TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar
+TEST_ARCHIVES += internal/gowebserver/testing/testassets.7z
+TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.xz
+TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.lz4
+ASSETS = $(TEST_ARCHIVES)
+ALL_APPS = gowebserver certtool httpprobe
 
 ALL_BINARIES = $(foreach app,$(ALL_APPS),$(foreach platform,$(ALL_PLATFORMS),bin/go/$(platform)/$(app)$(if $(findstring windows_,$(platform)),.exe,)))
-TEST_ASSETS = testing/testassets.zip testing/testassets.tar.gz testing/testassets.tar.bz2 testing/testassets.tar embedded/bindata_assetfs.go
-WINDOWS_VERSIONS = 1809 1903 1909 2004 20H2
+WINDOWS_VERSIONS = 1709 1803 1809 1903 1909 2004 20H2 ltsc2022
 BUILDX_BUILDER = buildx-builder
-LINUX_CPU_PLATFORMS = amd64 arm64 ppc64le s390x arm/v5 arm/v6 arm/v7
+LINUX_CPU_PLATFORMS = amd64 arm64 ppc64 ppc64le s390x arm/v5 arm/v6 arm/v7
 space := $(null) #
 comma := ,
 
@@ -88,29 +94,8 @@ endif
 all: $(ALL_BINARIES)
 assets: $(ASSETS)
 
-bin/toolchain/go-bindata$(EXE_EXTENSION):
-	mkdir -p $(dir $(abspath $@))
-	cd $(dir $(abspath $@)) && $(GO) build -pkgdir . github.com/go-bindata/go-bindata/go-bindata
-	touch $@
-
-bin/toolchain/go-bindata-assetfs$(EXE_EXTENSION):
-	mkdir -p $(dir $(abspath $@))
-	cd $(dir $(abspath $@)) && $(GO) build -pkgdir . github.com/elazarl/go-bindata-assetfs/go-bindata-assetfs
-	touch $@
-
 bin/go/%: $(ASSETS)
 	GOOS=$(firstword $(subst _, ,$(notdir $(abspath $(dir $@))))) GOARCH=$(word 2, $(subst _, ,$(notdir $(abspath $(dir $@))))) GOARM=$(subst v,,$(word 3, $(subst _, ,$(notdir $(abspath $(dir $@)))))) CGO_ENABLED=0 $(GO) build -o $@ cmd/$(basename $(notdir $@))/$(basename $(notdir $@)).go
-	touch $@
-
-%/bindata.go: bin/toolchain/go-bindata$(EXE_EXTENSION)
-	cd $(dir $@); $(GO_TOOLCHAIN_DIR)/go-bindata$(EXE_EXTENSION) -modtime $(BINDATA_MODTIME) -pkg $(notdir $(abspath $(dir $@))) -o bindata.go data/...
-	$(GO) fmt $@
-	touch $@
-
-%/bindata_assetfs.go: %/bindata.go bin/toolchain/go-bindata-assetfs$(EXE_EXTENSION)
-	cd $(dir $@); $(GO_TOOLCHAIN_DIR)/go-bindata-assetfs$(EXE_EXTENSION) -modtime $(BINDATA_MODTIME) -pkg $(notdir $(abspath $(dir $@))) -o bindata_assetfs.go data/...
-	rm -f $*/bindata.go
-	$(GO) fmt $@
 	touch $@
 
 RELEASE_BINARIES = amd64 arm arm64 386 arm amd64-darwin arm64-darwin amd64.exe 386.exe
@@ -141,56 +126,59 @@ bin/release/server-amd64.exe: bin/go/windows_amd64/gowebserver.exe
 bin/release/server-386.exe: bin/go/windows_386/gowebserver.exe
 	mkdir -p bin/release/ && cp $< $@
 
+bin/release/server-arm64.exe: bin/go/windows_arm64/gowebserver.exe
+	mkdir -p bin/release/ && cp $< $@
+
 dist: bin/release.tar.gz
 
 bin/release.tar.gz: $(ALL_BINARIES)
 	mkdir -p bin/
-	cd bin/go/; $(TAR) -zcf ../release.tar.gz *
+	cd bin/go/; $(TAR) -I 'gzip -9' -cf ../release.tar.gz *
 
-lint: $(ALL_ASSETS)
+lint: $(ASSETS)
 	$(GO) fmt ${SOURCE_DIRS}
 	$(GO) vet ${SOURCE_DIRS}
 
 clean:
-	$(RM) -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz testing/*.zip testing/*.tar* testing/testassets.go *.tar.bz2 *.snap
+	$(RM) -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz $(TEST_ARCHIVES) *.tar.bz2 *.snap
 	$(RM) -rf parts/ prime/ snap/.snapcraft/ stage/ *.snap
-	$(RM) -f embedded/bindata_assetfs.go
 	$(RM) -rf upload/
 	$(RM) -rf toolchain/
 	$(RM) -rf bin/
 
 check: test
 
-testing/testassets.zip:
-	$(ZIP) -qr9 testing/testassets.zip testing/*
+internal/gowebserver/testing/testassets.zip:
+	cd internal/gowebserver/testing/testassets/; $(ZIP) -qr9 ../testassets.zip *
 
-testing/testassets.tar.gz:
-	cd testing/testassets/; GZIP=-9 $(TAR) czf ../testassets.tar.gz *
+internal/gowebserver/testing/testassets.tar.gz:
+	cd internal/gowebserver/testing/testassets/; $(TAR) -I 'gzip -9' -cf ../testassets.tar.gz *
 	
-testing/testassets.tar.bz2:
-	cd testing/testassets/; BZIP=-9 $(TAR) cjf ../testassets.tar.bz2 *
+internal/gowebserver/testing/testassets.tar.bz2:
+	cd internal/gowebserver/testing/testassets/; BZIP=-9 $(TAR) cjf ../testassets.tar.bz2 *
+
+internal/gowebserver/testing/testassets.tar.xz:
+	cd internal/gowebserver/testing/testassets/; $(TAR) cJf ../testassets.tar.xz *
 	
-testing/testassets.tar:
-	cd testing/testassets/; $(TAR) cf ../testassets.tar *
+internal/gowebserver/testing/testassets.tar.lz4:
+	cd internal/gowebserver/testing/testassets/; $(TAR) cf ../testassets.tar.lz4 -I 'lz4' *
+	
+internal/gowebserver/testing/testassets.tar:
+	cd internal/gowebserver/testing/testassets/; $(TAR) cf ../testassets.tar *
 
-testing/testassets.go: $(TEST_ASSETS)
-	$(ECHO) "package testing" > testing/testassets.go
-	$(ECHO) "const zipAssets=\"$(shell base64 -w0 testing/testassets.zip)\"" >> testing/testassets.go
-	$(ECHO) "const tarAssets=\"$(shell base64 -w0 testing/testassets.tar)\"" >> testing/testassets.go
-	$(ECHO) "const tarGzAssets=\"$(shell base64 -w0 testing/testassets.tar.gz)\"" >> testing/testassets.go
-	$(ECHO) "const tarBzip2Assets=\"$(shell base64 -w0 testing/testassets.tar.bz2)\"" >> testing/testassets.go
-	gofmt -s -w ./testing/
+internal/gowebserver/testing/testassets.7z:
+	cd internal/gowebserver/testing/testassets/; $(SEVENZIP) a ../testassets.7z *
 
-test: testing/testassets.go
+test: $(ASSETS)
 	$(GO) test -race ${SOURCE_DIRS}
 
-test-10: testing/testassets.go
+test-10: $(ASSETS)
 	$(GO) test -race ${SOURCE_DIRS} -count 10
 
-coverage: testing/testassets.go
+coverage: $(ASSETS)
 	$(GO) test -cover ${SOURCE_DIRS}
 
-coverage.txt: testing/testassets.go
+coverage.txt: $(ASSETS)
 	for sfile in ${SOURCE_DIRS} ; do \
 		go test -race "$$sfile" -coverprofile=package.coverage -covermode=atomic; \
 		if [ -f package.coverage ]; then \
@@ -200,19 +188,16 @@ coverage.txt: testing/testassets.go
 	done
 
 bench: benchmark
-benchmark: testing/testassets.go
+benchmark: $(ASSETS)
 	$(GO) test -benchmem -bench=. ${SOURCE_DIRS}
 
 test-all: test test-10 benchmark coverage
 
-package-legacy:
-	snapcraft
-
-package:
-	LC_ALL=C.UTF-8 LANG=C.UTF-8 snapcraft
-
-run: clean $(ALL_ASSETS) lint
+run: clean $(ASSETS) lint
 	$(GO) run cmd/gowebserver/gowebserver.go -http.port 8181
+
+multirun: clean $(ASSETS) lint
+	$(GO) run cmd/gowebserver/gowebserver.go -path=./cmd/,./pkg/ -servepath=mains,code -http.port 8181
 
 install: gowebserver
 	mkdir -p $(DESTDIR)$(bindir) $(DESTDIR)$(man1dir)
@@ -226,25 +211,47 @@ deps:
 ensure-builder:
 	-$(DOCKER) buildx create --name $(BUILDX_BUILDER)
 
+ALL_IMAGES = $(GOWEBSERVER_IMAGE) $(CERTTOOL_IMAGE) $(HTTPPROBE_IMAGE)
 # https://github.com/docker-library/official-images#architectures-other-than-amd64
+images: DOCKER_PUSH = --push
 images: linux-images windows-images
 	-$(DOCKER) manifest rm $(GOWEBSERVER_IMAGE):$(TAG)
-	$(DOCKER) manifest create $(GOWEBSERVER_IMAGE):$(TAG) $(foreach winver,$(WINDOWS_VERSIONS),$(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$(winver)) $(foreach platform,$(LINUX_PLATFORMS),$(GOWEBSERVER_IMAGE):$(TAG)-$(platform))
+	-$(DOCKER) manifest rm $(CERTTOOL_IMAGE):$(TAG)
+	-$(DOCKER) manifest rm $(HTTPPROBE_IMAGE):$(TAG)
 
-	for winver in $(WINDOWS_VERSIONS) ; do \
-		windows_version=`$(DOCKER) manifest inspect mcr.microsoft.com/windows/nanoserver:$${winver} | jq -r '.manifests[0].platform["os.version"]'`; \
-		$(DOCKER) manifest annotate --os-version $${windows_version} $(GOWEBSERVER_IMAGE):$(TAG) $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$${winver} ; \
+	for image in $(ALL_IMAGES) ; do \
+		$(DOCKER) manifest create $$image:$(TAG) $(foreach winver,$(WINDOWS_VERSIONS),$${image}:$(TAG)-windows_amd64-$(winver)) $(foreach platform,$(LINUX_PLATFORMS),$${image}:$(TAG)-$(platform)) ; \
+		for winver in $(WINDOWS_VERSIONS) ; do \
+			windows_version=`$(DOCKER) manifest inspect mcr.microsoft.com/windows/nanoserver:$${winver} | jq -r '.manifests[0].platform["os.version"]'`; \
+			$(DOCKER) manifest annotate --os-version $${windows_version} $${image}:$(TAG) $${image}:$(TAG)-windows_amd64-$${winver} ; \
+		done ; \
+		$(DOCKER) manifest push $$image:$(TAG) ; \
 	done
-	$(DOCKER) manifest push $(GOWEBSERVER_IMAGE):$(TAG)
 
-linux-images: $(foreach platform,$(LINUX_PLATFORMS),linux-image-$(platform))
+ALL_LINUX_IMAGES = $(foreach app,$(ALL_APPS),$(foreach platform,$(LINUX_PLATFORMS),linux-image-$(app)-$(platform)))
+linux-images: $(ALL_LINUX_IMAGES)
 
-linux-image-%: bin/go/%/gowebserver ensure-builder
+linux-image-certtool-%: bin/go/%/certtool ensure-builder
+	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform $(subst _,/,$*) --build-arg BINARY_PATH=$< -f cmd/certtool/Dockerfile -t $(CERTTOOL_IMAGE):$(TAG)-$* . $(DOCKER_PUSH)
+
+linux-image-gowebserver-%: bin/go/%/gowebserver ensure-builder
 	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform $(subst _,/,$*) --build-arg BINARY_PATH=$< -f cmd/gowebserver/Dockerfile -t $(GOWEBSERVER_IMAGE):$(TAG)-$* . $(DOCKER_PUSH)
 
-windows-images: $(foreach winver,$(WINDOWS_VERSIONS),windows-image-$(winver))
+linux-image-httpprobe-%: bin/go/%/httpprobe ensure-builder
+	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform $(subst _,/,$*) --build-arg BINARY_PATH=$< -f cmd/httpprobe/Dockerfile -t $(HTTPPROBE_IMAGE):$(TAG)-$* . $(DOCKER_PUSH)
 
-windows-image-%: bin/go/windows_amd64/gowebserver.exe ensure-builder
+ALL_WINDOWS_IMAGES = $(foreach app,$(ALL_APPS),$(foreach winver,$(WINDOWS_VERSIONS),windows-image-$(app)-$(winver)))
+windows-images: $(ALL_WINDOWS_IMAGES)
+
+windows-image-certtool-%: bin/go/windows_amd64/certtool.exe ensure-builder
+	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform windows/amd64 -f cmd/certtool/Dockerfile.windows --build-arg WINDOWS_VERSION=$* -t $(CERTTOOL_IMAGE):$(TAG)-windows_amd64-$* . $(DOCKER_PUSH)
+
+windows-image-gowebserver-%: bin/go/windows_amd64/gowebserver.exe ensure-builder
 	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform windows/amd64 -f cmd/gowebserver/Dockerfile.windows --build-arg WINDOWS_VERSION=$* -t $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$* . $(DOCKER_PUSH)
 
-.PHONY : all assets dist lint clean check test test-10 coverage bench benchmark test-all package-legacy package install run deps
+windows-image-httpprobe-%: bin/go/windows_amd64/httpprobe.exe ensure-builder
+	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform windows/amd64 -f cmd/httpprobe/Dockerfile.windows --build-arg WINDOWS_VERSION=$* -t $(HTTPPROBE_IMAGE):$(TAG)-windows_amd64-$* . $(DOCKER_PUSH)
+
+presubmit: clean check coverage all release-binaries images
+
+.PHONY : all assets dist lint clean check test test-10 coverage bench benchmark test-all install run deps presubmit
