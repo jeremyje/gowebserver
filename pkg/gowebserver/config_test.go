@@ -24,8 +24,6 @@ import (
 
 const emptyConfigYaml = `verbose: false
 serve: []
-uploadPath: ""
-uploadHTTPPath: ""
 http:
   port: 0
 https:
@@ -40,14 +38,15 @@ https:
 metrics:
   enabled: false
   path: ""
+upload:
+  source: ""
+  endpoint: ""
 `
 
 const populatedConfigYaml = `verbose: true
 serve:
 - source: /home/folder
-  httpPath: /serving
-uploadPath: /home/upload
-uploadHTTPPath: /postage
+  endpoint: /serving
 http:
   port: 1000
 https:
@@ -62,6 +61,9 @@ https:
 metrics:
   enabled: true
   path: /prometheus
+upload:
+  source: /home/upload
+  endpoint: /postage
 `
 
 func TestEmptyConfig(t *testing.T) {
@@ -77,10 +79,8 @@ func TestPopulatedConfig(t *testing.T) {
 		Verbose: true,
 		Serve: []Serve{{
 			Source:   "/home/folder",
-			HTTPPath: "/serving",
+			Endpoint: "/serving",
 		}},
-		UploadPath:     "/home/upload",
-		UploadHTTPPath: "/postage",
 		HTTP: HTTP{
 			Port: 1000,
 		},
@@ -100,17 +100,23 @@ func TestPopulatedConfig(t *testing.T) {
 			Enabled: true,
 			Path:    "/prometheus",
 		},
+		Upload: Serve{
+			Source:   "/home/upload",
+			Endpoint: "/postage",
+		},
 	}
 
 	if diff := cmp.Diff(populatedConfigYaml, conf.String()); diff != "" {
 		t.Errorf("config.String() mismatch (-want +got):\n%s", diff)
+		t.Log(populatedConfigYaml)
+		t.Log(conf.String())
 	}
 }
 
 const noDefaultsConfigFile = `verbose: true
 serve:
 - source: "/home/example"
-  httpPath: "/serving"
+  endpoint: "/serving"
 configurationfile: "/something.yaml"
 http:
   port: 1
@@ -127,8 +133,9 @@ https:
 metrics:
   enabled: false
   path: /metrics
-uploadPath: "dropsite"
-uploadHTTPPath: "/upload.jspx"
+upload:
+  source: "dropsite"
+  endpoint: "/upload.jspx"
 `
 
 func TestNoDefaultConfig(t *testing.T) {
@@ -149,7 +156,7 @@ func TestNoDefaultConfig(t *testing.T) {
 		Serve: []Serve{
 			{
 				Source:   "/home/example",
-				HTTPPath: "/serving",
+				Endpoint: "/serving",
 			},
 		},
 		ConfigurationFile: "",
@@ -172,8 +179,10 @@ func TestNoDefaultConfig(t *testing.T) {
 			Enabled: false,
 			Path:    "/metrics",
 		},
-		UploadPath:     "dropsite",
-		UploadHTTPPath: "/upload.jspx",
+		Upload: Serve{
+			Source:   "dropsite",
+			Endpoint: "/upload.jspx",
+		},
 	}
 
 	if diff := cmp.Diff(got, want); diff != "" {
@@ -199,7 +208,7 @@ func TestPopulatedYamlConfig(t *testing.T) {
 		Serve: []Serve{
 			{
 				Source:   "/home/folder",
-				HTTPPath: "/serving",
+				Endpoint: "/serving",
 			},
 		},
 		ConfigurationFile: "",
@@ -222,8 +231,10 @@ func TestPopulatedYamlConfig(t *testing.T) {
 			Enabled: true,
 			Path:    "/prometheus",
 		},
-		UploadPath:     "/home/upload",
-		UploadHTTPPath: "/postage",
+		Upload: Serve{
+			Source:   "/home/upload",
+			Endpoint: "/postage",
+		},
 	}
 
 	if diff := cmp.Diff(got, want); diff != "" {
@@ -258,7 +269,7 @@ func TestDefaultConfiguration(t *testing.T) {
 		Serve: []Serve{
 			{
 				Source:   "",
-				HTTPPath: "/",
+				Endpoint: "/",
 			},
 		},
 		ConfigurationFile: "",
@@ -281,8 +292,10 @@ func TestDefaultConfiguration(t *testing.T) {
 			Enabled: true,
 			Path:    "/metrics",
 		},
-		UploadPath:     "uploaded-files",
-		UploadHTTPPath: "/upload.asp",
+		Upload: Serve{
+			Source:   "uploaded-files",
+			Endpoint: "/upload.asp",
+		},
 	}
 
 	if diff := cmp.Diff(got, want); diff != "" {

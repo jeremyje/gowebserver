@@ -51,11 +51,11 @@ func TestWebServer_Serve_Multi(t *testing.T) {
 		Serve: []Serve{
 			{
 				Source:   zipPath,
-				HTTPPath: "/zip",
+				Endpoint: "/zip",
 			},
 			{
 				Source:   tarXzPath,
-				HTTPPath: "/tar.gz",
+				Endpoint: "/tar.gz",
 			},
 		},
 	}

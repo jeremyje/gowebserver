@@ -204,15 +204,15 @@ func New(conf *Config) (WebServer, error) {
 		}
 		sp = append(sp, servePath{
 			localPath: p,
-			httpPath:  normalizeHTTPPath(paths.HTTPPath),
+			httpPath:  normalizeHTTPPath(paths.Endpoint),
 		})
 	}
 
 	uploadPath := ""
-	if conf.UploadPath != "" {
-		dir, err := expandPath(conf.UploadPath)
+	if conf.Upload.Source != "" {
+		dir, err := expandPath(conf.Upload.Source)
 		if err != nil {
-			return nil, fmt.Errorf("cannot expand path '%s', %s", conf.UploadPath, err)
+			return nil, fmt.Errorf("cannot expand path '%s', %s", conf.Upload.Source, err)
 		}
 		uploadPath = dir
 	}
@@ -226,7 +226,7 @@ func New(conf *Config) (WebServer, error) {
 		certificateFilePath: conf.HTTPS.Certificate.CertificateFilePath,
 		privateKeyFilePath:  conf.HTTPS.Certificate.PrivateKeyFilePath,
 		uploadPath:          uploadPath,
-		uploadHTTPPath:      conf.UploadHTTPPath,
+		uploadHTTPPath:      conf.Upload.Endpoint,
 		verbose:             conf.Verbose,
 	}
 

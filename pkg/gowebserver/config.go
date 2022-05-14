@@ -61,17 +61,18 @@ type Config struct {
 	Serve             []Serve `yaml:"serve"`
 	ConfigurationFile string  `yaml:"-"`
 
-	UploadPath     string `yaml:"uploadPath"`
-	UploadHTTPPath string `yaml:"uploadHTTPPath"`
-
 	HTTP    HTTP    `yaml:"http"`
 	HTTPS   HTTPS   `yaml:"https"`
 	Metrics Metrics `yaml:"metrics"`
+	Upload  Serve   `yaml:"upload"`
 }
 
+// Serve maps the source to endpoint serving of content.
 type Serve struct {
-	Source   string `yaml:"source"`
-	HTTPPath string `yaml:"httpPath"`
+	// Source location to serve.
+	Source string `yaml:"source"`
+	// Endpoint on the HTTP server to serve the content.
+	Endpoint string `yaml:"endpoint"`
 }
 
 // String returns a string representation of the config.
@@ -177,8 +178,6 @@ func loadFromFlags() (*Config, error) {
 		Verbose:           *verboseFlag,
 		Serve:             sl,
 		ConfigurationFile: *configFileFlag,
-		UploadPath:        *uploadPathFlag,
-		UploadHTTPPath:    *uploadHTTPPathFlag,
 		HTTP: HTTP{
 			Port: *httpPortFlag,
 		},
@@ -198,6 +197,10 @@ func loadFromFlags() (*Config, error) {
 			Enabled: *metricsFlag,
 			Path:    *metricsPathFlag,
 		},
+		Upload: Serve{
+			Source:   *uploadPathFlag,
+			Endpoint: *uploadHTTPPathFlag,
+		},
 	}, nil
 }
 
@@ -213,7 +216,7 @@ func serveList(paths string, servePaths string) ([]Serve, error) {
 	for i, p := range pl {
 		sl = append(sl, Serve{
 			Source:   p,
-			HTTPPath: spl[i],
+			Endpoint: spl[i],
 		})
 	}
 

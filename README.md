@@ -84,7 +84,7 @@ func main() {
   }
   defer logger.Sync()
   httpServer, err := gowebserver.New(&gowebserver.Config{
-    Serve: []gowebserver.Serve{{Source: ".", HTTPPath: "/"}},
+    Serve: []gowebserver.Serve{{Source: ".", Endpoint: "/"}},
   })
   if err != nil {
     zap.S().Fatal(err)

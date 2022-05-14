@@ -49,11 +49,13 @@ func TestUpload(t *testing.T) {
 		Serve: []Serve{
 			{
 				Source:   tmpDir,
-				HTTPPath: "/",
+				Endpoint: "/",
 			},
 		},
-		UploadPath:     tmpDir,
-		UploadHTTPPath: "/upload",
+		Upload: Serve{
+			Source:   tmpDir,
+			Endpoint: "/upload",
+		},
 	}
 
 	baseURL, close := serveAsync(t, cfg)
