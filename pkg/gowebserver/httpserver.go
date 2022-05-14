@@ -107,7 +107,6 @@ func (ws *webServerImpl) Serve(termCh <-chan error) error {
 		}
 		displayPath += paths.localPath
 	}
-	zap.S().With("HTTP", ws.httpAddr, "HTTPS", ws.httpsAddr).Info("Serving")
 	serverMux := http.NewServeMux()
 	if ws.metricsEnabled {
 		serverMux.Handle(ws.metricsServePath, promhttp.Handler())
@@ -175,10 +174,15 @@ func (ws *webServerImpl) Serve(termCh <-chan error) error {
 	if err != nil {
 		zap.S().With("error", err).Error("cannot get port from HTTPS listener")
 	}
+
+	zap.S().With("HTTP", httpPort, "HTTPS", httpsPort).Info("Serving Ports")
+
 	ws.setPorts(httpPort, httpsPort)
 
 	go func() {
-		checkError(http.ServeTLS(httpsSocket, httpHandler, ws.certificateFilePath, ws.privateKeyFilePath))
+		if ws.certificateFilePath != "" {
+			checkError(http.ServeTLS(httpsSocket, httpHandler, ws.certificateFilePath, ws.privateKeyFilePath))
+		}
 	}()
 	go func() {
 		checkError(http.Serve(httpSocket, httpHandler))

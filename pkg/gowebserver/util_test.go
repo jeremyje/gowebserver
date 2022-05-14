@@ -79,7 +79,7 @@ func TestDownloadFileOnLocalFile(t *testing.T) {
 
 	localPath, err := downloadFile(path)
 	if localPath != path {
-		t.Errorf("expected: %v, got: %v", path, localPath)
+		t.Errorf("want: %v, got: %v", path, localPath)
 	}
 
 	if err != nil {
@@ -98,5 +98,31 @@ func TestDownloadFileOnHttpsFile(t *testing.T) {
 	}
 	if !exists(localPath) {
 		t.Errorf("'%s' does not exist locally", localPath)
+	}
+}
+
+func TestSanitizeFileName(t *testing.T) {
+	testCases := []struct {
+		input string
+		want  string
+	}{
+		{input: "///////////////\\\\\\\\\\", want: ""},
+		{input: "../ok", want: "ok"},
+		{input: "/ok/", want: "ok"},
+		{input: "../whatever.json", want: "whatever.json"},
+		{input: "../what ever!@#$%^&*()+_=-.json", want: "what ever_-.json"},
+		{input: "../abc/def..tar.gz", want: "abc/def.tar.gz"},
+		{input: "./././././../.../..../abc.tar.gz/.....", want: "abc.tar.gz"},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.input, func(t *testing.T) {
+			t.Parallel()
+			got := sanitizeFileName(tc.input)
+			if tc.want != got {
+				t.Errorf("want: %v, got: %v", tc.want, got)
+			}
+		})
 	}
 }

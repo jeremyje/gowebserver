@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"go.uber.org/zap"
@@ -149,6 +150,37 @@ func copyFile(reader io.Reader, filePath string) error {
 		return fmt.Errorf("cannot copy to target file %s, %s", filePath, err)
 	}
 	return nil
+}
+
+var (
+	validChars = map[rune]interface{}{
+		'.':  nil,
+		'-':  nil,
+		'_':  nil,
+		' ':  nil,
+		'\\': nil,
+		'/':  nil,
+	}
+)
+
+func sanitizeFileName(fileName string) string {
+	name := strings.ReplaceAll(fileName, "..", ".")
+	sanitized := ""
+	for _, r := range name {
+		if _, ok := validChars[r]; ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z') || ('0' <= r && r <= '9') || ok {
+			sanitized = sanitized + string(r)
+		}
+	}
+
+	parts := strings.Split(strings.ReplaceAll(sanitized, "\\", "/"), "/")
+	sanitizedParts := []string{}
+	for _, part := range parts {
+		if strings.ReplaceAll(part, ".", "") != "" {
+			sanitizedParts = append(sanitizedParts, part)
+		}
+	}
+
+	return strings.Join(sanitizedParts, string(filepath.Separator))
 }
 
 func nilFunc() {

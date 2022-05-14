@@ -115,7 +115,9 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				writeUploadResponse(w, resp, logger)
 				return
 			}
-			localPath := filepath.Join(uh.uploadDirectory, filepath.Base(fileName))
+
+			name := sanitizeFileName(filepath.Base(fileName))
+			localPath := filepath.Join(uh.uploadDirectory, name)
 			f, err := os.OpenFile(localPath, os.O_WRONLY|os.O_CREATE, 0666)
 			if err != nil {
 				resp.Error = fmt.Sprintf("InternalError: Cannot create file (%s), %s", localPath, err)

@@ -96,7 +96,8 @@ func newSevenZipFs(filePath string) createFsResult {
 	// Iterate through the files in the archive,
 	// printing some of their contents.
 	for _, f := range r.File {
-		filePath := filepath.Join(staged.tmpDir, f.Name)
+		name := sanitizeFileName(f.Name)
+		filePath := filepath.Join(staged.tmpDir, name)
 		if f.FileInfo().IsDir() {
 			err = createDirectory(filePath)
 			if err != nil {
@@ -111,7 +112,7 @@ func newSevenZipFs(filePath string) createFsResult {
 
 			err := writeFileFromArchiveEntry(f, filePath)
 			if err != nil {
-				return staged.withError(fmt.Errorf("cannot write zip file entry: %s, %s", f.Name, err))
+				return staged.withError(fmt.Errorf("cannot write zip file entry: %s, %s", name, err))
 			}
 		}
 	}
@@ -137,7 +138,8 @@ func newZipFs(filePath string) createFsResult {
 	// Iterate through the files in the archive,
 	// printing some of their contents.
 	for _, f := range r.File {
-		filePath := filepath.Join(staged.tmpDir, f.Name)
+		name := sanitizeFileName(f.Name)
+		filePath := filepath.Join(staged.tmpDir, name)
 		if f.FileInfo().IsDir() {
 			err = createDirectory(filePath)
 			if err != nil {
@@ -152,7 +154,7 @@ func newZipFs(filePath string) createFsResult {
 
 			err := writeFileFromArchiveEntry(f, filePath)
 			if err != nil {
-				return staged.withError(fmt.Errorf("cannot write zip file entry: %s, %s", f.Name, err))
+				return staged.withError(fmt.Errorf("cannot write zip file entry: %s, %s", name, err))
 			}
 		}
 	}
@@ -224,14 +226,15 @@ func processTarEntries(tr *tar.Reader, tmpDir string) error {
 			return fmt.Errorf("cannot get next tar entry, %s", err)
 		}
 
-		localPath := filepath.Join(tmpDir, header.Name)
+		name := sanitizeFileName(header.Name)
+		localPath := filepath.Join(tmpDir, name)
 		switch header.Typeflag {
 		case tar.TypeDir:
 			err = createDirectory(localPath)
 		case tar.TypeReg:
 			err = writeFileFromTarEntry(localPath, tmpDir, tr)
 		default:
-			zap.S().With("headerName", header.Name, "header", header).Warn("Tar entry type not supported.")
+			zap.S().With("headerName", name, "header", header).Warn("Tar entry type not supported.")
 		}
 		if err != nil {
 			return fmt.Errorf("error processing tar entry %v, %s", header.Typeflag, err)

@@ -46,7 +46,7 @@ curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/downl
 
 ## Build
 
-Status: [![Build Status](https://secure.travis-ci.org/jeremyje/gowebserver.png)](http://travis-ci.org/jeremyje/gowebserver) [![Go Report Card](https://goreportcard.com/badge/github.com/jeremyje/gowebserver)](https://goreportcard.com/report/github.com/jeremyje/gowebserver) [![GoDoc](https://godoc.org/github.com/jeremyje/gowebserver?status.svg)](https://godoc.org/github.com/jeremyje/gowebserver) [![Snap Status](https://build.snapcraft.io/badge/jeremyje/gowebserver.svg)](https://build.snapcraft.io/user/jeremyje/gowebserver) [![codebeat badge](https://codebeat.co/badges/de86a882-9038-4994-afe2-fea7d93f63cb)](https://codebeat.co/projects/github-com-jeremyje-gowebserver-master) [![codecov](https://codecov.io/gh/jeremyje/gowebserver/branch/master/graph/badge.svg)](https://codecov.io/gh/jeremyje/gowebserver)
+![example workflow](https://github.com/jeremyje/gowebserver/actions/workflows/deploy.yml/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/jeremyje/gowebserver)](https://goreportcard.com/report/github.com/jeremyje/gowebserver) [![Go Reference](https://pkg.go.dev/badge/github.com/jeremyje/gowebserver.svg)](https://pkg.go.dev/github.com/jeremyje/gowebserver) [![codebeat badge](https://codebeat.co/badges/de86a882-9038-4994-afe2-fea7d93f63cb)](https://codebeat.co/projects/github-com-jeremyje-gowebserver-master) [![codecov](https://codecov.io/gh/jeremyje/gowebserver/branch/master/graph/badge.svg)](https://codecov.io/gh/jeremyje/gowebserver) [![Total alerts](https://img.shields.io/lgtm/alerts/g/jeremyje/gowebserver.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jeremyje/gowebserver/alerts/)
 
 Install [Go 1.18 or newer](https://golang.org/dl/).
 
@@ -67,32 +67,31 @@ make bench
 Sample code for embedding a HTTP/HTTPS server in your application.
 
 ```go
+package main
+
 import (
-  "github.com/jeremyje/gowebserver/server"
-  "github.com/jeremyje/gowebserver/cert"
+  "github.com/jeremyje/gowebserver/pkg/gowebserver"
+  "go.uber.org/zap"
 )
+
 func main() {
-  certBuilder := cert.NewCertificateBuilder().
-    SetRsa2048().
-    SetValidDurationInDays(365)
-  checkError(certBuilder.WriteCertificate("public.cert"))
-  checkError(certBuilder.WritePrivateKey("private.key"))
-
-  httpServer := server.NewWebServer().
-    SetPorts(80, 443).
-    SetMetricsEnabled(true).
-    SetServePath("/", "/metrics").
-    SetCertificateFile("public.cert").
-    SetPrivateKey("private.key").
-    SetVerbose(true)
-  checkError(httpServer.SetPath("."))
-  checkError(httpServer.SetUpload("./upload", "/upload.html"))
-  httpServer.Serve()
-}
-
-func checkError(err error) {
+  logger, err := zap.NewProduction()
   if err != nil {
-    log.Fatal(err)
+    zap.S().Fatal(err)
   }
+  if err == nil {
+    zap.ReplaceGlobals(logger)
+  }
+  defer logger.Sync()
+  httpServer, err := gowebserver.New(&gowebserver.Config{
+    Serve: []gowebserver.Serve{{Source: ".", HTTPPath: "/"}},
+  })
+  if err != nil {
+    zap.S().Fatal(err)
+  }
+
+  termCh := make(chan error)
+  httpServer.Serve(termCh)
 }
+
 ```
