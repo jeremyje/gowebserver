@@ -130,7 +130,7 @@ jobs:
             bin/release/server-arm64.exe
 
       - name: Publish Application
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           name: release.tar.gz
