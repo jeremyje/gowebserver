@@ -12,20 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Build and Publish
-
+name: Continuous Integration and Release
 on: push
-
 jobs:
   # Set the job key. The key is displayed as the job name
   # when a job name is not provided
   push-image:
-    # Name the Job
-    name: Push Image
+    name: Push Images
     # Set the type of machine to run on
     runs-on: ubuntu-latest
     steps:
-
       # https://github.community/t/how-to-get-just-the-tag-name/16241/6
       - name: Get the version
         id: get_version
@@ -33,13 +29,13 @@ jobs:
 
       # Checks out a copy of your repository on the ubuntu-latest machine
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       # https://github.com/actions/setup-go
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.17'
+          go-version: '1.18'
 
       - name: Prepare
         id: prep
@@ -67,14 +63,36 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Build
+
+      - name: Install Prerequisites
+        run: |
+          sudo apt-get -y -q install lz4 p7zip-full
+
+      - name: Prepare Build
         run: |
           make clean
           make deps
           make lint
-          make all
-          make test
+
+      - name: Test
+        run: |
+          make test-10
+          make benchmark
           make coverage.txt
+
+      - name: Push Code Coverage
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+          files: ./coverage.txt # optional
+          flags: unittests # optional
+          name: codecov-umbrella # optional
+          fail_ci_if_error: true # optional (default = false)
+          verbose: true # optional (default = false)
+
+      - name: Build
+        run: |
+          make all
           make bin/release.tar.gz
           make release-binaries
 
@@ -99,7 +117,7 @@ jobs:
           draft: true
           prerelease: false
           files: |
-            LICENSE.md
+            LICENSE
             bin/release.tar.gz
             bin/release/server-386
             bin/release/server-386.exe
@@ -109,6 +127,7 @@ jobs:
             bin/release/server-arm
             bin/release/server-arm64
             bin/release/server-arm64-darwin
+            bin/release/server-arm64.exe
 
       - name: Publish Application
         uses: actions/upload-artifact@v2
