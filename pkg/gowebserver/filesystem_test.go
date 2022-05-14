@@ -247,5 +247,6 @@ func runGitFsTest(tb testing.TB, path string) {
 	verifyFileMissing(tb, staged.tmpDir, ".git")
 	verifyFileMissing(tb, staged.tmpDir, ".gitmodules")
 	verifyFileExist(tb, staged.tmpDir, "README.md")
-	verifyFileExist(tb, staged.tmpDir, "cert/cert.go")
+	verifyFileExist(tb, staged.tmpDir, ".github/workflows/dependabot.yml")
+	verifyFileExist(tb, staged.tmpDir, "cmd/gowebserver/gowebserver.go")
 }
