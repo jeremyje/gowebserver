@@ -7,7 +7,7 @@ It can host a local directory or contents of a zip file.
 # Download (linux amd64, see Downloads for other builds)
 curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.0.0/server-amd64; chmod +x gowebserver
 
-# Host the directory you're currently in.
+# Host the current directory.
 ./gowebserver
 
 # Host your home directory.
@@ -23,12 +23,12 @@ curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/downl
 * HTTP and HTTPs serving
 * Automatic HTTPs certificate generation
 * Optional configuration by flags or YAML config file.
-* Host static files from:
+* Host local or HTTP served static files from:
   * Local directory (current directory is default)
-  * ZIP archive (local or from HTTP/HTTPS)
-  * Tarball (.tar, .tar.gz, .tar.bz2) archive (local or from HTTP/HTTPS)
-  * 7-zip (local or from HTTP/HTTPS)
-  * RAR (local or from HTTP/HTTPS)
+  * ZIP archive
+  * Tarball archive (.tar, .tar.bz2, .tar.gz, .tar.lz4, .tar.xz)
+  * 7-zip
+  * RAR
   * Git repository (HTTPS, SSH)
 * Metrics export to Prometheus.
 * Prebuild binaries for all major OSes.
