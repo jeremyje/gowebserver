@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Continuous Integration and Release
+name: CI
 on: push
 jobs:
   # Set the job key. The key is displayed as the job name

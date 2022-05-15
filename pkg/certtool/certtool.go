@@ -375,6 +375,22 @@ func ParseName(subject string) (pkix.Name, error) {
 	return name, nil
 }
 
+// ReadKeyPairFromFile is a convenience method for loading the key pair from a file.
+func ReadKeyPairFromFile(publicCertificateFile string, privateKeyFile string) (*KeyPair, error) {
+	pubData, err := ioutil.ReadFile(publicCertificateFile)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read public certificate '%s', %s", publicCertificateFile, err)
+	}
+	privData, err := ioutil.ReadFile(privateKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read private key '%s', %s", privateKeyFile, err)
+	}
+	return &KeyPair{
+		PublicCertificate: pubData,
+		PrivateKey:        privData,
+	}, nil
+}
+
 func GenerateAndWriteKeyPair(args *Args, publicCertificateFile string, privateKeyFile string) error {
 	if len(publicCertificateFile) == 0 {
 		return fmt.Errorf("public certificate file path must not be empty")

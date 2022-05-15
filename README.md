@@ -26,11 +26,12 @@ curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/downl
 * Host static files from:
   * Local directory (current directory is default)
   * ZIP archive (local or from HTTP/HTTPS)
-  * Tarball (.tar, .tar.gz, .tar.bz2) archive
+  * Tarball (.tar, .tar.gz, .tar.bz2) archive (local or from HTTP/HTTPS)
+  * 7-zip (local or from HTTP/HTTPS)
+  * RAR (local or from HTTP/HTTPS)
   * Git repository (HTTPS, SSH)
 * Metrics export to Prometheus.
 * Prebuild binaries for all major OSes.
-* Ubuntu snappy packaging for Raspberry Pi and other IoT devices.
 
 ## Downloads
 

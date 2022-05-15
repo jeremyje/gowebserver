@@ -27,9 +27,9 @@ import (
 	"strings"
 
 	"github.com/bodgit/sevenzip"
+	git "github.com/go-git/go-git/v5"
 	archiver "github.com/mholt/archiver/v4"
 	"go.uber.org/zap"
-	git "gopkg.in/src-d/go-git.v4"
 )
 
 var (

@@ -28,7 +28,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// WebServer is a convience wrapper for Go's HTTP/HTTPS Web serving API.
+// WebServer is a convenience wrapper for Go's HTTP/HTTPS Web serving API.
 type WebServer interface {
 	// Serve starts serving the HTTP/HTTPS server synchronously.
 	Serve(<-chan error) error

@@ -10,8 +10,15 @@ require (
 	github.com/stretchr/testify v1.7.1
 	go.uber.org/zap v1.21.0
 	golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6
-	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.4.0
+)
+
+require (
+	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
+	github.com/acomagu/bufpipe v1.0.3 // indirect
+	github.com/go-git/gcfg v1.5.0 // indirect
+	github.com/go-git/go-billy/v5 v5.3.1 // indirect
+	github.com/imdario/mergo v0.3.12 // indirect
 )
 
 require (
@@ -25,6 +32,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
+	github.com/go-git/go-git/v5 v5.4.2
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
@@ -42,7 +50,6 @@ require (
 	github.com/prometheus/common v0.34.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
-	github.com/src-d/gcfg v1.4.0 // indirect
 	github.com/therootcompany/xz v1.0.1 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/xanzy/ssh-agent v0.3.1 // indirect
@@ -53,7 +60,6 @@ require (
 	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
-	gopkg.in/src-d/go-billy.v4 v4.3.2 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20220512140231-539c8e751b99 // indirect
 )
