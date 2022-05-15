@@ -97,6 +97,88 @@ func TestWebServer_Serve_Multi(t *testing.T) {
 	}
 }
 
+func TestWebServer_Serve(t *testing.T) {
+	archivePaths := []string{"/", "/index.html", "/site.js", "/assets/fivesix/5.txt", "/assets/more/3.txt", "/assets/1.txt"}
+	testCases := []struct {
+		source string
+		paths  []string
+	}{
+		{
+			source: gowsTesting.MustZipFilePath(t),
+			paths:  archivePaths,
+		},
+		{
+			source: gowsTesting.MustSevenZipFilePath(t),
+			paths:  archivePaths,
+		},
+		{
+			source: gowsTesting.MustTarFilePath(t),
+			paths:  archivePaths,
+		},
+		{
+			source: gowsTesting.MustTarGzFilePath(t),
+			paths:  archivePaths,
+		},
+		{
+			source: gowsTesting.MustTarBzip2FilePath(t),
+			paths:  archivePaths,
+		},
+		{
+			source: gowsTesting.MustTarXzFilePath(t),
+			paths:  archivePaths,
+		},
+		{
+			source: gowsTesting.MustTarLz4FilePath(t),
+			paths:  archivePaths,
+		},
+		{
+			source: "http://example.com/",
+			paths:  []string{"/"},
+		},
+		{
+			source: "https://github.com/jeremyje/gowebserver.git",
+			paths:  []string{"/", "/README.md"},
+		},
+		/*
+			TODO: This breaks because of https://github.com/go-git/go-git/issues/143.
+			{
+				source: "git@github.com:jeremyje/gowebserver.git",
+				paths:  []string{"/", "/README.md"},
+			},
+		*/
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.source, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &Config{
+				Serve: []Serve{
+					{
+						Source:   tc.source,
+						Endpoint: "/",
+					},
+				},
+			}
+
+			baseURL, close := serveAsync(t, cfg)
+			defer close()
+
+			for _, path := range tc.paths {
+				resp, err := http.Get(baseURL + path)
+				if err != nil {
+					t.Error(err)
+				} else {
+					if resp.StatusCode != http.StatusOK {
+						t.Errorf("status for '%s' got: %d, want 200", path, resp.StatusCode)
+					}
+				}
+			}
+		})
+	}
+}
+
 func serveAsync(tb testing.TB, cfg *Config) (string, func()) {
 	ws, err := New(cfg)
 	if err != nil {
@@ -115,12 +197,15 @@ func serveAsync(tb testing.TB, cfg *Config) (string, func()) {
 	}()
 
 	var httpPort int
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 600; i++ {
 		httpPort, _ = wsi.getPorts()
 		if httpPort != 0 {
 			break
 		}
-		time.Sleep(time.Millisecond * 10)
+		if i%10 == 0 && i != 0 {
+			tb.Logf("waited %d seconds", i*100)
+		}
+		time.Sleep(time.Millisecond * 100)
 	}
 
 	baseURL := fmt.Sprintf("http://localhost:%d", httpPort)

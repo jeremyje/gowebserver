@@ -126,3 +126,20 @@ func TestSanitizeFileName(t *testing.T) {
 		})
 	}
 }
+
+func mustTempDir(tb testing.TB) string {
+	dir, cleanup, err := createTempDirectory()
+	if err != nil {
+		tb.Fatal(err)
+	}
+	tb.Cleanup(cleanup)
+	return dir
+}
+
+func mustFile(tb testing.TB, path string) []byte {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		tb.Fatalf("cannot read file '%s', %s", path, err)
+	}
+	return data
+}

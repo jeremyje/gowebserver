@@ -18,6 +18,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -34,7 +35,7 @@ https:
     privateKey: ""
     path: ""
     hosts: ""
-    duration: 0
+    duration: 0s
 metrics:
   enabled: false
   path: ""
@@ -57,7 +58,7 @@ https:
     privateKey: private-key.pem
     path: public-certificate.pem
     hosts: gowebserver.com
-    duration: 9000
+    duration: 24h0m0s
 metrics:
   enabled: true
   path: /prometheus
@@ -92,7 +93,7 @@ func TestPopulatedConfig(t *testing.T) {
 				PrivateKeyFilePath:       "private-key.pem",
 				CertificateFilePath:      "public-certificate.pem",
 				CertificateHosts:         "gowebserver.com",
-				CertificateValidDuration: 9000,
+				CertificateValidDuration: time.Hour * 24,
 				ForceOverwrite:           true,
 			},
 		},
@@ -128,7 +129,7 @@ https:
     rootPrivateKey: root-private.pem
     rootPath: root-public.pem
     hosts: "hosts"
-    duration: 1
+    duration: 1m0s
     forceoverwrite: false
 metrics:
   enabled: false
@@ -171,7 +172,7 @@ func TestNoDefaultConfig(t *testing.T) {
 				PrivateKeyFilePath:       "private.pem",
 				CertificateFilePath:      "public.pem",
 				CertificateHosts:         "hosts",
-				CertificateValidDuration: 1,
+				CertificateValidDuration: time.Minute,
 				ForceOverwrite:           false,
 			},
 		},
@@ -223,7 +224,7 @@ func TestPopulatedYamlConfig(t *testing.T) {
 				PrivateKeyFilePath:       "private-key.pem",
 				CertificateFilePath:      "public-certificate.pem",
 				CertificateHosts:         "gowebserver.com",
-				CertificateValidDuration: 9000,
+				CertificateValidDuration: time.Hour * 24,
 				ForceOverwrite:           false,
 			},
 		},
@@ -284,7 +285,7 @@ func TestDefaultConfiguration(t *testing.T) {
 				PrivateKeyFilePath:       "web.key",
 				CertificateFilePath:      "web.cert",
 				CertificateHosts:         "",
-				CertificateValidDuration: 5475,
+				CertificateValidDuration: 43800 * time.Hour,
 				ForceOverwrite:           false,
 			},
 		},

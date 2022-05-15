@@ -25,6 +25,8 @@ SEVENZIP = 7z
 ECHO = @echo
 GO = GO111MODULE=on go
 DOCKER = DOCKER_CLI_EXPERIMENTAL=enabled docker
+KIND = kind
+HELM = helm
 
 EXE_EXTENSION =
 BASE_VERSION = 0.0.0-dev
@@ -194,7 +196,7 @@ benchmark: $(ASSETS)
 test-all: test test-10 benchmark coverage
 
 run: clean $(ASSETS) lint
-	$(GO) run cmd/gowebserver/gowebserver.go -http.port 8181
+	$(GO) run cmd/gowebserver/gowebserver.go -http.port 8181 -path=git@github.com:jeremyje/gowebserver.git -verbose
 
 multirun: clean $(ASSETS) lint
 	$(GO) run cmd/gowebserver/gowebserver.go -path=./cmd/,./pkg/ -servepath=mains,code -http.port 8181
@@ -253,5 +255,17 @@ windows-image-httpprobe-%: bin/go/windows_amd64/httpprobe.exe ensure-builder
 	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform windows/amd64 -f cmd/httpprobe/Dockerfile.windows --build-arg WINDOWS_VERSION=$* -t $(HTTPPROBE_IMAGE):$(TAG)-windows_amd64-$* . $(DOCKER_PUSH)
 
 presubmit: clean check coverage all release-binaries images
+
+kind-create:
+	$(KIND) create cluster --config=$(REPOSITORY_ROOT)/install/kind/kind-cluster.yaml
+# kubectl config set clusters.kind-kind.server https://192.168.86.36:6443
+
+kind-delete:
+	$(KIND) delete cluster
+
+install/kubernetes.yaml:
+	$(HELM) template gowebserver install/helm > install/kubernetes.yaml
+
+template: install/kubernetes.yaml
 
 .PHONY : all assets dist lint clean check test test-10 coverage bench benchmark test-all install run deps presubmit

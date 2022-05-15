@@ -22,6 +22,7 @@ import (
 	"os/user"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
@@ -40,13 +41,13 @@ type HTTPS struct {
 
 // Certificate holds the certificate/private key configuration for HTTPS.
 type Certificate struct {
-	RootPrivateKeyFilePath   string `yaml:"rootPrivateKey"`
-	RootCertificateFilePath  string `yaml:"rootPath"`
-	PrivateKeyFilePath       string `yaml:"privateKey"`
-	CertificateFilePath      string `yaml:"path"`
-	CertificateHosts         string `yaml:"hosts"`
-	CertificateValidDuration int    `yaml:"duration"`
-	ForceOverwrite           bool   `yaml:"-"`
+	RootPrivateKeyFilePath   string        `yaml:"rootPrivateKey"`
+	RootCertificateFilePath  string        `yaml:"rootPath"`
+	PrivateKeyFilePath       string        `yaml:"privateKey"`
+	CertificateFilePath      string        `yaml:"path"`
+	CertificateHosts         string        `yaml:"hosts"`
+	CertificateValidDuration time.Duration `yaml:"duration"`
+	ForceOverwrite           bool          `yaml:"-"`
 }
 
 // Metrics holds the metrics configuration.
@@ -138,7 +139,7 @@ var (
 	privateKeyFilePathFlag      = flag.String("https.certificate.privatekey", "web.key", "Private key for HTTPS serving.")
 	certificateFilePathFlag     = flag.String("https.certificate.path", "web.cert", "Certificate to host HTTPS with.")
 	certHostsFlag               = flag.String("https.certificate.hosts", "", "Comma-separated hostnames and IPs to generate a certificate for.")
-	validDurationFlag           = flag.Int("https.certificate.duration", 5475, "Certificate valid duration.")
+	validDurationFlag           = flag.Duration("https.certificate.duration", time.Hour*43800, "Lifespan of the certificate. (default: 5 years)")
 	forceOverwriteCertFlag      = flag.Bool("https.certificate.forceoverwrite", false, "Force overwrite existing certificates if they already exist.")
 
 	// Monitoring Flags

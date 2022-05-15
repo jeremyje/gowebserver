@@ -1,9 +1,12 @@
 package gowebserver
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/jeremyje/gowebserver/pkg/certtool"
 )
 
 func TestConfigLogger(t *testing.T) {
@@ -30,6 +33,46 @@ func TestRunApplication(t *testing.T) {
 		if !strings.Contains(err.Error(), "closed network connection") {
 			t.Error(err)
 		}
+	}
+}
+
+func TestCreateCertificate(t *testing.T) {
+	dir := mustTempDir(t)
+	cfg := &Config{
+		Verbose:           false,
+		Serve:             []Serve{},
+		ConfigurationFile: "",
+		HTTP:              HTTP{},
+		HTTPS: HTTPS{
+			Port: 0,
+			Certificate: Certificate{
+				RootPrivateKeyFilePath:   filepath.Join(dir, "root-private.key"),
+				RootCertificateFilePath:  filepath.Join(dir, "root-public.cert"),
+				PrivateKeyFilePath:       filepath.Join(dir, "private.key"),
+				CertificateFilePath:      filepath.Join(dir, "public.cert"),
+				CertificateHosts:         "localhost",
+				CertificateValidDuration: time.Hour,
+				ForceOverwrite:           true,
+			},
+		},
+		Metrics: Metrics{},
+		Upload:  Serve{},
+	}
+	if err := createCertificate(cfg); err != nil {
+		t.Error(err)
+	}
+
+	rootPub, _, err := certtool.ReadKeyPair(mustFile(t, filepath.Join(dir, "root-public.cert")), mustFile(t, filepath.Join(dir, "root-private.key")))
+	if err != nil {
+		t.Error(err)
+	}
+
+	pub, _, err := certtool.ReadKeyPair(mustFile(t, filepath.Join(dir, "public.cert")), mustFile(t, filepath.Join(dir, "private.key")))
+	if err != nil {
+		t.Error(err)
+	}
+	if err := pub.CheckSignatureFrom(rootPub); err != nil {
+		t.Error(err)
 	}
 }
 

@@ -513,7 +513,7 @@ func TestParseName(t *testing.T) {
 			t.Parallel()
 			actual, err := ParseName(tc.subject)
 			if err != nil {
-				t.Errorf("Unexepected error for input '%s', %v", tc.subject, err)
+				t.Errorf("Unexpected error for input '%s', %v", tc.subject, err)
 			}
 			if !reflect.DeepEqual(actual, tc.expected) {
 				t.Errorf("pkix.Name are different\ngot %v\nexpected: %v", actual, tc.expected)

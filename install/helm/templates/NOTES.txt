@@ -1,0 +1,9 @@
+Gowebserver has been installed in your cluster!
+
+Status
+------
+'kubectl --namespace {{ .Release.Namespace }} get pods,svc'
+
+Name: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}
+Service: {{ .Release.Service }}

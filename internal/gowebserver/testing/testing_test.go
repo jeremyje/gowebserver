@@ -74,6 +74,8 @@ func TestMustFilePath(t *testing.T) {
 		{name: "MustTarFilePath", f: MustTarFilePath},
 		{name: "MustTarGzFilePath", f: MustTarGzFilePath},
 		{name: "MustTarBzip2FilePath", f: MustTarBzip2FilePath},
+		{name: "MustTarXzFilePath", f: MustTarXzFilePath},
+		{name: "MustTarLz4FilePath", f: MustTarLz4FilePath},
 		{name: "MustZipFilePath", f: MustZipFilePath},
 	}
 

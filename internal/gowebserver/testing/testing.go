@@ -43,9 +43,7 @@ var (
 // MustCreateTempFile creates a temp file for testing.
 func MustCreateTempFile(tb testing.TB) *os.File {
 	f, err := ioutil.TempFile(os.TempDir(), "tempfile")
-	if err != nil {
-		tb.Fatal(err)
-	}
+	fatalOnFail(tb, err)
 
 	cleanupFile(tb, f.Name())
 	return f
@@ -55,9 +53,7 @@ func MustCreateTempFile(tb testing.TB) *os.File {
 func MustWriteTempFile(tb testing.TB, content string) *os.File {
 	fp := MustCreateTempFile(tb)
 
-	if err := ioutil.WriteFile(fp.Name(), []byte(content), testFileMode); err != nil {
-		tb.Fatal(err)
-	}
+	fatalOnFail(tb, ioutil.WriteFile(fp.Name(), []byte(content), testFileMode))
 	return fp
 }
 
@@ -102,9 +98,7 @@ func mustCreateTempArchive(tb testing.TB, suffix string) string {
 }
 
 func mustWriteData(tb testing.TB, path string, data []byte) string {
-	if err := ioutil.WriteFile(path, data, testFileMode); err != nil {
-		tb.Fatal(err)
-	}
+	fatalOnFail(tb, ioutil.WriteFile(path, data, testFileMode))
 	return path
 }
 
@@ -117,4 +111,10 @@ func cleanupFile(tb testing.TB, name string) {
 			}
 		}
 	})
+}
+
+func fatalOnFail(tb testing.TB, err error) {
+	if err != nil {
+		tb.Fatal(err)
+	}
 }

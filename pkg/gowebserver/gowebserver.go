@@ -17,7 +17,6 @@ package gowebserver
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/jeremyje/gowebserver/pkg/certtool"
 	"go.uber.org/zap"
@@ -95,15 +94,19 @@ func createCertificate(conf *Config) error {
 					Algorithm: "RSA",
 					KeyLength: 2048,
 				},
-				Validity:      time.Hour * time.Duration(conf.HTTPS.Certificate.CertificateValidDuration*24),
-				CA:            true,
-				ParentKeyPair: parentKP,
+				Validity: conf.HTTPS.Certificate.CertificateValidDuration,
+				CA:       true,
 			},
 				rootCertPath,
 				rootKeyPath)
 			zap.S().With("error", err, "certificateFile", rootCertPath, "privateKeyFile", rootKeyPath).Debug("GenerateAndWriteKeyPair")
 			if err != nil {
 				return fmt.Errorf("cannot write public certificate, %s", err)
+			}
+
+			parentKP, err = certtool.ReadKeyPairFromFile(rootCertPath, rootKeyPath)
+			if err != nil {
+				return fmt.Errorf("cannot read root key pair, %s", err)
 			}
 		}
 
@@ -112,7 +115,7 @@ func createCertificate(conf *Config) error {
 				Algorithm: "RSA",
 				KeyLength: 2048,
 			},
-			Validity:      time.Hour * time.Duration(conf.HTTPS.Certificate.CertificateValidDuration*24),
+			Validity:      conf.HTTPS.Certificate.CertificateValidDuration,
 			CA:            false,
 			ParentKeyPair: parentKP,
 		},
