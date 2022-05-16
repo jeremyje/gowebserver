@@ -377,32 +377,46 @@ func ParseName(subject string) (pkix.Name, error) {
 
 // ReadKeyPairFromFile is a convenience method for loading the key pair from a file.
 func ReadKeyPairFromFile(publicCertificateFile string, privateKeyFile string) (*KeyPair, error) {
-	pubData, err := ioutil.ReadFile(publicCertificateFile)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read public certificate '%s', %s", publicCertificateFile, err)
+	if publicCertificateFile == "" && privateKeyFile == "" {
+		return nil, fmt.Errorf("public certificate and private key were not provided")
 	}
-	privData, err := ioutil.ReadFile(privateKeyFile)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read private key '%s', %s", privateKeyFile, err)
+	if publicCertificateFile != "" && privateKeyFile == "" {
+		return nil, fmt.Errorf("public certificate was provided without a private key")
 	}
+	if publicCertificateFile == "" && privateKeyFile != "" {
+		return nil, fmt.Errorf("private key was provided without a public certificate")
+	}
+
+	pub, err := ioutil.ReadFile(publicCertificateFile)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read the public certificate file (%s), %s", publicCertificateFile, err)
+	}
+	priv, err := ioutil.ReadFile(privateKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read the private key file (%s), %s", privateKeyFile, err)
+	}
+
 	return &KeyPair{
-		PublicCertificate: pubData,
-		PrivateKey:        privData,
+		PublicCertificate: pub,
+		PrivateKey:        priv,
 	}, nil
 }
 
-func GenerateAndWriteKeyPair(args *Args, publicCertificateFile string, privateKeyFile string) error {
+func GenerateAndWriteKeyPair(args *Args, publicCertificateFile string, privateKeyFile string) (*KeyPair, error) {
 	if len(publicCertificateFile) == 0 {
-		return fmt.Errorf("public certificate file path must not be empty")
+		return nil, fmt.Errorf("public certificate file path must not be empty")
 	}
 	if len(privateKeyFile) == 0 {
-		return fmt.Errorf("private key file path must not be empty")
+		return nil, fmt.Errorf("private key file path must not be empty")
 	}
 	kp, err := GenerateKeyPair(args)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return WriteKeyPair(kp, publicCertificateFile, privateKeyFile)
+	if err := WriteKeyPair(kp, publicCertificateFile, privateKeyFile); err != nil {
+		return nil, err
+	}
+	return kp, nil
 }
 
 func WriteKeyPair(kp *KeyPair, publicCertificateFile string, privateKeyFile string) error {

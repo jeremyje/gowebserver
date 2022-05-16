@@ -52,7 +52,7 @@ GO_TOOLCHAIN_DIR = $(dir $(abspath golang.mk))bin/toolchain
 NICHE_PLATFORMS = freebsd openbsd netbsd darwin
 
 LINUX_PLATFORMS = linux_386 linux_amd64 linux_arm_v5 linux_arm_v6 linux_arm_v7 linux_arm64 linux_s390x linux_ppc64 linux_ppc64le linux_riscv64 linux_mips64le linux_mips linux_mipsle linux_mips64
-LINUX_NICHE_PLATFORMS = 
+LINUX_NICHE_PLATFORMS =
 WINDOWS_PLATFORMS = windows_386 windows_amd64 windows_arm64
 MAIN_PLATFORMS = windows_amd64 linux_amd64 linux_arm64
 ALL_PLATFORMS = $(LINUX_PLATFORMS) $(LINUX_NICHE_PLATFORMS) $(WINDOWS_PLATFORMS) $(foreach niche,$(NICHE_PLATFORMS),$(niche)_amd64 $(niche)_arm64)
@@ -155,16 +155,16 @@ internal/gowebserver/testing/testassets.zip:
 
 internal/gowebserver/testing/testassets.tar.gz:
 	cd internal/gowebserver/testing/testassets/; $(TAR) -I 'gzip -9' -cf ../testassets.tar.gz *
-	
+
 internal/gowebserver/testing/testassets.tar.bz2:
 	cd internal/gowebserver/testing/testassets/; BZIP=-9 $(TAR) cjf ../testassets.tar.bz2 *
 
 internal/gowebserver/testing/testassets.tar.xz:
 	cd internal/gowebserver/testing/testassets/; $(TAR) cJf ../testassets.tar.xz *
-	
+
 internal/gowebserver/testing/testassets.tar.lz4:
 	cd internal/gowebserver/testing/testassets/; $(TAR) cf ../testassets.tar.lz4 -I 'lz4' *
-	
+
 internal/gowebserver/testing/testassets.tar:
 	cd internal/gowebserver/testing/testassets/; $(TAR) cf ../testassets.tar *
 

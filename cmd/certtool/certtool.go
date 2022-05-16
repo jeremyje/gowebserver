@@ -18,7 +18,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"sort"
 	"strconv"
 	"strings"
@@ -54,7 +53,7 @@ func certtoolMain() {
 	flag.Parse()
 
 	if args, err := argsFromFlags(); err == nil {
-		if err := certtool.GenerateAndWriteKeyPair(args, *publicCertificate, *privateKey); err != nil {
+		if _, err := certtool.GenerateAndWriteKeyPair(args, *publicCertificate, *privateKey); err != nil {
 			zap.S().Error(err)
 		}
 	} else {
@@ -63,15 +62,20 @@ func certtoolMain() {
 }
 
 func argsFromFlags() (*certtool.Args, error) {
+	var parent *certtool.KeyPair
+
 	algorithm, keyLength, err := StringToKeyType(*keyType)
 	if err != nil {
 		return nil, err
 	}
 
-	parent, err := readParentPair(*parentPublicCertificate, *parentPrivateKey)
-	if err != nil {
-		return nil, err
+	if *parentPublicCertificate != "" {
+		parent, err = certtool.ReadKeyPairFromFile(*parentPublicCertificate, *parentPrivateKey)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	return &certtool.Args{
 		CA:                 *ca,
 		Country:            *country,
@@ -87,39 +91,6 @@ func argsFromFlags() (*certtool.Args, error) {
 		},
 		ParentKeyPair: parent,
 	}, nil
-}
-
-func readParentPair(publicCertificateFile string, privateKeyFile string) (*certtool.KeyPair, error) {
-	if publicCertificateFile == "" && privateKeyFile == "" {
-		return nil, nil
-	}
-	if publicCertificateFile != "" && privateKeyFile == "" {
-		return nil, fmt.Errorf("public certificate was provided without a private key")
-	}
-	if publicCertificateFile == "" && privateKeyFile != "" {
-		return nil, fmt.Errorf("private key was provided without a public certificate")
-	}
-
-	pub, err := ioutil.ReadFile(publicCertificateFile)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read the public certificate file (%s), %s", publicCertificateFile, err)
-	}
-	priv, err := ioutil.ReadFile(privateKeyFile)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read the private key file (%s), %s", privateKeyFile, err)
-	}
-
-	return &certtool.KeyPair{
-		PublicCertificate: pub,
-		PrivateKey:        priv,
-	}, nil
-}
-
-func loadFile(fileName string) ([]byte, error) {
-	if fileName == "" {
-		return []byte{}, nil
-	}
-	return ioutil.ReadFile(fileName)
 }
 
 func StringToKeyType(keyType string) (string, int, error) {

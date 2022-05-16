@@ -89,7 +89,7 @@ func createCertificate(conf *Config) error {
 		if conf.HTTPS.Certificate.RootCertificateFilePath != "" {
 			rootCertPath := conf.HTTPS.Certificate.RootCertificateFilePath
 			rootKeyPath := conf.HTTPS.Certificate.RootPrivateKeyFilePath
-			err := certtool.GenerateAndWriteKeyPair(&certtool.Args{
+			kp, err := certtool.GenerateAndWriteKeyPair(&certtool.Args{
 				KeyType: &certtool.KeyType{
 					Algorithm: "RSA",
 					KeyLength: 2048,
@@ -104,13 +104,10 @@ func createCertificate(conf *Config) error {
 				return fmt.Errorf("cannot write public certificate, %s", err)
 			}
 
-			parentKP, err = certtool.ReadKeyPairFromFile(rootCertPath, rootKeyPath)
-			if err != nil {
-				return fmt.Errorf("cannot read root key pair, %s", err)
-			}
+			parentKP = kp
 		}
 
-		err := certtool.GenerateAndWriteKeyPair(&certtool.Args{
+		_, err := certtool.GenerateAndWriteKeyPair(&certtool.Args{
 			KeyType: &certtool.KeyType{
 				Algorithm: "RSA",
 				KeyLength: 2048,
