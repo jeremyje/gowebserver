@@ -28,6 +28,37 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var (
+	// Serving Flags
+	pathFlag       = flag.String("path", "", "Path to serve (local filesystem, git, zip, tarball files).")
+	servePathFlag  = flag.String("servepath", "/", "The HTTP/HTTPS serving root path for the hosted path.")
+	configFileFlag = flag.String("configfile", "", "YAML formatted configuration file. (overrides flag values)")
+	verboseFlag    = flag.Bool("verbose", false, "Print out extra information.")
+
+	// Upload Flags
+	uploadPathFlag     = flag.String("upload.path", "uploaded-files", "Local filesystem path where uploaded files are placed.")
+	uploadHTTPPathFlag = flag.String("upload.httppath", "/upload.asp", "The URL path for uploading files.")
+
+	// HTTP Flags
+	httpPortFlag *int
+
+	// HTTPS Flags
+	httpsPortFlag *int
+
+	// HTTPS Certificate Flags
+	rootPrivateKeyFilePathFlag  = flag.String("https.certificate.rootprivatekey", "", "(optional) Root private key file path for generating derived certificates.")
+	rootCertificateFilePathFlag = flag.String("https.certificate.rootpath", "", "(optional) Root public certificate for derived certificates.")
+	privateKeyFilePathFlag      = flag.String("https.certificate.privatekey", "web.key", "Private key for HTTPS serving.")
+	certificateFilePathFlag     = flag.String("https.certificate.path", "web.cert", "Certificate to host HTTPS with.")
+	certHostsFlag               = flag.String("https.certificate.hosts", "", "Comma-separated hostnames and IPs to generate a certificate for.")
+	validDurationFlag           = flag.Duration("https.certificate.duration", time.Hour*43800, "Lifespan of the certificate. (default: 5 years)")
+	forceOverwriteCertFlag      = flag.Bool("https.certificate.forceoverwrite", false, "Force overwrite existing certificates if they already exist.")
+
+	// Monitoring Flags
+	metricsFlag     = flag.Bool("metrics.enabled", true, "Enables server metrics for monitoring.")
+	metricsPathFlag = flag.String("metrics.path", "/metrics", "The URL path for exporting server metrics for Prometheus monitoring.")
+)
+
 // HTTP holds the configuration for HTTP serving.
 type HTTP struct {
 	Port int `yaml:"port"`
@@ -115,37 +146,6 @@ func loadWithConfigFile(filePath string, conf *Config) error {
 	}
 	return nil
 }
-
-var (
-	// Serving Flags
-	pathFlag       = flag.String("path", "", "Path to serve (local filesystem, git, zip, tarball files).")
-	servePathFlag  = flag.String("servepath", "/", "The HTTP/HTTPS serving root path for the hosted path.")
-	configFileFlag = flag.String("configfile", "", "YAML formatted configuration file. (overrides flag values)")
-	verboseFlag    = flag.Bool("verbose", false, "Print out extra information.")
-
-	// Upload Flags
-	uploadPathFlag     = flag.String("upload.path", "uploaded-files", "Local filesystem path where uploaded files are placed.")
-	uploadHTTPPathFlag = flag.String("upload.httppath", "/upload.asp", "The URL path for uploading files.")
-
-	// HTTP Flags
-	httpPortFlag *int
-
-	// HTTPS Flags
-	httpsPortFlag *int
-
-	// HTTPS Certificate Flags
-	rootPrivateKeyFilePathFlag  = flag.String("https.certificate.rootprivatekey", "", "(optional) Root private key file path for generating derived certificates.")
-	rootCertificateFilePathFlag = flag.String("https.certificate.rootpath", "", "(optional) Root public certificate for derived certificates.")
-	privateKeyFilePathFlag      = flag.String("https.certificate.privatekey", "web.key", "Private key for HTTPS serving.")
-	certificateFilePathFlag     = flag.String("https.certificate.path", "web.cert", "Certificate to host HTTPS with.")
-	certHostsFlag               = flag.String("https.certificate.hosts", "", "Comma-separated hostnames and IPs to generate a certificate for.")
-	validDurationFlag           = flag.Duration("https.certificate.duration", time.Hour*43800, "Lifespan of the certificate. (default: 5 years)")
-	forceOverwriteCertFlag      = flag.Bool("https.certificate.forceoverwrite", false, "Force overwrite existing certificates if they already exist.")
-
-	// Monitoring Flags
-	metricsFlag     = flag.Bool("metrics.enabled", true, "Enables server metrics for monitoring.")
-	metricsPathFlag = flag.String("metrics.path", "/metrics", "The URL path for exporting server metrics for Prometheus monitoring.")
-)
 
 func init() {
 	defaultPortInt := 8080

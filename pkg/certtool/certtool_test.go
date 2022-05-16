@@ -50,6 +50,85 @@ func TestPublicKey(t *testing.T) {
 	assert.NotNil(publicKey(&ecdsa.PrivateKey{}))
 }
 
+func TestReadKeyPairFromFile_Errors(t *testing.T) {
+	tmpDir := mustTemp(t)
+	pubPath := filepath.Join(tmpDir, "pub.cert")
+	privPath := filepath.Join(tmpDir, "priv.key")
+	originalKP, err := GenerateAndWriteKeyPair(&Args{}, pubPath, privPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testCases := []struct {
+		publicCertificateFile string
+		privateKeyFile        string
+		wantErr               string
+	}{
+		{
+			publicCertificateFile: "",
+			privateKeyFile:        "",
+			wantErr:               "public certificate and private key were not provided",
+		},
+		{
+			publicCertificateFile: pubPath,
+			privateKeyFile:        "",
+			wantErr:               "public certificate was provided without a private key",
+		},
+		{
+			publicCertificateFile: "",
+			privateKeyFile:        privPath,
+			wantErr:               "private key was provided without a public certificate",
+		},
+		{
+			publicCertificateFile: pubPath,
+			privateKeyFile:        "does-not-exist",
+			wantErr:               "cannot read the private key file (does-not-exist), open does-not-exist: no such file or directory",
+		},
+		{
+			publicCertificateFile: "does-not-exist",
+			privateKeyFile:        privPath,
+			wantErr:               "cannot read the public certificate file (does-not-exist), open does-not-exist: no such file or directory",
+		},
+		{
+			publicCertificateFile: pubPath,
+			privateKeyFile:        privPath,
+			wantErr:               "",
+		},
+	}
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(fmt.Sprintf("%v", tc), func(t *testing.T) {
+			t.Parallel()
+			kp, err := ReadKeyPairFromFile(tc.publicCertificateFile, tc.privateKeyFile)
+			if tc.wantErr == "" {
+				if err != nil {
+					t.Error(err)
+				}
+				if kp == nil {
+					t.Fatal("KeyPair is nil")
+				}
+				if string(kp.PublicCertificate) != string(originalKP.PublicCertificate) {
+					t.Errorf("original and read public certificates do not match.\ngot: %s\nwant: %s", string(kp.PublicCertificate), string(originalKP.PublicCertificate))
+				}
+				if string(kp.PrivateKey) != string(originalKP.PrivateKey) {
+					t.Errorf("original and read private key do not match.\ngot: %s\nwant: %s", string(kp.PrivateKey), string(originalKP.PrivateKey))
+				}
+			} else {
+				if kp != nil {
+					t.Error("key pair is not nil")
+				}
+
+				if err == nil {
+					t.Fatalf("error is nil, want: '%s'", tc.wantErr)
+				}
+				if err.Error() != tc.wantErr {
+					t.Errorf("got err: '%s', want: '%s'", err.Error(), tc.wantErr)
+				}
+			}
+		})
+	}
+}
+
 func TestReadKeyPair_BadPublicCert(t *testing.T) {
 	assert := assert.New(t)
 
@@ -59,32 +138,8 @@ func TestReadKeyPair_BadPublicCert(t *testing.T) {
 	assert.Contains(err.Error(), "public certificate has a PEM remainder")
 }
 
-func TestReadKeyPair_MalformedRootCerts(t *testing.T) {
-	if testing.Short() {
-		t.Skip("certificate generation takes a long time")
-	}
-
-	assert := assert.New(t)
-
-	pair, err := createCertificateAndPrivateKeyPEM(&Args{
-		KeyType: defaultKeyType(),
-		ParentKeyPair: &KeyPair{
-			PublicCertificate: []byte("lol"),
-			PrivateKey:        []byte("lol"),
-		},
-	})
-	assert.Contains(err.Error(), "public certificate has a PEM remainder")
-	assert.Nil(pair)
-}
-
-func TestReadKeyPair_KeyTypeMismatch(t *testing.T) {
-	if testing.Short() {
-		t.Skip("certificate generation takes a long time")
-	}
-
-	assert := assert.New(t)
-
-	rootPair, err := createCertificateAndPrivateKeyPEM(&Args{
+func TestCreateCertificateAndPrivateKeyPEMErrors(t *testing.T) {
+	ca, err := createCertificateAndPrivateKeyPEM(&Args{
 		Validity:  time.Hour * 1,
 		Hostnames: []string{"a.com", "b.com", "127.0.0.1"},
 		KeyType:   defaultKeyType(),
@@ -94,15 +149,66 @@ func TestReadKeyPair_KeyTypeMismatch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	derivedPair, err := createCertificateAndPrivateKeyPEM(&Args{
-		KeyType: &KeyType{
-			Algorithm: "ECDSA",
-			KeyLength: 224,
+	testCases := []struct {
+		args    *Args
+		wantErr string
+	}{
+		{
+			args: &Args{
+				KeyType: &KeyType{
+					Algorithm: "lol",
+					KeyLength: 10000,
+				},
+			},
+			wantErr: "key algorithm, lol, is not valid",
 		},
-		ParentKeyPair: rootPair,
-	})
-	assert.Contains(err.Error(), "cannot create X.509 public certificate")
-	assert.Nil(derivedPair)
+		{
+			args: &Args{
+				KeyType: &KeyType{
+					Algorithm: "RSA",
+					KeyLength: 1,
+				},
+			},
+			wantErr: "cannot generate private key: crypto/rsa: too few primes of given length to generate an RSA key",
+		},
+		{
+			args: &Args{
+				KeyType: defaultKeyType(),
+				ParentKeyPair: &KeyPair{
+					PublicCertificate: []byte("lol"),
+					PrivateKey:        []byte("lol"),
+				},
+			},
+			wantErr: "public certificate has a PEM remainder of 3 bytes",
+		},
+		{
+			args: &Args{
+				KeyType: &KeyType{
+					Algorithm: "ECDSA",
+					KeyLength: 224,
+				},
+				ParentKeyPair: ca,
+			},
+			wantErr: "cannot create X.509 public certificate: x509: requested SignatureAlgorithm does not match private key type",
+		},
+	}
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(fmt.Sprintf("%v", tc), func(t *testing.T) {
+			t.Parallel()
+
+			kp, err := createCertificateAndPrivateKeyPEM(tc.args)
+			if kp != nil {
+				t.Errorf("KeyPair is not nil, got: %v", kp)
+			}
+			if err == nil {
+				t.Errorf("error was nil, want: %s", tc.wantErr)
+			}
+			if err.Error() != tc.wantErr {
+				t.Errorf("want err: '%s', got '%s'", tc.wantErr, err)
+			}
+		})
+	}
 }
 
 func TestReadKeyPair_MalformedPublicCertificate(t *testing.T) {
@@ -363,17 +469,11 @@ func TestFillDefaults(t *testing.T) {
 func TestCreateCertificateToBadPath(t *testing.T) {
 	assert := assert.New(t)
 
-	tmpDir, err := ioutil.TempDir("", "certtest")
-
-	defer func() {
-		assert.Nil(os.RemoveAll(tmpDir))
-	}()
-
-	assert.Nil(err)
+	tmpDir := mustTemp(t)
 
 	publicCertPath := filepath.Join(tmpDir, "public.cert")
 
-	assert.Contains(GenerateAndWriteKeyPair(
+	kp, err := GenerateAndWriteKeyPair(
 		&Args{
 			Validity:  time.Hour * 1,
 			Hostnames: []string{"a.com", "b.com", "127.0.0.1"},
@@ -381,8 +481,12 @@ func TestCreateCertificateToBadPath(t *testing.T) {
 		},
 		"does-not-exist/pub.cert",
 		"does-not-exist/private.key",
-	).Error(), "does-not-exist/pub.cert")
-	assert.Contains(GenerateAndWriteKeyPair(
+	)
+
+	assert.Nil(kp)
+	assert.Contains(err.Error(), "does-not-exist/pub.cert")
+
+	kp, err = GenerateAndWriteKeyPair(
 		&Args{
 			Validity:  time.Hour * 1,
 			Hostnames: []string{"a.com", "b.com", "127.0.0.1"},
@@ -390,7 +494,10 @@ func TestCreateCertificateToBadPath(t *testing.T) {
 		},
 		publicCertPath,
 		"does-not-exist/private.key",
-	).Error(), "does-not-exist/private.key")
+	)
+
+	assert.Nil(kp)
+	assert.Contains(err.Error(), "does-not-exist/private.key")
 }
 
 func TestCreateCertificate(t *testing.T) {
@@ -400,18 +507,12 @@ func TestCreateCertificate(t *testing.T) {
 
 	assert := assert.New(t)
 
-	tmpDir, err := ioutil.TempDir("", "certtest")
-
-	defer func() {
-		assert.Nil(os.RemoveAll(tmpDir))
-	}()
-
-	assert.Nil(err)
+	tmpDir := mustTemp(t)
 
 	publicCertPath := filepath.Join(tmpDir, "public.cert")
 	privateKeyPath := filepath.Join(tmpDir, "private.key")
 
-	err = GenerateAndWriteKeyPair(&Args{
+	kp, err := GenerateAndWriteKeyPair(&Args{
 		Validity:  time.Hour * 1,
 		Hostnames: []string{"a.com", "b.com", "127.0.0.1"},
 		KeyType:   defaultKeyType(),
@@ -420,6 +521,8 @@ func TestCreateCertificate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	assert.NotNil(kp)
 
 	assert.FileExists(publicCertPath)
 	assert.FileExists(privateKeyPath)
@@ -476,7 +579,10 @@ func TestBadValues(t *testing.T) {
 		tc := tc
 		t.Run(tc.errorString, func(t *testing.T) {
 			t.Parallel()
-			err := GenerateAndWriteKeyPair(tc.args, tc.pub, tc.priv)
+			kp, err := GenerateAndWriteKeyPair(tc.args, tc.pub, tc.priv)
+			if kp != nil {
+				t.Errorf("KeyPair should be nil, got: %+v", kp)
+			}
 			if err == nil {
 				t.Errorf("Expected an error with text, '%s'", tc.errorString)
 			} else if err.Error() != tc.errorString {
@@ -553,4 +659,18 @@ func TestPemBlockForKey_errors(t *testing.T) {
 	block, err = pemBlockForKey(&ecdsa.PrivateKey{})
 	assert.Nil(block)
 	assert.Contains(err.Error(), "unknown elliptic curve")
+}
+
+func mustTemp(tb testing.TB) string {
+	tmpDir, err := ioutil.TempDir("", "certtest")
+
+	if err != nil {
+		tb.Fatal(err)
+	}
+	tb.Cleanup(func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			tb.Errorf("cannot delete temp directory '%s', %s", tmpDir, err)
+		}
+	})
+	return tmpDir
 }
