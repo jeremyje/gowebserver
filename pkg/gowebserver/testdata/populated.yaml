@@ -1,0 +1,26 @@
+verbose: true
+serve:
+- source: /home/folder
+  endpoint: /serving
+http:
+  port: 1000
+https:
+  port: 2000
+  certificate:
+    rootPrivateKey: root-private-key.pem
+    rootPath: root-public-certificate.pem
+    privateKey: private-key.pem
+    path: public-certificate.pem
+    hosts: gowebserver.com
+    duration: 24h0m0s
+monitoring:
+  debugEndpoint: /debugging
+  metrics:
+    enabled: true
+    path: /prometheus
+  trace:
+    enabled: true
+    uri: remotehost
+upload:
+  source: /home/upload
+  endpoint: /postage

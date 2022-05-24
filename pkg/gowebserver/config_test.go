@@ -20,52 +20,19 @@ import (
 	"testing"
 	"time"
 
+	_ "embed"
+
 	"github.com/google/go-cmp/cmp"
 )
 
-const emptyConfigYaml = `verbose: false
-serve: []
-http:
-  port: 0
-https:
-  port: 0
-  certificate:
-    rootPrivateKey: ""
-    rootPath: ""
-    privateKey: ""
-    path: ""
-    hosts: ""
-    duration: 0s
-metrics:
-  enabled: false
-  path: ""
-upload:
-  source: ""
-  endpoint: ""
-`
-
-const populatedConfigYaml = `verbose: true
-serve:
-- source: /home/folder
-  endpoint: /serving
-http:
-  port: 1000
-https:
-  port: 2000
-  certificate:
-    rootPrivateKey: root-private-key.pem
-    rootPath: root-public-certificate.pem
-    privateKey: private-key.pem
-    path: public-certificate.pem
-    hosts: gowebserver.com
-    duration: 24h0m0s
-metrics:
-  enabled: true
-  path: /prometheus
-upload:
-  source: /home/upload
-  endpoint: /postage
-`
+var (
+	//go:embed testdata/empty.yaml
+	emptyConfigYaml string
+	//go:embed testdata/populated.yaml
+	populatedConfigYaml string
+	//go:embed testdata/nodefaults.yaml
+	noDefaultsConfigFile string
+)
 
 func TestEmptyConfig(t *testing.T) {
 	conf := &Config{}
@@ -97,9 +64,16 @@ func TestPopulatedConfig(t *testing.T) {
 				ForceOverwrite:           true,
 			},
 		},
-		Metrics: Metrics{
-			Enabled: true,
-			Path:    "/prometheus",
+		Monitoring: Monitoring{
+			DebugEndpoint: "/debugging",
+			Metrics: Metrics{
+				Enabled: true,
+				Path:    "/prometheus",
+			},
+			Trace: Trace{
+				Enabled: true,
+				URI:     "remotehost",
+			},
 		},
 		Upload: Serve{
 			Source:   "/home/upload",
@@ -113,31 +87,6 @@ func TestPopulatedConfig(t *testing.T) {
 		t.Log(conf.String())
 	}
 }
-
-const noDefaultsConfigFile = `verbose: true
-serve:
-- source: "/home/example"
-  endpoint: "/serving"
-configurationfile: "/something.yaml"
-http:
-  port: 1
-https:
-  port: 2
-  certificate:
-    privateKey: private.pem
-    path: public.pem
-    rootPrivateKey: root-private.pem
-    rootPath: root-public.pem
-    hosts: "hosts"
-    duration: 1m0s
-    forceoverwrite: false
-metrics:
-  enabled: false
-  path: /metrics
-upload:
-  source: "dropsite"
-  endpoint: "/upload.jspx"
-`
 
 func TestNoDefaultConfig(t *testing.T) {
 	fp, err := writeTempFile(noDefaultsConfigFile)
@@ -176,9 +125,16 @@ func TestNoDefaultConfig(t *testing.T) {
 				ForceOverwrite:           false,
 			},
 		},
-		Metrics: Metrics{
-			Enabled: false,
-			Path:    "/metrics",
+		Monitoring: Monitoring{
+			DebugEndpoint: "/zdebug",
+			Metrics: Metrics{
+				Enabled: false,
+				Path:    "/metrics",
+			},
+			Trace: Trace{
+				Enabled: true,
+				URI:     "somewhere",
+			},
 		},
 		Upload: Serve{
 			Source:   "dropsite",
@@ -186,7 +142,7 @@ func TestNoDefaultConfig(t *testing.T) {
 		},
 	}
 
-	if diff := cmp.Diff(got, want); diff != "" {
+	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("config mismatch (-want +got):\n%s", diff)
 	}
 }
@@ -228,17 +184,25 @@ func TestPopulatedYamlConfig(t *testing.T) {
 				ForceOverwrite:           false,
 			},
 		},
-		Metrics: Metrics{
-			Enabled: true,
-			Path:    "/prometheus",
+		Monitoring: Monitoring{
+			DebugEndpoint: "/debugging",
+			Metrics: Metrics{
+				Enabled: true,
+				Path:    "/prometheus",
+			},
+			Trace: Trace{
+				Enabled: true,
+				URI:     "remotehost",
+			},
 		},
+
 		Upload: Serve{
 			Source:   "/home/upload",
 			Endpoint: "/postage",
 		},
 	}
 
-	if diff := cmp.Diff(got, want); diff != "" {
+	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("config mismatch (-want +got):\n%s", diff)
 	}
 }
@@ -289,9 +253,16 @@ func TestDefaultConfiguration(t *testing.T) {
 				ForceOverwrite:           false,
 			},
 		},
-		Metrics: Metrics{
-			Enabled: true,
-			Path:    "/metrics",
+		Monitoring: Monitoring{
+			DebugEndpoint: "/debug",
+			Metrics: Metrics{
+				Enabled: true,
+				Path:    "/metrics",
+			},
+			Trace: Trace{
+				Enabled: false,
+				URI:     "",
+			},
 		},
 		Upload: Serve{
 			Source:   "uploaded-files",
@@ -299,7 +270,7 @@ func TestDefaultConfiguration(t *testing.T) {
 		},
 	}
 
-	if diff := cmp.Diff(got, want); diff != "" {
+	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("config mismatch (-want +got):\n%s", diff)
 	}
 }
