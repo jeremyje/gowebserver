@@ -100,9 +100,65 @@ bin/go/%: $(ASSETS)
 	GOOS=$(firstword $(subst _, ,$(notdir $(abspath $(dir $@))))) GOARCH=$(word 2, $(subst _, ,$(notdir $(abspath $(dir $@))))) GOARM=$(subst v,,$(word 3, $(subst _, ,$(notdir $(abspath $(dir $@)))))) CGO_ENABLED=0 $(GO) build -o $@ cmd/$(basename $(notdir $@))/$(basename $(notdir $@)).go
 	touch $@
 
-RELEASE_BINARIES = amd64 arm arm64 386 arm amd64-darwin arm64-darwin amd64.exe 386.exe
+SHORT_APP_NAMES = server httpprobe certtool
+RELEASE_BINARY_SUFFIXES = amd64 arm arm64 386 arm amd64-darwin arm64-darwin amd64.exe 386.exe
+RELEASE_BINARIES = $(foreach appname,$(SHORT_APP_NAMES),$(foreach relbin,$(RELEASE_BINARY_SUFFIXES),bin/release/$(appname)-$(relbin)))
 
-release-binaries: $(foreach relbin,$(RELEASE_BINARIES),bin/release/server-$(relbin))
+release-binaries: $(RELEASE_BINARIES)
+
+bin/release/certtool-amd64: bin/go/linux_amd64/certtool
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/certtool-arm: bin/go/linux_arm_v7/certtool
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/certtool-arm64: bin/go/linux_arm64/certtool
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/certtool-386: bin/go/linux_386/certtool
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/certtool-amd64-darwin: bin/go/darwin_amd64/certtool
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/certtool-arm64-darwin: bin/go/darwin_arm64/certtool
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/certtool-amd64.exe: bin/go/windows_amd64/certtool.exe
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/certtool-386.exe: bin/go/windows_386/certtool.exe
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/certtool-arm64.exe: bin/go/windows_arm64/certtool.exe
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/httpprobe-amd64: bin/go/linux_amd64/httpprobe
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/httpprobe-arm: bin/go/linux_arm_v7/httpprobe
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/httpprobe-arm64: bin/go/linux_arm64/httpprobe
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/httpprobe-386: bin/go/linux_386/httpprobe
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/httpprobe-amd64-darwin: bin/go/darwin_amd64/httpprobe
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/httpprobe-arm64-darwin: bin/go/darwin_arm64/httpprobe
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/httpprobe-amd64.exe: bin/go/windows_amd64/httpprobe.exe
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/httpprobe-386.exe: bin/go/windows_386/httpprobe.exe
+	mkdir -p bin/release/ && cp $< $@
+
+bin/release/httpprobe-arm64.exe: bin/go/windows_arm64/httpprobe.exe
+	mkdir -p bin/release/ && cp $< $@
 
 bin/release/server-amd64: bin/go/linux_amd64/gowebserver
 	mkdir -p bin/release/ && cp $< $@
