@@ -35,6 +35,7 @@ VERSION_SUFFIX = $(SHORT_SHA)
 VERSION = $(BASE_VERSION)-$(VERSION_SUFFIX)
 BUILD_DATE = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 TAG := $(VERSION)
+PKG := github.com/jeremyje/gowebserver
 
 SOURCE_DIRS=$(shell go list ./... | grep -v '/vendor/')
 export PATH := $(PWD)/bin/toolchain:$(PATH):/root/go/bin:/usr/lib/go-1.9/bin:/usr/local/go/bin:/usr/go/bin
@@ -97,7 +98,10 @@ all: $(ALL_BINARIES)
 assets: $(ASSETS)
 
 bin/go/%: $(ASSETS)
-	GOOS=$(firstword $(subst _, ,$(notdir $(abspath $(dir $@))))) GOARCH=$(word 2, $(subst _, ,$(notdir $(abspath $(dir $@))))) GOARM=$(subst v,,$(word 3, $(subst _, ,$(notdir $(abspath $(dir $@)))))) CGO_ENABLED=0 $(GO) build -o $@ cmd/$(basename $(notdir $@))/$(basename $(notdir $@)).go
+	GOOS=$(firstword $(subst _, ,$(notdir $(abspath $(dir $@))))) GOARCH=$(word 2, $(subst _, ,$(notdir $(abspath $(dir $@))))) GOARM=$(subst v,,$(word 3, $(subst _, ,$(notdir $(abspath $(dir $@)))))) CGO_ENABLED=0 \
+		$(GO) build -o $@ \
+		-ldflags '-X $(PKG)/pkg/gowebserver.version=$(VERSION)' \
+		cmd/$(basename $(notdir $@))/$(basename $(notdir $@)).go
 	touch $@
 
 SHORT_APP_NAMES = server httpprobe certtool

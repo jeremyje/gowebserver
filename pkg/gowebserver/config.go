@@ -55,8 +55,11 @@ var (
 	forceOverwriteCertFlag      = flag.Bool("https.certificate.forceoverwrite", false, "Force overwrite existing certificates if they already exist.")
 
 	// Monitoring Flags
-	metricsFlag     = flag.Bool("metrics.enabled", true, "Enables server metrics for monitoring.")
-	metricsPathFlag = flag.String("metrics.path", "/metrics", "The URL path for exporting server metrics for Prometheus monitoring.")
+	monitoringDebugEndpointFlag = flag.String("monitoring.debugendpoint", "/debug", "The URL path debugging.")
+	monitoringTraceURIFlag      = flag.String("monitoring.trace.uri", "", "URI endpoing for Jaeger tracing.")
+	monitoringMetricsPath       = flag.String("monitoring.metrics.path", "/metrics", "The URL path for exporting server metrics for Prometheus monitoring.")
+
+	version = "UNKNOWN"
 )
 
 // HTTP holds the configuration for HTTP serving.
@@ -81,6 +84,19 @@ type Certificate struct {
 	ForceOverwrite           bool          `yaml:"-"`
 }
 
+// Monitoring holds the monitoring configuration.
+type Monitoring struct {
+	DebugEndpoint string  `yaml:"debugEndpoint"`
+	Metrics       Metrics `yaml:"metrics"`
+	Trace         Trace   `yaml:"trace"`
+}
+
+// Trace holds the trace configuration.
+type Trace struct {
+	Enabled bool   `yaml:"enabled"`
+	URI     string `yaml:"uri"`
+}
+
 // Metrics holds the metrics configuration.
 type Metrics struct {
 	Enabled bool   `yaml:"enabled"`
@@ -93,10 +109,10 @@ type Config struct {
 	Serve             []Serve `yaml:"serve"`
 	ConfigurationFile string  `yaml:"-"`
 
-	HTTP    HTTP    `yaml:"http"`
-	HTTPS   HTTPS   `yaml:"https"`
-	Metrics Metrics `yaml:"metrics"`
-	Upload  Serve   `yaml:"upload"`
+	HTTP       HTTP       `yaml:"http"`
+	HTTPS      HTTPS      `yaml:"https"`
+	Monitoring Monitoring `yaml:"monitoring"`
+	Upload     Serve      `yaml:"upload"`
 }
 
 // Serve maps the source to endpoint serving of content.
@@ -194,9 +210,16 @@ func loadFromFlags() (*Config, error) {
 				ForceOverwrite:           *forceOverwriteCertFlag,
 			},
 		},
-		Metrics: Metrics{
-			Enabled: *metricsFlag,
-			Path:    *metricsPathFlag,
+		Monitoring: Monitoring{
+			DebugEndpoint: *monitoringDebugEndpointFlag,
+			Metrics: Metrics{
+				Enabled: *monitoringMetricsPath != "",
+				Path:    *monitoringMetricsPath,
+			},
+			Trace: Trace{
+				Enabled: *monitoringTraceURIFlag != "",
+				URI:     *monitoringTraceURIFlag,
+			},
 		},
 		Upload: Serve{
 			Source:   *uploadPathFlag,

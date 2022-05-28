@@ -240,7 +240,7 @@ func TestNew(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(fmt.Sprintf("%+v", tc.config), func(t *testing.T) {
-			t.Parallel()
+			//t.Parallel()
 			got, err := New(tc.config)
 			if err != nil {
 				t.Fatal(err)

@@ -19,12 +19,11 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
 )
 
@@ -45,6 +44,7 @@ type webServerImpl struct {
 	verbose             bool
 	uploadPath          string
 	uploadHTTPPath      string
+	monitoringCtx       *monitoringContext
 
 	httpListenPort  int
 	httpsListenPort int
@@ -69,11 +69,11 @@ func expandPath(dir string) (string, error) {
 }
 
 func (ws *webServerImpl) addHandler(serverMux *http.ServeMux, servePath string, handler http.Handler) {
-	//	if ws.metricsEnabled {
-	//		serverMux.HandleFunc(servePath, promhttp.InstrumentHandler(servePath, handler))
-	//} else {
-	serverMux.Handle(servePath, handler)
-	//}
+	if ws.metricsEnabled {
+		serverMux.Handle(servePath, otelhttp.NewHandler(handler, servePath, otelhttp.WithTracerProvider(ws.monitoringCtx.getTraceProvider()), otelhttp.WithMeterProvider(ws.monitoringCtx.getMeterProvider())))
+	} else {
+		serverMux.Handle(servePath, handler)
+	}
 }
 
 func getPort(lis net.Listener) (int, error) {
@@ -100,6 +100,8 @@ func (ws *webServerImpl) getPorts() (int, int) {
 }
 
 func (ws *webServerImpl) Serve(termCh <-chan error) error {
+	allCleanups := []func(){}
+
 	displayPath := ""
 	for i, paths := range ws.fileSystemServePath {
 		if i > 0 {
@@ -108,10 +110,13 @@ func (ws *webServerImpl) Serve(termCh <-chan error) error {
 		displayPath += paths.localPath
 	}
 	serverMux := http.NewServeMux()
-	if ws.metricsEnabled {
-		serverMux.Handle(ws.metricsServePath, promhttp.Handler())
+	if ws.monitoringCtx != nil {
+		for endpoint, h := range ws.monitoringCtx.handlers {
+			serverMux.Handle(endpoint, h)
+		}
+		allCleanups = append(allCleanups, ws.monitoringCtx.shutdown)
 	}
-	allCleanups := []func(){}
+
 	hasIndex := false
 	endpoints := []string{}
 	for _, paths := range ws.fileSystemServePath {
@@ -145,12 +150,14 @@ func (ws *webServerImpl) Serve(termCh <-chan error) error {
 	}()
 
 	if len(ws.uploadHTTPPath) > 0 {
-		uploadHandler := newUploadHandler(ws.uploadHTTPPath, ws.uploadPath)
+		uploadHandler, err := newUploadHandler(ws.monitoringCtx, ws.uploadHTTPPath, ws.uploadPath)
+		if err != nil {
+			return err
+		}
 		ws.addHandler(serverMux, ws.uploadHTTPPath, uploadHandler)
 	}
 
-	corsHandler := cors.Default().Handler(serverMux)
-	httpHandler := newTracingHTTPHandler(corsHandler, ws.metricsEnabled)
+	httpHandler := cors.Default().Handler(serverMux)
 
 	httpSocket, err := net.Listen("tcp", ws.httpAddr)
 	if err != nil {
@@ -217,12 +224,17 @@ func New(conf *Config) (WebServer, error) {
 		uploadPath = dir
 	}
 
+	monitoringCtx, err := setupMonitoring(conf.Monitoring)
+	if err != nil {
+		return nil, fmt.Errorf("cannot setup monitoring '%+v', %s", conf.Monitoring, err)
+	}
 	ws := &webServerImpl{
-		httpAddr:            ":" + strconv.Itoa(conf.HTTP.Port),
-		httpsAddr:           ":" + strconv.Itoa(conf.HTTPS.Port),
-		metricsEnabled:      conf.Metrics.Enabled,
+		httpAddr:            toAddr(conf.HTTP.Port),
+		httpsAddr:           toAddr(conf.HTTPS.Port),
+		monitoringCtx:       monitoringCtx,
+		metricsEnabled:      conf.Monitoring.Metrics.Enabled,
 		fileSystemServePath: sp,
-		metricsServePath:    conf.Metrics.Path,
+		metricsServePath:    conf.Monitoring.Metrics.Path,
 		certificateFilePath: conf.HTTPS.Certificate.CertificateFilePath,
 		privateKeyFilePath:  conf.HTTPS.Certificate.PrivateKeyFilePath,
 		uploadPath:          uploadPath,
@@ -231,6 +243,10 @@ func New(conf *Config) (WebServer, error) {
 	}
 
 	return ws, nil
+}
+
+func toAddr(port int) string {
+	return fmt.Sprintf(":%d", port)
 }
 
 func normalizeHTTPPath(path string) string {

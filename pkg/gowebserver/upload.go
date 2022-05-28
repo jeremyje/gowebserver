@@ -30,7 +30,11 @@ import (
 
 	_ "embed"
 
-	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric/instrument"
+	"go.opentelemetry.io/otel/metric/instrument/syncint64"
+	"go.opentelemetry.io/otel/metric/unit"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -38,42 +42,36 @@ var (
 
 	//go:embed upload.html
 	uploadHTML []byte
-
-	uploadedBytesTotal = prometheus.NewCounter(
-		prometheus.CounterOpts{
-			Name: "uploaded_bytes_total",
-			Help: "Number of bytes uploaded.",
-		},
-	)
-	uploadedFilesTotal = prometheus.NewCounter(
-		prometheus.CounterOpts{
-			Name: "uploaded_files_total",
-			Help: "Number of files uploaded.",
-		},
-	)
 )
-
-func init() {
-	prometheus.MustRegister(uploadedBytesTotal)
-	prometheus.MustRegister(uploadedFilesTotal)
-}
 
 const (
 	uploadFileFormName = "gowebserveruploadfile[]"
 )
 
 type uploadHTTPHandler struct {
-	uploadHTTPPath  string
-	uploadDirectory string
+	tp                 trace.TracerProvider
+	uploadHTTPPath     string
+	uploadDirectory    string
+	uploadedBytesTotal syncint64.Counter
+	uploadedFilesTotal syncint64.Counter
 }
 
 type uploadResponse struct {
-	Success bool   `json:"success"`
-	Error   string `json:"error,omitempty"`
+	Success bool  `json:"success"`
+	Error   error `json:"error,omitempty"`
 }
 
+const (
+	uploadTraceName = "uploadHTTPHandler"
+)
+
 func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	uploadTracer := uh.tp.Tracer(uploadTraceName)
+	ctx, span := uploadTracer.Start(r.Context(), r.Method)
+	defer span.End()
+
 	logger := zap.S().With("url", r.URL)
+
 	if r.Method == "GET" {
 		crutime := time.Now().Unix()
 		h := md5.New()
@@ -102,55 +100,74 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		files := m.File[uploadFileFormName]
 		for i := range files {
 			fileName := files[i].Filename
+			ctx, childSpan := uploadTracer.Start(ctx, fileName)
+			defer childSpan.End()
+			span.AddEvent("create file", trace.WithAttributes(attribute.String("filename", fileName)))
+
 			file, err := files[i].Open()
 			if err != nil {
-				resp.Error = fmt.Sprintf("InternalError: Cannot download file (%s), %s", fileName, err)
-				writeUploadResponse(w, resp, logger)
+				resp.Error = fmt.Errorf("InternalError: Cannot download file (%s), %s", fileName, err)
+				writeUploadResponse(w, resp, logger, childSpan)
 				return
 			}
 			defer file.Close()
 			err = os.MkdirAll(uh.uploadDirectory, 0766)
 			if err != nil {
-				resp.Error = fmt.Sprintf("InternalError: Cannot create directory to store file (%s), %s", uh.uploadDirectory, err)
-				writeUploadResponse(w, resp, logger)
+				resp.Error = fmt.Errorf("InternalError: Cannot create directory to store file (%s), %s", uh.uploadDirectory, err)
+				writeUploadResponse(w, resp, logger, childSpan)
 				return
 			}
 
 			name := sanitizeFileName(filepath.Base(fileName))
 			localPath := filepath.Join(uh.uploadDirectory, name)
-			f, err := os.OpenFile(localPath, os.O_WRONLY|os.O_CREATE, 0666)
+			f, err := os.OpenFile(localPath, os.O_WRONLY|os.O_CREATE, 0644)
 			if err != nil {
-				resp.Error = fmt.Sprintf("InternalError: Cannot create file (%s), %s", localPath, err)
-				writeUploadResponse(w, resp, logger)
+				resp.Error = fmt.Errorf("InternalError: Cannot create file (%s), %s", localPath, err)
+				writeUploadResponse(w, resp, logger, childSpan)
 				return
 			}
 			defer f.Close()
 			bytesWritten, err := io.Copy(f, file)
 			if err != nil {
-				resp.Error = fmt.Sprintf("InternalError: Cannot write file (%s), %s", localPath, err)
-				writeUploadResponse(w, resp, logger)
+				resp.Error = fmt.Errorf("InternalError: Cannot write file (%s), %s", localPath, err)
+				writeUploadResponse(w, resp, logger, childSpan)
 			}
-			uploadedBytesTotal.Add(float64(bytesWritten))
-			uploadedFilesTotal.Inc()
+			childSpan.SetAttributes(attribute.Int64("bytesWritten", bytesWritten))
+			uh.uploadedBytesTotal.Add(ctx, bytesWritten)
+			uh.uploadedFilesTotal.Add(ctx, 1)
 			logger.With("fileName", fileName).With("localPath", localPath).Info("Upload Complete")
 		}
 
 		resp.Success = true
-		writeUploadResponse(w, resp, logger)
+		writeUploadResponse(w, resp, logger, span)
 	}
 }
 
-func newUploadHandler(uploadHTTPPath string, uploadDirectory string) http.Handler {
+func newUploadHandler(mc *monitoringContext, uploadHTTPPath string, uploadDirectory string) (http.Handler, error) {
+	m := mc.getMeterProvider().Meter(uploadDirectory)
+
+	uploadedBytesTotal, err := m.SyncInt64().Counter("uploaded_bytes_total", instrument.WithDescription("Number of bytes uploaded."), instrument.WithUnit(unit.Bytes))
+	if err != nil {
+		return nil, err
+	}
+	uploadedFilesTotal, err := m.SyncInt64().Counter("uploaded_files_total", instrument.WithDescription("Number of files uploaded."), instrument.WithUnit(unit.Dimensionless))
+	if err != nil {
+		return nil, err
+	}
 	return &uploadHTTPHandler{
-		uploadHTTPPath:  uploadHTTPPath,
-		uploadDirectory: uploadDirectory,
-	}
+		tp:                 mc.getTraceProvider(),
+		uploadHTTPPath:     uploadHTTPPath,
+		uploadDirectory:    uploadDirectory,
+		uploadedBytesTotal: uploadedBytesTotal,
+		uploadedFilesTotal: uploadedFilesTotal,
+	}, nil
 }
 
-func writeUploadResponse(w http.ResponseWriter, resp uploadResponse, logger *zap.SugaredLogger) {
-	if len(resp.Error) > 0 {
+func writeUploadResponse(w http.ResponseWriter, resp uploadResponse, logger *zap.SugaredLogger, span trace.Span) {
+	if resp.Error != nil {
 		logger.With("error", resp.Error).Warn("Upload error")
 		w.WriteHeader(http.StatusBadRequest)
+		span.RecordError(resp.Error)
 	} else {
 		logger.Debug("Upload Successful")
 	}

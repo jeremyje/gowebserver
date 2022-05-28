@@ -1,0 +1,24 @@
+verbose: false
+serve: []
+http:
+  port: 0
+https:
+  port: 0
+  certificate:
+    rootPrivateKey: ""
+    rootPath: ""
+    privateKey: ""
+    path: ""
+    hosts: ""
+    duration: 0s
+monitoring:
+  debugEndpoint: ""
+  metrics:
+    enabled: false
+    path: ""
+  trace:
+    enabled: false
+    uri: ""
+upload:
+  source: ""
+  endpoint: ""

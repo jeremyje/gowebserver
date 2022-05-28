@@ -55,8 +55,10 @@ func TestCreateCertificate(t *testing.T) {
 				ForceOverwrite:           true,
 			},
 		},
-		Metrics: Metrics{},
-		Upload:  Serve{},
+		Monitoring: Monitoring{
+			Metrics: Metrics{},
+		},
+		Upload: Serve{},
 	}
 	if err := createCertificate(cfg); err != nil {
 		t.Error(err)

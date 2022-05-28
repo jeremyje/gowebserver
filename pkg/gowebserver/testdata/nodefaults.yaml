@@ -1,0 +1,28 @@
+verbose: true
+serve:
+- source: "/home/example"
+  endpoint: "/serving"
+configurationfile: "/something.yaml"
+http:
+  port: 1
+https:
+  port: 2
+  certificate:
+    privateKey: private.pem
+    path: public.pem
+    rootPrivateKey: root-private.pem
+    rootPath: root-public.pem
+    hosts: "hosts"
+    duration: 1m0s
+    forceoverwrite: false
+monitoring:
+  debugEndpoint: /zdebug
+  metrics:
+    enabled: false
+    path: /metrics
+  trace:
+    enabled: true
+    uri: "somewhere"
+upload:
+  source: "dropsite"
+  endpoint: "/upload.jspx"
