@@ -1,7 +1,7 @@
 verbose: true
 serve:
-- source: /home/folder
-  endpoint: /serving
+  - source: /home/folder
+    endpoint: /serving
 http:
   port: 1000
 https:
