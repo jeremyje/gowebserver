@@ -15,6 +15,7 @@
 package gowebserver
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -25,7 +26,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -125,12 +126,14 @@ type Serve struct {
 
 // String returns a string representation of the config.
 func (c *Config) String() string {
-	data, err := yaml.Marshal(c)
-	if err != nil {
+	b := &bytes.Buffer{}
+	e := yaml.NewEncoder(b)
+	e.SetIndent(2)
+	if err := e.Encode(c); err != nil {
 		return err.Error()
 	}
-
-	return string(data)
+	e.Close()
+	return b.String()
 }
 
 // Load loads the configuration for the server.
