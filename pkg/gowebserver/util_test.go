@@ -15,10 +15,17 @@
 package gowebserver
 
 import (
+	"bytes"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
+
+	_ "embed"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestCheckError(t *testing.T) {
@@ -142,4 +149,101 @@ func mustFile(tb testing.TB, path string) []byte {
 		tb.Fatalf("cannot read file '%s', %s", path, err)
 	}
 	return data
+}
+
+var (
+	//go:embed testdata/hi-template.html
+	hiTemplateHTML []byte
+	//go:embed testdata/hi-template-want.html
+	hiTemplateWantHTML []byte
+	//go:embed testdata/broken-template.html
+	brokenTemplateHTML []byte
+)
+
+func TestExecuteTemplate(t *testing.T) {
+	testCases := []struct {
+		name    string
+		input   []byte
+		want    []byte
+		wantErr bool
+	}{
+		{
+			name:  "testdata/hi-template.html",
+			input: hiTemplateHTML,
+			want:  hiTemplateWantHTML,
+		},
+		{
+			name:    "testdata/index.html",
+			input:   indexHTML,
+			wantErr: true,
+		},
+		{
+			name:    "testdata/broken-template.html",
+			input:   brokenTemplateHTML,
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			w := &bytes.Buffer{}
+			var params = struct {
+				TestString string
+			}{"test-string"}
+			if err := executeTemplate(tc.input, params, w); err != nil {
+				if !tc.wantErr {
+					t.Error(err)
+				}
+			} else {
+				if tc.wantErr {
+					t.Error("expected an error")
+				}
+				if diff := cmp.Diff(tc.want, w.Bytes()); diff != "" {
+					t.Errorf("executeTemplate() mismatch (-want +got):\n%s", diff)
+				}
+			}
+		})
+	}
+}
+
+type angryReader struct {
+}
+
+func (a *angryReader) Read(p []byte) (n int, err error) {
+	return 0, fmt.Errorf("failure")
+}
+
+func TestCopyFileErrors(t *testing.T) {
+	testCases := []struct {
+		filePath string
+		r        io.Reader
+		wantErr  string
+	}{
+		{
+			filePath: "dir-does-not-exist/target-file.txt",
+			r:        &angryReader{},
+			wantErr:  "cannot create target file dir-does-not-exist/target-file.txt, open dir-does-not-exist/target-file.txt: no such file or directory",
+		},
+		{
+			filePath: "target-file.txt",
+			r:        &angryReader{},
+			wantErr:  "cannot copy to target file target-file.txt, failure",
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.filePath, func(t *testing.T) {
+			t.Parallel()
+			if err := copyFile(tc.r, tc.filePath); err != nil {
+				if diff := cmp.Diff(tc.wantErr, err.Error()); diff != "" {
+					t.Errorf("copyFile() mismatch (-want +got):\n%s", diff)
+				}
+			} else {
+				t.Error("expected an error")
+			}
+		})
+	}
 }

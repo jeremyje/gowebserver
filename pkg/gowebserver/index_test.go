@@ -19,15 +19,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	_ "embed"
+
 	"github.com/google/go-cmp/cmp"
 )
 
 var (
-	indexHTMLForTest = `<pre>
-<a href="/ok">/ok</a>
-<a href="/abc">/abc</a>
-</pre>
-`
+	//go:embed testdata/index.html
+	indexHTMLForTest []byte
 )
 
 func TestIndexHTML(t *testing.T) {
@@ -37,9 +36,11 @@ func TestIndexHTML(t *testing.T) {
 }
 
 func TestIndexHTTPHandlerServeHTTP(t *testing.T) {
-	hs := httptest.NewServer(&indexHTTPHandler{
-		servePaths: []string{"/ok", "/abc"},
-	})
+	h, err := newIndexHTTPHandler([]string{"/ok", "/abc"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	hs := httptest.NewServer(h)
 	defer hs.Close()
 	resp, err := hs.Client().Get(hs.URL + "/")
 	if err != nil {
@@ -52,7 +53,7 @@ func TestIndexHTTPHandlerServeHTTP(t *testing.T) {
 		t.Error(err)
 	}
 
-	if diff := cmp.Diff(string(data), indexHTMLForTest); diff != "" {
+	if diff := cmp.Diff(string(indexHTMLForTest), string(data)); diff != "" {
 		t.Errorf("index mismatch (-want +got):\n%s", diff)
 	}
 }

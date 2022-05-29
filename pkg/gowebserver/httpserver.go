@@ -137,8 +137,9 @@ func (ws *webServerImpl) Serve(termCh <-chan error) error {
 	}
 
 	if !hasIndex {
-		h := &indexHTTPHandler{
-			servePaths: endpoints,
+		h, err := newIndexHTTPHandler(endpoints)
+		if err != nil {
+			return err
 		}
 		ws.addHandler(serverMux, "/", h)
 	}

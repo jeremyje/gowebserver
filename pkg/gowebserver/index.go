@@ -14,15 +14,11 @@
 
 package gowebserver
 
-// https://astaxie.gitbooks.io/build-web-application-with-golang/content/en/04.5.html
-// http://sanatgersappa.blogspot.com/2013/03/handling-multiple-file-uploads-in-go.html
 import (
+	"bytes"
 	"net/http"
-	"text/template"
 
 	_ "embed"
-
-	"go.uber.org/zap"
 )
 
 var (
@@ -31,24 +27,24 @@ var (
 )
 
 type indexHTTPHandler struct {
-	servePaths []string
+	page []byte
+}
+
+func newIndexHTTPHandler(servePaths []string) (*indexHTTPHandler, error) {
+	w := &bytes.Buffer{}
+	var params = struct {
+		ServePaths []string
+	}{servePaths}
+	if err := executeTemplate(indexHTML, params, w); err != nil {
+		return nil, err
+	}
+
+	return &indexHTTPHandler{
+		page: w.Bytes(),
+	}, nil
 }
 
 func (h *indexHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	logger := zap.S().With("url", r.URL)
-
-	tmpl := template.New("")
-	t, err := tmpl.Parse(string(indexHTML))
-	if err != nil {
-		logger.With("error", err).Error("Error parsing html template")
-		w.Write([]byte(err.Error()))
-		return
-	}
 	w.Header().Add("Content-Type", "text/html")
-	var params = struct {
-		ServePaths []string
-	}{h.servePaths}
-	if err := t.Execute(w, params); err != nil {
-		zap.S().With("error", err).Error("cannot parse index.html template.")
-	}
+	w.Write(h.page)
 }
