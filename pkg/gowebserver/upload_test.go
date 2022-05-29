@@ -87,6 +87,21 @@ func TestUpload(t *testing.T) {
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("sha256 upload mismatch (-want +got):\n%s", diff)
 	}
+
+	req, err = http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"/upload", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	resp, err = hc.Do(req)
+	if err != nil {
+		t.Error(err)
+	}
+	if resp == nil {
+		t.Fatal("response is nil")
+	}
+	if resp.StatusCode != 200 {
+		t.Errorf("http status code is '%d'", resp.StatusCode)
+	}
 }
 
 func sha256File(tb testing.TB, localPath string) string {

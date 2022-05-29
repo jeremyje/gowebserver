@@ -169,7 +169,7 @@ func TestCreateCertificateAndPrivateKeyPEMErrors(t *testing.T) {
 					KeyLength: 1,
 				},
 			},
-			wantErr: "cannot generate private key: crypto/rsa: too few primes of given length to generate an RSA key",
+			wantErr: "cannot generate private key: 'RSA-1' key type has a key length below 2048",
 		},
 		{
 			args: &Args{

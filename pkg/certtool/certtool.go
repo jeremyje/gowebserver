@@ -252,6 +252,9 @@ func argsToPkixName(args *Args, serialNumber string) pkix.Name {
 func generatePrivateKeyFromType(keyType KeyType) (interface{}, error) {
 	switch strings.ToUpper(keyType.Algorithm) {
 	case "RSA":
+		if keyType.KeyLength < 2048 {
+			return nil, errors.Errorf("'%s-%d' key type has a key length below 2048", keyType.Algorithm, keyType.KeyLength)
+		}
 		return rsa.GenerateKey(rand.Reader, keyType.KeyLength)
 	case "ECDSA":
 		switch keyType.KeyLength {

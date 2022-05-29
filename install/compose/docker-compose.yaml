@@ -1,13 +1,14 @@
 version: '3.9'
 services:
   gowebserver:
-    image: docker.io/jeremyje/gowebserver:0.0.0-dev-a7f2ce1
+    image: docker.io/jeremyje/gowebserver:2.2.0
     container_name: gowebserver
     hostname: gowebserver
     networks:
       - gowebserver-net
     command:
       - '-configfile=/etc/gowebserver/gowebserver.yaml'
+    user: root
     ports:
       - 28080:8080
       - 28081:8443

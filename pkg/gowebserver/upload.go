@@ -25,7 +25,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"text/template"
 	"time"
 
 	_ "embed"
@@ -78,19 +77,13 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(h, strconv.FormatInt(crutime, 10))
 		token := fmt.Sprintf("%x", h.Sum(nil))
 
-		tmpl := template.New("")
-		t, err := tmpl.Parse(string(uploadHTML))
-		if err != nil {
-			logger.With("error", err).Error("Error parsing html template")
-			w.Write([]byte(err.Error()))
-			return
-		}
 		var params = struct {
 			UploadHTTPPath     string
 			UploadToken        string
 			UploadFileFormName string
 		}{uh.uploadHTTPPath, token, uploadFileFormName}
-		if err := t.Execute(w, params); err != nil {
+
+		if err := executeTemplate(uploadHTML, params, w); err != nil {
 			logger.With("error", err).Error("cannot parse upload.html template.")
 		}
 	} else {

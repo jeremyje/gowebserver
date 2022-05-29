@@ -22,6 +22,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"go.uber.org/zap"
 )
@@ -147,6 +148,7 @@ func copyFile(reader io.Reader, filePath string) error {
 
 	_, err = io.Copy(fsf, reader)
 	if err != nil {
+		os.Remove(fsf.Name())
 		return fmt.Errorf("cannot copy to target file %s, %s", filePath, err)
 	}
 	return nil
@@ -184,4 +186,17 @@ func sanitizeFileName(fileName string) string {
 }
 
 func nilFunc() {
+}
+
+func executeTemplate(tmplText []byte, params interface{}, w io.Writer) error {
+	tmpl := template.New("")
+	t, err := tmpl.Parse(string(tmplText))
+	if err != nil {
+		return err
+	}
+
+	if err := t.Execute(w, params); err != nil {
+		return err
+	}
+	return nil
 }

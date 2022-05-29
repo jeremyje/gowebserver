@@ -99,11 +99,11 @@ func StringToKeyType(keyType string) (string, int, error) {
 	}
 	switch parseKeyTypeKeyName(keyType) {
 	case "RSA":
-		return parseKeyTypeName(keyType, 2048, []int{256, 512, 1024, 2048, 4096})
+		return parseKeyTypeName(keyType, 2048, []int{2048, 4096})
 	case "ECDSA":
 		return parseKeyTypeName(keyType, 521, []int{224, 256, 384, 521})
 	}
-	return "", 0, nil
+	return "", 0, fmt.Errorf("'%s' is not a valid key type", keyType)
 }
 
 func parseKeyTypeKeyName(keyTypeName string) string {

@@ -8,16 +8,16 @@ import (
 	"testing"
 	"time"
 
+	_ "embed"
+
 	"github.com/google/go-cmp/cmp"
 	gowsTesting "github.com/jeremyje/gowebserver/internal/gowebserver/testing"
 )
 
 var (
-	wantMultiIndex = []byte(`<pre>
-<a href="/zip/">/zip/</a>
-<a href="/tar.gz/">/tar.gz/</a>
-</pre>
-`)
+	//go:embed testdata/multiindex.html
+	wantMultiIndex []byte
+
 	wantIndex      = []byte(`index.html`)
 	wantSiteJs     = []byte(`site.js`)
 	wantAssets1Txt = []byte(`assets/1.txt`)

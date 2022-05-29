@@ -56,7 +56,7 @@ func TestFileSystem(t *testing.T) {
 
 			staged := tc.f(tc.path)
 
-			if diff := cmp.Diff(staged.localFilePath, tc.path); diff != "" {
+			if diff := cmp.Diff(tc.path, staged.localFilePath); diff != "" {
 				t.Errorf("staged.localFilePath mismatch (-want +got):\n%s", diff)
 			}
 
@@ -174,7 +174,7 @@ func runGitFsTest(tb testing.TB, path string) {
 		tb.Error(staged.err)
 	}
 
-	if diff := cmp.Diff(staged.localFilePath, path); diff != "" {
+	if diff := cmp.Diff(path, staged.localFilePath); diff != "" {
 		tb.Errorf("staged.localFilePath mismatch (-want +got):\n%s", diff)
 	}
 
