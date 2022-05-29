@@ -1,7 +1,7 @@
 version: '3.9'
 services:
   gowebserver:
-    image: docker.io/jeremyje/gowebserver:2.2.0
+    image: docker.io/jeremyje/gowebserver:2.3.0
     container_name: gowebserver
     hostname: gowebserver
     networks:
