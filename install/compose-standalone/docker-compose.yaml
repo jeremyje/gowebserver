@@ -1,0 +1,22 @@
+version: '3.9'
+services:
+  gowebserver-standalone:
+    image: docker.io/jeremyje/gowebserver:0.0.0-dev-a7f2ce1
+    container_name: gowebserver-standalone
+    hostname: gowebserver-standalone
+    networks:
+      - gowebserver-standalone-net
+    command:
+      - '-configfile=/etc/gowebserver/gowebserver.yaml'
+    ports:
+      - 28082:8080
+      - 28083:8443
+    #restart: on-failure
+    volumes:
+      - ./gowebserver:/etc/gowebserver
+      - gowebserver_standalone_data:/gowebserver/upload
+volumes:
+  gowebserver_standalone_data:
+networks:
+  gowebserver-standalone-net:
+    driver: bridge
