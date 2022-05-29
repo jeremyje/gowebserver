@@ -24,61 +24,6 @@ import (
 	gowsTesting "github.com/jeremyje/gowebserver/internal/gowebserver/testing"
 )
 
-func TestIsSupportedTar(t *testing.T) {
-	testCases := []struct {
-		input       string
-		want        bool
-		wantRegular bool
-		wantGzip    bool
-		wantBzip2   bool
-	}{
-		{input: "ok.tar", want: true, wantRegular: true, wantGzip: false, wantBzip2: false},
-		{input: "ok.TAR", want: true, wantRegular: true, wantGzip: false, wantBzip2: false},
-		{input: "ok.tar.gz", want: true, wantRegular: false, wantGzip: true, wantBzip2: false},
-		{input: "ok.tar.GZ", want: true, wantRegular: false, wantGzip: true, wantBzip2: false},
-		{input: "ok.tar.bz2", want: true, wantRegular: false, wantGzip: false, wantBzip2: true},
-		{input: "ok.tar.BZ2", want: true, wantRegular: false, wantGzip: false, wantBzip2: true},
-
-		{input: "ok.tar.lzma", want: false, wantRegular: false, wantGzip: false, wantBzip2: false},
-		{input: "ok.zip", want: false, wantRegular: false, wantGzip: false, wantBzip2: false},
-	}
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(fmt.Sprintf("isSupportedTar(%s)", tc.input), func(t *testing.T) {
-			t.Parallel()
-			got := isSupportedTar(tc.input)
-			if tc.want != got {
-				t.Errorf("expected: %v, got: %v", tc.want, got)
-			}
-		})
-
-		t.Run(fmt.Sprintf("isRegularTar(%s)", tc.input), func(t *testing.T) {
-			t.Parallel()
-			got := isRegularTar(tc.input)
-			if tc.wantRegular != got {
-				t.Errorf("expected: %v, got: %v", tc.wantRegular, got)
-			}
-		})
-
-		t.Run(fmt.Sprintf("isTarGzip(%s)", tc.input), func(t *testing.T) {
-			t.Parallel()
-			got := isTarGzip(tc.input)
-			if tc.wantGzip != got {
-				t.Errorf("expected: %v, got: %v", tc.wantGzip, got)
-			}
-		})
-
-		t.Run(fmt.Sprintf("isTarBzip2(%s)", tc.input), func(t *testing.T) {
-			t.Parallel()
-			got := isTarBzip2(tc.input)
-			if tc.wantBzip2 != got {
-				t.Errorf("expected: %v, got: %v", tc.wantBzip2, got)
-			}
-		})
-	}
-}
-
 func TestFileSystem(t *testing.T) {
 	zipPath := gowsTesting.MustZipFilePath(t)
 	sevenZipPath := gowsTesting.MustSevenZipFilePath(t)
@@ -101,11 +46,7 @@ func TestFileSystem(t *testing.T) {
 		{name: "newArchiveFs", path: tarXzPath, f: newArchiveFs},
 		{name: "newArchiveFs", path: tarLz4Path, f: newArchiveFs},
 
-		{name: "newZipFs", path: zipPath, f: newZipFs},
 		{name: "newSevenZipFs", path: sevenZipPath, f: newSevenZipFs},
-		{name: "newTarFs", path: tarPath, f: newTarFs},
-		{name: "newTarFs", path: tarGzPath, f: newTarFs},
-		{name: "newTarFs", path: tarBz2Path, f: newTarFs},
 	}
 
 	for _, tc := range testCases {
@@ -147,7 +88,7 @@ func TestIsSupported(t *testing.T) {
 		{input: "ok.tar.br", isSupportedArchive: true},
 		{input: "ok.tar.zst", isSupportedArchive: true},
 
-		{input: "ok.zip", isSupportedZip: true},
+		{input: "ok.zip", isSupportedArchive: true, isSupportedZip: true},
 		{input: "ok.tar.lzma"},
 		{input: "ok.7z", isSupportedSevenZip: true},
 		{input: "ok.7Z", isSupportedSevenZip: true},
@@ -179,8 +120,6 @@ func TestIsSupported(t *testing.T) {
 		tf(t, "isSupportedGit", isSupportedGit, tc.input, tc.isSupportedGit)
 		tf(t, "isSupportedHTTP", isSupportedHTTP, tc.input, tc.isSupportedHTTP)
 		tf(t, "isSupportedSevenZip", isSupportedSevenZip, tc.input, tc.isSupportedSevenZip)
-		tf(t, "isSupportedTar", isSupportedTar, tc.input, tc.isSupportedTar)
-		tf(t, "isSupportedZip", isSupportedZip, tc.input, tc.isSupportedZip)
 	}
 }
 
