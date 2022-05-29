@@ -1,0 +1,27 @@
+verbose: true
+serve:
+  - source: https://github.com/jeremyje/gowebserver.git
+    endpoint: /gowebserver
+  - source: /gowebserver/upload
+    endpoint: /uploaded
+http:
+  port: 8080
+https:
+  port: 8443
+  certificate:
+    rootPrivateKey: root-private-key.pem
+    rootPath: root-public-certificate.pem
+    privateKey: private-key.pem
+    path: public-certificate.pem
+    hosts: gowebserver
+    duration: 24h0m0s
+monitoring:
+  debugEndpoint: /debug
+  metrics:
+    enabled: false
+    path: /metrics
+  trace:
+    enabled: false
+upload:
+  source: /gowebserver/upload
+  endpoint: /upload

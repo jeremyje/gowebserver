@@ -60,6 +60,13 @@ spec:
       containers:
       - name: gowebserver
         image: "docker.io/jeremyje/gowebserver:0.0.0-dev-bb2d80f"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "500m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
         ports:
         - name: http
           containerPort: 8080
