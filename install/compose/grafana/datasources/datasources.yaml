@@ -10,7 +10,7 @@ datasources:
 - name: Jaeger
   type: jaeger
   access: browser
-  url: http://jaeger:16686
+  url: http://jaeger:14269
   editable: true
 - name: Prometheus
   type: prometheus

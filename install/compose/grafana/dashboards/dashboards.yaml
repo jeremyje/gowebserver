@@ -1,7 +1,7 @@
 apiVersion: 1
 
 providers:
-- name: 'Loki and Promtail'
+- name: 'Monitoring'
   orgId: 1
   folder: ''
   type: file

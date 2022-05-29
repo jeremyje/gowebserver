@@ -20,6 +20,8 @@ services:
       driver: loki
       options:
         loki-url: 'http://loki:3100/api/prom/push'
+    depends_on:
+      - loki
   prometheus:
     image: prom/prometheus
     container_name: prometheus
@@ -38,6 +40,8 @@ services:
       driver: loki
       options:
         loki-url: 'http://loki:3100/api/prom/push'
+    depends_on:
+      - loki
   loki:
     image: grafana/loki:master
     container_name: loki
@@ -53,10 +57,6 @@ services:
       - JAEGER_AGENT_PORT=6831
       - JAEGER_SAMPLER_TYPE=const
       - JAEGER_SAMPLER_PARAM=1
-    logging:
-      driver: loki
-      options:
-        loki-url: 'http://localhost:3100/api/prom/push'
   promtail:
     image: grafana/promtail:master
     container_name: promtail
@@ -70,6 +70,8 @@ services:
       driver: loki
       options:
         loki-url: 'http://loki:3100/api/prom/push'
+    depends_on:
+      - loki
   grafana:
     image: grafana/grafana
     container_name: grafana
@@ -89,6 +91,8 @@ services:
       driver: loki
       options:
         loki-url: 'http://loki:3100/api/prom/push'
+    depends_on:
+      - loki
   jaeger:
     image: jaegertracing/all-in-one:latest
     container_name: jaeger
@@ -102,6 +106,8 @@ services:
       driver: loki
       options:
         loki-url: 'http://loki:3100/api/prom/push'
+    depends_on:
+      - loki
 volumes:
   gowebserver_data:
   prom_data:
