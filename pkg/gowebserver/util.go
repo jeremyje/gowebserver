@@ -165,8 +165,18 @@ var (
 	}
 )
 
+func ensureDirs(fileName string) error {
+	absFullPath, err := filepath.Abs(filepath.Clean(fileName))
+	if err != nil {
+		return err
+	}
+
+	fullBaseDir := filepath.Dir(absFullPath)
+	return os.MkdirAll(fullBaseDir, 0766)
+}
+
 func sanitizeFileName(fileName string) string {
-	name := strings.ReplaceAll(fileName, "..", ".")
+	name := strings.ReplaceAll(filepath.Clean(fileName), "..", ".")
 	sanitized := ""
 	for _, r := range name {
 		if _, ok := validChars[r]; ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z') || ('0' <= r && r <= '9') || ok {

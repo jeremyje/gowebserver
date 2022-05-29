@@ -120,6 +120,8 @@ func TestSanitizeFileName(t *testing.T) {
 		{input: "../what ever!@#$%^&*()+_=-.json", want: "what ever_-.json"},
 		{input: "../abc/def..tar.gz", want: "abc/def.tar.gz"},
 		{input: "./././././../.../..../abc.tar.gz/.....", want: "abc.tar.gz"},
+		{input: ".file", want: ".file"},
+		{input: "../ok/.file", want: "ok/.file"},
 	}
 
 	for _, tc := range testCases {

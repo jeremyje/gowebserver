@@ -88,11 +88,21 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		var resp uploadResponse
-		r.ParseMultipartForm(32 << 20)
+
+		ctx, childSpan := uploadTracer.Start(ctx, "ParseMultipartForm")
+		if err := r.ParseMultipartForm(32 << 20); err != nil {
+			resp.Error = fmt.Errorf("InternalError: cannot parse multi-part form")
+			writeUploadResponse(w, resp, logger, childSpan)
+			childSpan.End()
+			return
+		}
+
+		childSpan.End()
 		m := r.MultipartForm
 		files := m.File[uploadFileFormName]
 		for i := range files {
-			fileName := files[i].Filename
+			fileName := sanitizeFileName(files[i].Filename)
+
 			ctx, childSpan := uploadTracer.Start(ctx, fileName)
 			defer childSpan.End()
 			span.AddEvent("create file", trace.WithAttributes(attribute.String("filename", fileName)))
@@ -104,15 +114,15 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			defer file.Close()
-			err = os.MkdirAll(uh.uploadDirectory, 0766)
-			if err != nil {
+
+			localPath := filepath.Join(uh.uploadDirectory, fileName)
+
+			if err := ensureDirs(localPath); err != nil {
 				resp.Error = fmt.Errorf("InternalError: Cannot create directory to store file (%s), %s", uh.uploadDirectory, err)
 				writeUploadResponse(w, resp, logger, childSpan)
 				return
 			}
 
-			name := sanitizeFileName(filepath.Base(fileName))
-			localPath := filepath.Join(uh.uploadDirectory, name)
 			f, err := os.OpenFile(localPath, os.O_WRONLY|os.O_CREATE, 0644)
 			if err != nil {
 				resp.Error = fmt.Errorf("InternalError: Cannot create file (%s), %s", localPath, err)
