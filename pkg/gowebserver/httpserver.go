@@ -44,6 +44,7 @@ type webServerImpl struct {
 	verbose             bool
 	uploadPath          string
 	uploadHTTPPath      string
+	enhancedListMode    bool
 	monitoringCtx       *monitoringContext
 
 	httpListenPort  int
@@ -122,7 +123,8 @@ func (ws *webServerImpl) Serve(termCh <-chan error) error {
 	for _, paths := range ws.fileSystemServePath {
 		zap.S().With("localPath", paths.localPath, "http", paths.httpPath).Info("Endpoint")
 		endpoints = append(endpoints, paths.httpPath)
-		fsHandler, cleanup, err := newFS(paths.localPath)
+
+		fsHandler, cleanup, err := newHandlerFromFS(paths.localPath, ws.monitoringCtx.getTraceProvider(), ws.enhancedListMode)
 		if err != nil {
 			return err
 		}
@@ -238,6 +240,7 @@ func New(conf *Config) (WebServer, error) {
 		metricsServePath:    conf.Monitoring.Metrics.Path,
 		certificateFilePath: conf.HTTPS.Certificate.CertificateFilePath,
 		privateKeyFilePath:  conf.HTTPS.Certificate.PrivateKeyFilePath,
+		enhancedListMode:    conf.EnhancedList,
 		uploadPath:          uploadPath,
 		uploadHTTPPath:      conf.Upload.Endpoint,
 		verbose:             conf.Verbose,

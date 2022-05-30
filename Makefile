@@ -328,4 +328,13 @@ install/kubernetes.yaml:
 
 template: install/kubernetes.yaml
 
+bs: pkg/gowebserver/static/bootstrap/
+pkg/gowebserver/static/bootstrap/:
+	mkdir -p pkg/gowebserver/static/
+	cd pkg/gowebserver/static/ \
+		&& curl -o bootstrap.zip -L https://github.com/twbs/bootstrap/releases/download/v5.1.3/bootstrap-5.1.3-dist.zip \
+		&& unzip bootstrap.zip \
+		&& mv bootstrap-5.1.3-dist/ bootstrap/ \
+		&& rm -f bootstrap.zip
+
 .PHONY : all assets dist lint clean check test test-10 coverage bench benchmark test-all install run deps presubmit

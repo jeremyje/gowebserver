@@ -98,7 +98,7 @@ func TestWebServer_Serve_Multi(t *testing.T) {
 }
 
 func TestWebServer_Serve(t *testing.T) {
-	archivePaths := []string{"/", "/index.html", "/site.js", "/assets/fivesix/5.txt", "/assets/more/3.txt", "/assets/1.txt"}
+	archivePaths := []string{"/.", "/", "/index.html", "/site.js", "/assets/", "/assets/fivesix", "/assets/fivesix/", "/assets/fivesix/5.txt", "/assets/more/3.txt", "/assets/1.txt"}
 	testCases := []struct {
 		source string
 		paths  []string

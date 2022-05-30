@@ -2,6 +2,7 @@ module github.com/jeremyje/gowebserver
 
 require (
 	github.com/bodgit/sevenzip v1.2.2
+	github.com/dustin/go-humanize v1.0.0
 	github.com/google/go-cmp v0.5.8
 	github.com/mholt/archiver/v4 v4.0.0-alpha.6
 	github.com/pkg/errors v0.9.1
@@ -42,6 +43,7 @@ require (
 )
 
 require (
+	facette.io/natsort v0.0.0-20181210072756-2cd4dd1e2dcb
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect

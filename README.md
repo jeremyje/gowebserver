@@ -17,6 +17,14 @@ curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/downl
 ./gowebserver --path=https://github.com/jeremyje/gowebserver/archive/v2.4.0.zip
 ```
 
+## Windows Service
+
+```powershell
+sc.exe create gowebserver start= delayed-auto binpath= "C:\apps\gowebserver.exe -configfile=C:\apps\gowebserver.yaml"
+sc.exe failure gowebserver reset= 0 actions= restart/1000
+sc.exe start gowebserver
+```
+
 ## Features
 
 * Zero-config required, hosts on port 80 or 8080 based on root and supports Cloud9's $PORT variable.

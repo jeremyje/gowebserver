@@ -75,3 +75,5 @@ bin/
 
 *.key
 *.cert
+
+__debug_bin

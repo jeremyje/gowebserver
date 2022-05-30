@@ -2,6 +2,7 @@ verbose: true
 serve:
   - source: /home/folder
     endpoint: /serving
+enhancedList: true
 http:
   port: 1000
 https:
