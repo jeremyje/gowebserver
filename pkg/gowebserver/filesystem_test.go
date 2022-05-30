@@ -16,8 +16,9 @@ package gowebserver
 
 import (
 	"fmt"
+	"io"
+	"io/fs"
 	"io/ioutil"
-	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -36,17 +37,16 @@ func TestFileSystem(t *testing.T) {
 	testCases := []struct {
 		name string
 		path string
-		f    func(string) createFsResult
+		f    func(string) (fs.FS, func(), error)
 	}{
-		{name: "newArchiveFs", path: zipPath, f: newArchiveFs},
-		{name: "newArchiveFs", path: sevenZipPath, f: newArchiveFs},
-		{name: "newArchiveFs", path: tarPath, f: newArchiveFs},
-		{name: "newArchiveFs", path: tarGzPath, f: newArchiveFs},
-		{name: "newArchiveFs", path: tarBz2Path, f: newArchiveFs},
-		{name: "newArchiveFs", path: tarXzPath, f: newArchiveFs},
-		{name: "newArchiveFs", path: tarLz4Path, f: newArchiveFs},
+		{name: "newArchiveFs", path: zipPath, f: newArchiveFS},
+		{name: "newArchiveFs", path: tarPath, f: newArchiveFS},
+		{name: "newArchiveFs", path: tarGzPath, f: newArchiveFS},
+		{name: "newArchiveFs", path: tarBz2Path, f: newArchiveFS},
+		{name: "newArchiveFs", path: tarXzPath, f: newArchiveFS},
+		{name: "newArchiveFs", path: tarLz4Path, f: newArchiveFS},
 
-		{name: "newSevenZipFs", path: sevenZipPath, f: newSevenZipFs},
+		{name: "newSevenZipFs", path: sevenZipPath, f: newSevenZipFS},
 	}
 
 	for _, tc := range testCases {
@@ -54,18 +54,27 @@ func TestFileSystem(t *testing.T) {
 		t.Run(fmt.Sprintf("%s %s", tc.name, tc.path), func(t *testing.T) {
 			t.Parallel()
 
-			staged := tc.f(tc.path)
+			vFS, cleanup, err := tc.f(tc.path)
+			if err != nil {
+				t.Error(err)
+			}
+			defer cleanup()
 
-			if diff := cmp.Diff(tc.path, staged.localFilePath); diff != "" {
+			fp, err := vFS.Open("index.html")
+			if err != nil {
+				t.Fatal(err)
+			}
+			data, err := io.ReadAll(fp)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if diff := cmp.Diff("index.html", string(data)); diff != "" {
 				t.Errorf("staged.localFilePath mismatch (-want +got):\n%s", diff)
 			}
 
-			if staged.handler == nil {
-				t.Error("staged.handler is nil")
-			}
-
 			// zip does not support strip prefix so testing/testassets/ is required.
-			verifyLocalFileFromDefaultAsset(t, staged.tmpDir)
+			verifyLocalFileFromDefaultAsset(t, vFS)
 		})
 	}
 }
@@ -123,43 +132,46 @@ func TestIsSupported(t *testing.T) {
 	}
 }
 
-func verifyLocalFileFromDefaultAsset(tb testing.TB, dir string) {
-	verifyLocalFile(tb, dir, "index.html")
-	verifyLocalFile(tb, dir, "site.js")
-	verifyLocalFile(tb, dir, "assets/1.txt")
-	verifyLocalFile(tb, dir, "assets/2.txt")
-	verifyLocalFile(tb, dir, "assets/more/3.txt")
-	verifyLocalFile(tb, dir, "assets/four/4.txt")
-	verifyLocalFile(tb, dir, "assets/fivesix/5.txt")
-	verifyLocalFile(tb, dir, "assets/fivesix/6.txt")
+func verifyLocalFileFromDefaultAsset(tb testing.TB, vFS fs.FS) {
+	for _, fileName := range []string{"index.html", "site.js", "assets/1.txt", "assets/2.txt", "assets/more/3.txt", "assets/four/4.txt", "assets/fivesix/5.txt", "assets/fivesix/6.txt"} {
+		verifyLocalFile(tb, vFS, fileName)
+	}
 }
 
-func verifyLocalFile(tb testing.TB, dir string, assetPath string) error {
-	fullPath := filepath.Join(dir, assetPath)
-	if !exists(fullPath) {
-		return fmt.Errorf("%s does not exist when it's expected to", fullPath)
+func verifyLocalFile(tb testing.TB, vFS fs.FS, assetPath string) error {
+	f, err := vFS.Open(assetPath)
+	if err != nil {
+		tb.Fatal(fmt.Errorf("%s does not exist when it's expected to, %s", assetPath, err))
 	}
-	data, err := ioutil.ReadFile(fullPath)
+
+	data, err := ioutil.ReadAll(f)
 	if err != nil {
 		return err
 	}
 	if string(data) != assetPath {
-		return fmt.Errorf("The test asset file does not contain it's relative file path as the body, File= %s, Body= %s", fullPath, string(data))
+		return fmt.Errorf("The test asset file does not contain it's relative file path as the body, File= %s, Body= %s", assetPath, string(data))
 	}
 	return nil
 }
 
-func verifyFileExist(tb testing.TB, dir string, assetPath string) {
-	fullPath := filepath.Join(dir, assetPath)
-	if !exists(fullPath) {
-		tb.Errorf("%s does not exist when it's expected to", fullPath)
+func verifyFileExist(tb testing.TB, vFS fs.FS, assetPath string) {
+	f, err := vFS.Open(assetPath)
+	if err != nil {
+		tb.Errorf("cannot find '%s', %s", assetPath, err)
+	}
+
+	if _, err := f.Stat(); err != nil {
+		tb.Errorf("cannot stat '%s', %s", assetPath, err)
 	}
 }
 
-func verifyFileMissing(tb testing.TB, dir string, assetPath string) {
-	fullPath := filepath.Join(dir, assetPath)
-	if exists(fullPath) {
-		tb.Errorf("%s exists when it's expected to be deleted", fullPath)
+func verifyFileMissing(tb testing.TB, vFS fs.FS, assetPath string) {
+	f, err := vFS.Open(assetPath)
+	if f != nil {
+		tb.Errorf("'%s' file handle is not nil when it should be", assetPath)
+	}
+	if err == nil {
+		tb.Errorf("wanted error for reading '%s' as it should not exist", assetPath)
 	}
 }
 
@@ -168,24 +180,16 @@ func TestGitFsOverHttp(t *testing.T) {
 }
 
 func runGitFsTest(tb testing.TB, path string) {
-	staged := newGitFs(path)
-	tb.Logf("Local: %s    Dir: %s, Error %s", staged.localFilePath, staged.tmpDir, staged.err)
-	if staged.err != nil {
-		tb.Error(staged.err)
+	vFS, cleanup, err := newGitFS(path)
+	tb.Cleanup(cleanup)
+	if err != nil {
+		tb.Fatal(err)
 	}
 
-	if diff := cmp.Diff(path, staged.localFilePath); diff != "" {
-		tb.Errorf("staged.localFilePath mismatch (-want +got):\n%s", diff)
-	}
-
-	if staged.handler == nil {
-		tb.Error("staged.handler is nil")
-	}
-
-	verifyFileMissing(tb, staged.tmpDir, ".gitignore")
-	verifyFileMissing(tb, staged.tmpDir, ".git")
-	verifyFileMissing(tb, staged.tmpDir, ".gitmodules")
-	verifyFileExist(tb, staged.tmpDir, "README.md")
-	verifyFileExist(tb, staged.tmpDir, ".github/dependabot.yml")
-	verifyFileExist(tb, staged.tmpDir, "cmd/gowebserver/gowebserver.go")
+	verifyFileMissing(tb, vFS, ".gitignore")
+	verifyFileMissing(tb, vFS, ".git")
+	verifyFileMissing(tb, vFS, ".gitmodules")
+	verifyFileExist(tb, vFS, "README.md")
+	verifyFileExist(tb, vFS, ".github/dependabot.yml")
+	verifyFileExist(tb, vFS, "cmd/gowebserver/gowebserver.go")
 }

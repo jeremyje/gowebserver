@@ -17,6 +17,7 @@ package gowebserver
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -32,33 +33,32 @@ var (
 )
 
 func newFS(path string) (http.Handler, func(), error) {
-	if isSupportedSevenZip(path) {
-		staged := newSevenZipFs(path)
-		return staged.handler, staged.cleanup, staged.err
-	} else if isSupportedArchive(path) {
-		staged := newArchiveFs(path)
-		return staged.handler, staged.cleanup, staged.err
-	} else if isSupportedGit(path) {
-		staged := newGitFs(path)
-		return staged.handler, staged.cleanup, staged.err
-	} else if isSupportedHTTP(path) {
+	return newHandlerFromFS(path)
+}
+
+func newHandlerFromFS(path string) (http.Handler, func(), error) {
+	if !isSupportedGit(path) && isSupportedHTTP(path) {
 		staged := newHTTPReverseProxy(path)
 		return staged.handler, staged.cleanup, staged.err
 	}
-	return newNative(path)
+	vFS, cleanup, err := newRawFSFromURI(path)
+	if err != nil {
+		cleanup()
+		return nil, nilFunc, err
+	}
+
+	return http.FileServer(http.FS(vFS)), cleanup, nil
 }
 
-func newArchiveFs(filePath string) createFsResult {
-	staged := stageRemoteFile(filePath)
-	if staged.err != nil {
-		return staged
+func newRawFSFromURI(path string) (fs.FS, func(), error) {
+	if isSupportedSevenZip(path) {
+		return newSevenZipFS(path)
+	} else if isSupportedArchive(path) {
+		return newArchiveFS(path)
+	} else if isSupportedGit(path) {
+		return newGitFS(path)
 	}
-	fs, err := archiver.FileSystem(filePath)
-	if err != nil {
-		return staged.withError(err)
-	}
-
-	return staged.withHTTPHandler(http.FileServer(http.FS(fs)), nilFunc, nil)
+	return newLocalFS(path)
 }
 
 func isSupportedArchive(filePath string) bool {
@@ -68,44 +68,6 @@ func isSupportedArchive(filePath string) bool {
 		}
 	}
 	return false
-}
-
-func newSevenZipFs(filePath string) createFsResult {
-	staged := stageRemoteFile(filePath)
-	if staged.err != nil {
-		return staged
-	}
-	// Extract archive
-	r, err := sevenzip.OpenReader(staged.localFilePath)
-	if err != nil {
-		return staged.withError(err)
-	}
-	defer r.Close()
-
-	// Iterate through the files in the archive,
-	// printing some of their contents.
-	for _, f := range r.File {
-		name := sanitizeFileName(f.Name)
-		filePath := filepath.Join(staged.tmpDir, name)
-		if f.FileInfo().IsDir() {
-			err = createDirectory(filePath)
-			if err != nil {
-				return staged.withError(fmt.Errorf("cannot create directory: %s, %s", filePath, err))
-			}
-		} else {
-			dirPath := filepath.Dir(filePath)
-			err = createDirectory(dirPath)
-			if err != nil {
-				return staged.withError(fmt.Errorf("cannot create directory: %s, %s", dirPath, err))
-			}
-
-			err := writeFileFromArchiveEntry(f, filePath)
-			if err != nil {
-				return staged.withError(fmt.Errorf("cannot write zip file entry: %s, %s", name, err))
-			}
-		}
-	}
-	return staged.withHTTPHandler(newNative(staged.tmpDir))
 }
 
 func isSupportedSevenZip(filePath string) bool {
@@ -125,41 +87,95 @@ type opener interface {
 	Open() (io.ReadCloser, error)
 }
 
-func newNative(directory string) (http.Handler, func(), error) {
+func newLocalFS(directory string) (fs.FS, func(), error) {
 	dir, err := filepath.Abs(directory)
 	if err != nil {
 		return nil, nilFunc, err
 	}
-	return http.FileServer(http.Dir(dirPath(dir))), nilFunc, nil
+	return os.DirFS(filepath.Clean(dirPath(dir))), nilFunc, nil
 }
 
-func newGitFs(filePath string) createFsResult {
-	staged := createFsResult{
-		localFilePath: filePath,
+func newArchiveFS(filePath string) (fs.FS, func(), error) {
+	staged := stageRemoteFile(filePath)
+	if staged.err != nil {
+		return nil, staged.cleanup, staged.err
 	}
+	fs, err := archiver.FileSystem(filePath)
+	return fs, nilFunc, err
+}
+
+func newSevenZipFS(filePath string) (fs.FS, func(), error) {
+	staged := stageRemoteFile(filePath)
+	if staged.err != nil {
+		return nil, staged.cleanup, staged.err
+	}
+
+	// Extract archive
+	r, err := sevenzip.OpenReader(staged.localFilePath)
+	if err != nil {
+		return nil, staged.cleanup, err
+	}
+	defer r.Close()
+
+	// Iterate through the files in the archive,
+	// printing some of their contents.
+	for _, f := range r.File {
+		name := sanitizeFileName(f.Name)
+		filePath := filepath.Join(staged.tmpDir, name)
+		if f.FileInfo().IsDir() {
+			err = createDirectory(filePath)
+			if err != nil {
+				return nil, staged.cleanup, fmt.Errorf("cannot create directory: %s, %s", filePath, err)
+			}
+		} else {
+			dirPath := filepath.Dir(filePath)
+			err = createDirectory(dirPath)
+			if err != nil {
+				return nil, staged.cleanup, fmt.Errorf("cannot create directory: %s, %s", dirPath, err)
+			}
+
+			err := writeFileFromArchiveEntry(f, filePath)
+			if err != nil {
+				return nil, staged.cleanup, fmt.Errorf("cannot write zip file entry: %s, %s", name, err)
+			}
+		}
+	}
+
+	localFS, cleanup, err := newLocalFS(staged.tmpDir)
+	return localFS, func() {
+		os.Remove(staged.localFilePath)
+		staged.cleanup()
+		cleanup()
+	}, err
+}
+
+func newGitFS(filePath string) (fs.FS, func(), error) {
 	if !isSupportedGit(filePath) {
-		return staged.withError(fmt.Errorf("%s is not a valid git repository", filePath))
+		return nil, nilFunc, fmt.Errorf("%s is not a valid git repository", filePath)
 	}
 
 	tmpDir, cleanup, err := createTempDirectory()
 	if err != nil {
-		return staged.withError(fmt.Errorf("cannot create temp directory, %s", err))
+		return nil, nilFunc, fmt.Errorf("cannot create temp directory, %s", err)
 	}
-	staged.tmpDir = tmpDir
-	_, err = git.PlainClone(tmpDir, false, &git.CloneOptions{
+
+	if _, err := git.PlainClone(tmpDir, false, &git.CloneOptions{
 		URL:          filePath,
 		Progress:     os.Stdout,
 		Depth:        1,
 		SingleBranch: true,
-	})
-	if err != nil {
-		return staged.withError(fmt.Errorf("could not clone %s, %s", filePath, err))
+	}); err != nil {
+		return nil, nilFunc, fmt.Errorf("could not clone %s, %s", filePath, err)
 	}
+
 	tryDeleteDirectory(filepath.Join(tmpDir, ".git"))
 	tryDeleteFile(filepath.Join(tmpDir, ".gitignore"))
 	tryDeleteFile(filepath.Join(tmpDir, ".gitmodules"))
-	h, _, err := newNative(tmpDir)
-	return staged.withHTTPHandler(h, cleanup, err)
+	lFS, localCleanup, err := newLocalFS(tmpDir)
+	return lFS, func() {
+		cleanup()
+		localCleanup()
+	}, err
 }
 
 func isSupportedGit(filePath string) bool {
