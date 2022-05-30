@@ -131,14 +131,14 @@ type monitoringContext struct {
 }
 
 func (m *monitoringContext) getTraceProvider() trace.TracerProvider {
-	if m == nil || m.tp == nil{
+	if m == nil || m.tp == nil {
 		return otel.GetTracerProvider()
 	}
 	return m.tp
 }
 
 func (m *monitoringContext) getMeterProvider() metric.MeterProvider {
-	if m == nil || m.prom == nil{
+	if m == nil || m.prom == nil {
 		return global.MeterProvider()
 	}
 	return m.prom.MeterProvider()

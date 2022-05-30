@@ -192,7 +192,7 @@ func sanitizeFileName(fileName string) string {
 		}
 	}
 
-	return strings.Join(sanitizedParts, string(filepath.Separator))
+	return filepath.Clean(strings.Join(sanitizedParts, string(filepath.Separator)))
 }
 
 func nilFunc() {

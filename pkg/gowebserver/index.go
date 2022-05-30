@@ -22,8 +22,8 @@ import (
 )
 
 var (
-	//go:embed index.html
-	indexHTML []byte
+	//go:embed template-index.html
+	templateIndexHTML []byte
 )
 
 type indexHTTPHandler struct {
@@ -35,7 +35,7 @@ func newIndexHTTPHandler(servePaths []string) (*indexHTTPHandler, error) {
 	var params = struct {
 		ServePaths []string
 	}{servePaths}
-	if err := executeTemplate(indexHTML, params, w); err != nil {
+	if err := executeTemplate(templateIndexHTML, params, w); err != nil {
 		return nil, err
 	}
 
