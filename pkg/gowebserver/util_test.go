@@ -113,7 +113,7 @@ func TestSanitizeFileName(t *testing.T) {
 		input string
 		want  string
 	}{
-		{input: "///////////////\\\\\\\\\\", want: ""},
+		{input: "///////////////\\\\\\\\\\", want: "."},
 		{input: "../ok", want: "ok"},
 		{input: "/ok/", want: "ok"},
 		{input: "../whatever.json", want: "whatever.json"},
@@ -122,6 +122,8 @@ func TestSanitizeFileName(t *testing.T) {
 		{input: "./././././../.../..../abc.tar.gz/.....", want: "abc.tar.gz"},
 		{input: ".file", want: ".file"},
 		{input: "../ok/.file", want: "ok/.file"},
+		{input: ".", want: "."},
+		{input: "/", want: "."},
 	}
 
 	for _, tc := range testCases {
@@ -175,8 +177,8 @@ func TestExecuteTemplate(t *testing.T) {
 			want:  hiTemplateWantHTML,
 		},
 		{
-			name:    "testdata/index.html",
-			input:   indexHTML,
+			name:    "template-index.html",
+			input:   templateIndexHTML,
 			wantErr: true,
 		},
 		{
@@ -202,7 +204,7 @@ func TestExecuteTemplate(t *testing.T) {
 				if tc.wantErr {
 					t.Error("expected an error")
 				}
-				if diff := cmp.Diff(tc.want, w.Bytes()); diff != "" {
+				if diff := cmp.Diff(string(tc.want), w.String()); diff != "" {
 					t.Errorf("executeTemplate() mismatch (-want +got):\n%s", diff)
 				}
 			}

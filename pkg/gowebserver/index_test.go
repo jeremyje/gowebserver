@@ -25,12 +25,12 @@ import (
 )
 
 var (
-	//go:embed testdata/index.html
-	indexHTMLForTest []byte
+	//go:embed testdata/test-index.html
+	testIndexHTML []byte
 )
 
-func TestIndexHTML(t *testing.T) {
-	if len(indexHTML) < 50 {
+func TestTemplateIndexHTML(t *testing.T) {
+	if len(templateIndexHTML) < 50 {
 		t.Errorf("data/index.html was not stored")
 	}
 }
@@ -53,7 +53,7 @@ func TestIndexHTTPHandlerServeHTTP(t *testing.T) {
 		t.Error(err)
 	}
 
-	if diff := cmp.Diff(string(indexHTMLForTest), string(data)); diff != "" {
+	if diff := cmp.Diff(string(testIndexHTML), string(data)); diff != "" {
 		t.Errorf("index mismatch (-want +got):\n%s", diff)
 	}
 }
