@@ -2,6 +2,7 @@ verbose: true
 serve:
 - source: "/home/example"
   endpoint: "/serving"
+enhancedList: true
 configurationfile: "/something.yaml"
 http:
   port: 1

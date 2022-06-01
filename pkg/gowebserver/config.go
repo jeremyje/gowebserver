@@ -60,6 +60,8 @@ var (
 	monitoringTraceURIFlag      = flag.String("monitoring.trace.uri", "", "URI endpoing for Jaeger tracing.")
 	monitoringMetricsPath       = flag.String("monitoring.metrics.path", "/metrics", "The URL path for exporting server metrics for Prometheus monitoring.")
 
+	enhancedListFlag = flag.Bool("enhancedindex", false, "Enable enhanced index.")
+
 	version = "UNKNOWN"
 )
 
@@ -109,6 +111,7 @@ type Config struct {
 	Verbose           bool    `yaml:"verbose"`
 	Serve             []Serve `yaml:"serve"`
 	ConfigurationFile string  `yaml:"-"`
+	EnhancedList      bool    `yaml:"enhancedList"`
 
 	HTTP       HTTP       `yaml:"http"`
 	HTTPS      HTTPS      `yaml:"https"`
@@ -198,6 +201,7 @@ func loadFromFlags() (*Config, error) {
 		Verbose:           *verboseFlag,
 		Serve:             sl,
 		ConfigurationFile: *configFileFlag,
+		EnhancedList:      *enhancedListFlag,
 		HTTP: HTTP{
 			Port: *httpPortFlag,
 		},

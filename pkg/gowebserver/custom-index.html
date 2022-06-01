@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- https://www.w3schools.com/howto/howto_css_image_grid_responsive.asp -->
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>{{.Root}}</title>
+  <style>
+    body {
+      background-color: white;
+      font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    pre {
+      overflow-x: auto;
+      white-space: pre-wrap;
+      white-space: -moz-pre-wrap;
+      white-space: -pre-wrap;
+      white-space: -o-pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .square-image {
+      object-fit: cover;
+      /* Do not scale the image */
+      object-position: center;
+      /* Center the image within the element */
+      width: 128px;
+      height: 128px;
+    }
+
+    /*
+    
+    ​html,
+    body,
+    div,
+    img {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      font-size: 100%;
+      vertical-align: baseline;
+    }
+      */
+
+    body {
+      line-height: 1;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 5px;
+      justify-content: flex-start;
+    }
+
+    .item {
+      margin: 5px;
+    }
+
+    .file-container {
+      margin: 4px;
+      display: flex;
+      padding: 4px;
+      width: 100%;
+    }
+
+    .full-width {
+      width: 100%;
+    }
+
+    .file-list {
+      list-style-type: none;
+      padding-left: 0;
+      font-size: 1.25em;
+    }
+
+    .file-list a {
+      color: black;
+      text-decoration: none;
+      background-color: #FFFFFF;
+    }
+
+    .file-list a:nth-child(odd) {
+      background-color: #EEEEEE;
+    }
+
+    .file-list li {
+      border-bottom: 1px solid #DDDDDD;
+      padding: .5em;
+    }
+
+    .file-list li:nth-child(odd) {
+      background-color: #EEEEEE;
+    }
+
+    .file-list li:hover {
+      background-color: #DDDDDD;
+    }
+
+    .file-list li:last-child {
+      border: 0;
+    }
+
+    .left {
+      float: left;
+    }
+
+    .right {
+      float: right;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+
+    <div class="container">
+      {{range $index, $element := $.Images}}
+      <a href="{{$element.Name}}"><img src="{{$element.Name}}" class="square-image item" loading="lazy"
+          alt="{{$element.ModTime}}" /></a>
+      {{end}}
+    </div>
+
+    <ul class="file-list">
+      {{range $index, $element := $.DirEntries}}
+      <a href="{{$element.Name}}" class="full-width">
+        <li>
+          {{$element.Name}}{{if $element.IsDir}}/{{else}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{humanizeBytes
+          $element.Size}} {{humanizeDate
+          $element.ModTime}}{{end}}
+        </li>
+      </a>
+      {{end}}
+    </ul>
+
+  </main>
+</body>
+
+</html>

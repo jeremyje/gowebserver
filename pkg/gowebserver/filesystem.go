@@ -26,17 +26,14 @@ import (
 	"github.com/bodgit/sevenzip"
 	git "github.com/go-git/go-git/v5"
 	archiver "github.com/mholt/archiver/v4"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
 	archives = []string{".tar", ".tar.gz", ".tar.bz2", ".tar.xz", ".tar.lz4", ".tar.br", ".tar.zst", ".rar", ".zip"}
 )
 
-func newFS(path string) (http.Handler, func(), error) {
-	return newHandlerFromFS(path)
-}
-
-func newHandlerFromFS(path string) (http.Handler, func(), error) {
+func newHandlerFromFS(path string, tp trace.TracerProvider, enhancedList bool) (http.Handler, func(), error) {
 	if !isSupportedGit(path) && isSupportedHTTP(path) {
 		staged := newHTTPReverseProxy(path)
 		return staged.handler, staged.cleanup, staged.err
@@ -47,7 +44,7 @@ func newHandlerFromFS(path string) (http.Handler, func(), error) {
 		return nil, nilFunc, err
 	}
 
-	return http.FileServer(http.FS(vFS)), cleanup, nil
+	return newCustomIndex(http.FileServer(http.FS(vFS)), vFS, tp, enhancedList), cleanup, nil
 }
 
 func newRawFSFromURI(path string) (fs.FS, func(), error) {

@@ -16,14 +16,17 @@ package gowebserver
 
 import (
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
+	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"text/template"
+	"time"
 
+	"github.com/dustin/go-humanize"
 	"go.uber.org/zap"
 )
 
@@ -199,7 +202,15 @@ func nilFunc() {
 }
 
 func executeTemplate(tmplText []byte, params interface{}, w io.Writer) error {
-	tmpl := template.New("")
+	tmpl := template.New("").Funcs(template.FuncMap{
+		"humanizeBytes": humanize.Bytes,
+		"isImage":       isImage,
+		"isOdd":         isOdd,
+		"isEven":        isEven,
+		"humanizeDate":  humanizeDate,
+		"stepBegin":     stepBegin,
+		"stepEnd":       stepEnd,
+	})
 	t, err := tmpl.Parse(string(tmplText))
 	if err != nil {
 		return err
@@ -209,4 +220,28 @@ func executeTemplate(tmplText []byte, params interface{}, w io.Writer) error {
 		return err
 	}
 	return nil
+}
+
+func humanizeDate(t time.Time) string {
+	return t.Format("2006/01/02")
+}
+
+func isImage(name string) bool {
+	return strings.HasPrefix(mime.TypeByExtension(filepath.Ext(name)), "image")
+}
+
+func isOdd(v int) bool {
+	return v%2 == 1
+}
+
+func isEven(v int) bool {
+	return v%2 == 0
+}
+
+func stepBegin(v int, base int, max int) bool {
+	return v%base == 0
+}
+
+func stepEnd(v int, base int, max int) bool {
+	return v%base == base-1 || v+1 == max
 }
