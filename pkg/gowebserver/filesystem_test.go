@@ -193,3 +193,33 @@ func runGitFsTest(tb testing.TB, path string) {
 	verifyFileExist(tb, vFS, ".github/dependabot.yml")
 	verifyFileExist(tb, vFS, "cmd/gowebserver/gowebserver.go")
 }
+
+func TestNestedFSPath(t *testing.T) {
+	testCases := []struct {
+		input string
+		want  []string
+	}{
+		{input: "", want: []string{""}},
+		{input: ".", want: []string{"."}},
+		{input: "a/b/c", want: []string{"a/b/c"}},
+		{input: "a/b/c.ok/d/e/f.zip", want: []string{"a/b/c.ok/d/e/f.zip"}},
+		{input: "./a/b/c.zip", want: []string{"./a/b/c.zip"}},
+		{input: "./a/b/c.zip/.d/e/f.tar.gz/g/h/i.txt", want: []string{"./a/b/c.zip", ".d/e/f.tar.gz", "g/h/i.txt"}},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.input, func(t *testing.T) {
+			t.Parallel()
+			gotSplit := splitNestedFSPath(tc.input)
+			if diff := cmp.Diff(tc.want, gotSplit); diff != "" {
+				t.Errorf("splitNestedFSPath mismatch (-want +got):\n%s", diff)
+			}
+			gotJoin := joinNestedFSPath(gotSplit)
+
+			if diff := cmp.Diff(tc.input, gotJoin); diff != "" {
+				t.Errorf("splitNestedFSPath mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}

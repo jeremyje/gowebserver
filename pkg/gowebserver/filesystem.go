@@ -33,6 +33,28 @@ var (
 	archives = []string{".tar", ".tar.gz", ".tar.bz2", ".tar.xz", ".tar.lz4", ".tar.br", ".tar.zst", ".rar", ".zip"}
 )
 
+func splitNestedFSPath(path string) []string {
+	parts := strings.Split(path, "/")
+	segments := []string{}
+
+	cur := []string{}
+	for _, part := range parts {
+		cur = append(cur, part)
+		if isSupportedArchive(part) || isSupportedSevenZip(part) {
+			segments = append(segments, strings.Join(cur, "/"))
+			cur = []string{}
+		}
+	}
+	if len(cur) > 0 {
+		segments = append(segments, strings.Join(cur, "/"))
+	}
+	return segments
+}
+
+func joinNestedFSPath(paths []string) string {
+	return strings.Join(paths, "/")
+}
+
 func newHandlerFromFS(path string, tp trace.TracerProvider, enhancedList bool) (http.Handler, func(), error) {
 	if !isSupportedGit(path) && isSupportedHTTP(path) {
 		staged := newHTTPReverseProxy(path)
