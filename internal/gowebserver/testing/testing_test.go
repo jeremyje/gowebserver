@@ -69,6 +69,7 @@ func TestMustFilePath(t *testing.T) {
 		name string
 		f    func(testing.TB) string
 	}{
+		{name: "MustNestedZipFilePath", f: MustNestedZipFilePath},
 		{name: "MustZipFilePath", f: MustZipFilePath},
 		{name: "MustSevenZipFilePath", f: MustSevenZipFilePath},
 		{name: "MustTarFilePath", f: MustTarFilePath},
@@ -76,7 +77,6 @@ func TestMustFilePath(t *testing.T) {
 		{name: "MustTarBzip2FilePath", f: MustTarBzip2FilePath},
 		{name: "MustTarXzFilePath", f: MustTarXzFilePath},
 		{name: "MustTarLz4FilePath", f: MustTarLz4FilePath},
-		{name: "MustZipFilePath", f: MustZipFilePath},
 	}
 
 	for _, tc := range testCases {

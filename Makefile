@@ -64,7 +64,7 @@ TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.7z
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.xz
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.lz4
-ASSETS = $(TEST_ARCHIVES)
+ASSETS = $(TEST_ARCHIVES) internal/gowebserver/testing/nested-testassets.zip internal/gowebserver/testing/single-testassets.zip
 ALL_APPS = gowebserver certtool httpprobe
 
 ALL_BINARIES = $(foreach app,$(ALL_APPS),$(foreach platform,$(ALL_PLATFORMS),bin/go/$(platform)/$(app)$(if $(findstring windows_,$(platform)),.exe,)))
@@ -202,13 +202,21 @@ lint: $(ASSETS)
 	$(GO) vet ${SOURCE_DIRS}
 
 clean:
-	$(RM) -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz $(TEST_ARCHIVES) *.tar.bz2 *.snap
+	$(RM) -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz $(ASSETS) *.tar.bz2 *.snap
 	$(RM) -rf parts/ prime/ snap/.snapcraft/ stage/ *.snap
 	$(RM) -rf upload/
 	$(RM) -rf toolchain/
 	$(RM) -rf bin/
 
 check: test
+
+internal/gowebserver/testing/single-testassets.zip: $(TEST_ARCHIVES)
+	cd internal/gowebserver/testing/; $(ZIP) -qr9 ../single-testassets.zip testassets/
+	mv internal/gowebserver/single-testassets.zip internal/gowebserver/testing/single-testassets.zip
+
+internal/gowebserver/testing/nested-testassets.zip: $(TEST_ARCHIVES) internal/gowebserver/testing/single-testassets.zip
+	cd internal/gowebserver/testing/; $(ZIP) -qr9 ../nested-testassets.zip *
+	mv internal/gowebserver/nested-testassets.zip internal/gowebserver/testing/nested-testassets.zip
 
 internal/gowebserver/testing/testassets.zip:
 	cd internal/gowebserver/testing/testassets/; $(ZIP) -qr9 ../testassets.zip *

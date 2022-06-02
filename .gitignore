@@ -49,6 +49,8 @@ gowebserver-*
 release.tar.gz
 testing/testassets.*
 internal/gowebserver/testing/testassets.*
+internal/gowebserver/testing/nested-testassets.*
+internal/gowebserver/testing/single-testassets.*
 packaging/parts/
 packaging/snap/
 uploaded-files/
