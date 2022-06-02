@@ -4,8 +4,14 @@ import "testing"
 
 func xTestMain(t *testing.T) {
 	conf := &Config{
-		Verbose:           true,
-		Serve:             []Serve{{Source: "/home/coder/project/gowebserver/cmd/", Endpoint: "/mains/"}, {Source: "/home/coder/project/gowebserver/pkg/", Endpoint: "/code/"}, {Source: "/home/coder/project/gowebserver/", Endpoint: "/root/"}},
+		Verbose: true,
+		Serve: []Serve{
+			{Source: "/home/coder/project/gowebserver/cmd/", Endpoint: "/mains/"},
+			{Source: "/home/coder/project/gowebserver/pkg/", Endpoint: "/code/"},
+			{Source: "/home/coder/project/gowebserver/", Endpoint: "/root/"},
+			{Source: "/home/coder/project/gowebserver/internal/gowebserver/testing/nested-testassets.zip", Endpoint: "/nested/"},
+			{Source: "/home/coder/project/gowebserver/internal/gowebserver/testing/single-testassets.zip", Endpoint: "/single/"},
+		},
 		ConfigurationFile: "",
 		HTTP:              HTTP{Port: 8181},
 		HTTPS:             HTTPS{Port: 8443},

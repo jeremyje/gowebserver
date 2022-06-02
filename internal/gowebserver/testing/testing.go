@@ -24,6 +24,8 @@ import (
 const testFileMode = os.FileMode(0644)
 
 var (
+	//go:embed nested-testassets.zip
+	nestedZipAssets []byte
 	//go:embed testassets.zip
 	zipAssets []byte
 	//go:embed testassets.7z
@@ -55,6 +57,11 @@ func MustWriteTempFile(tb testing.TB, content string) *os.File {
 
 	fatalOnFail(tb, ioutil.WriteFile(fp.Name(), []byte(content), testFileMode))
 	return fp
+}
+
+// MustNestedZipFilePath gets the .zip test asset file.
+func MustNestedZipFilePath(tb testing.TB) string {
+	return mustWriteData(tb, mustCreateTempArchive(tb, ".zip"), nestedZipAssets)
 }
 
 // MustZipFilePath gets the .zip test asset file.

@@ -15,6 +15,7 @@
 package gowebserver
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -199,4 +200,24 @@ func newGitFS(filePath string) (fs.FS, func(), error) {
 
 func isSupportedGit(filePath string) bool {
 	return strings.HasSuffix(strings.ToLower(filePath), ".git")
+}
+
+func archiverFileSystemFromArchive(file *os.File) (fs.FS, error) {
+	stat, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	format, _, err := archiver.Identify(stat.Name(), file)
+	if err != nil && !errors.Is(err, archiver.ErrNoMatch) {
+		return nil, err
+	}
+	if format != nil {
+		// TODO: we only really need Extractor and Decompressor here, not the combined interfaces...
+		if af, ok := format.(archiver.Archival); ok {
+			r := io.NewSectionReader(file, 0, stat.Size())
+			return archiver.ArchiveFS{Stream: r, Format: af}, nil
+		}
+	}
+	return nil, fmt.Errorf("archive not recognized")
 }
