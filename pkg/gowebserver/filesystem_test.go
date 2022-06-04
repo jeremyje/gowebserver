@@ -19,13 +19,82 @@ import (
 	"io"
 	"io/fs"
 	"io/ioutil"
+	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	gowsTesting "github.com/jeremyje/gowebserver/internal/gowebserver/testing"
 )
 
-func TestFileSystem(t *testing.T) {
+var (
+	commonFSRootDirList    = []string{"assets", "index.html", "site.js", "weird #1.txt", "weird#.txt", "weird$.txt"}
+	nestedZipFSRootDirList = []string{"single-testassets.zip", "single-testassets.zip-dir", "testassets", "testassets.7z", "testassets.tar", "testassets.tar-dir", "testassets.tar.bz2", "testassets.tar.bz2-dir", "testassets.tar.gz", "testassets.tar.gz-dir", "testassets.tar.lz4", "testassets.tar.lz4-dir", "testassets.tar.xz", "testassets.tar.xz-dir", "testassets.zip", "testassets.zip-dir", "testing.go", "testing_test.go"}
+)
+
+func TestVirtualDirectory(t *testing.T) {
+	nestedZipPath := gowsTesting.MustNestedZipFilePath(t)
+
+	vFS, err := newRawFSFromURI(nestedZipPath)
+	if err != nil {
+		t.Error(err)
+	}
+	defer vFS.Close()
+	nFS := newNestedFS(vFS)
+	defer nFS.Close()
+
+	dirs, err := nFS.ReadDir("")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	hasVirtual := false
+	for _, dir := range dirs {
+		if dir.IsDir() {
+			if diff := cmp.Diff(fs.ModeDir, dir.Type()); diff != "" {
+				t.Errorf("Type() mismatch (-want +got):\n%s", diff)
+			}
+			info, err := dir.Info()
+			if err != nil {
+				t.Errorf("dir.Info() error= %s", err)
+			}
+			if info == nil {
+				t.Error("Info() is nil")
+			}
+
+			if strings.HasSuffix(dir.Name(), nestedDirSuffix) {
+				hasVirtual = true
+				vDir, ok := dir.(*virtualDirEntry)
+				if ok {
+					if diff := cmp.Diff(int64(0), vDir.Size()); diff != "" {
+						t.Errorf("Size() mismatch (-want +got):\n%s", diff)
+					}
+
+					if diff := cmp.Diff(fs.ModeDir, vDir.Mode()); diff != "" {
+						t.Errorf("Mode() mismatch (-want +got):\n%s", diff)
+					}
+
+					if vDir.Sys() == nil {
+						t.Errorf("%s.Sys() is nil", vDir.Name())
+					}
+
+					if vDir.ModTime().Before(emptyTime) {
+						t.Errorf("ModTime() is before empty time, %s", vDir.ModTime())
+					}
+				} else {
+					t.Errorf("%s is not a virtual directory but has the suffix", dir.Name())
+				}
+			}
+		}
+	}
+
+	if !hasVirtual {
+		t.Error("no virtual directories were verified")
+	}
+}
+
+func TestNestedFileSystem(t *testing.T) {
 	zipPath := gowsTesting.MustZipFilePath(t)
 	sevenZipPath := gowsTesting.MustSevenZipFilePath(t)
 	tarPath := gowsTesting.MustTarFilePath(t)
@@ -33,49 +102,154 @@ func TestFileSystem(t *testing.T) {
 	tarBz2Path := gowsTesting.MustTarBzip2FilePath(t)
 	tarXzPath := gowsTesting.MustTarXzFilePath(t)
 	tarLz4Path := gowsTesting.MustTarLz4FilePath(t)
+	singleZipPath := gowsTesting.MustSingleZipFilePath(t)
+	nestedZipPath := gowsTesting.MustNestedZipFilePath(t)
 
 	testCases := []struct {
-		name string
-		path string
-		f    func(string) (fs.FS, func(), error)
+		uri          string
+		baseDir      string
+		isNested     bool
+		wantRootDirs []string
 	}{
-		{name: "newArchiveFs", path: zipPath, f: newArchiveFS},
-		{name: "newArchiveFs", path: tarPath, f: newArchiveFS},
-		{name: "newArchiveFs", path: tarGzPath, f: newArchiveFS},
-		{name: "newArchiveFs", path: tarBz2Path, f: newArchiveFS},
-		{name: "newArchiveFs", path: tarXzPath, f: newArchiveFS},
-		{name: "newArchiveFs", path: tarLz4Path, f: newArchiveFS},
+		{uri: zipPath, baseDir: ""},
+		{uri: tarPath, baseDir: ""},
+		{uri: tarGzPath, baseDir: ""},
+		{uri: tarBz2Path, baseDir: ""},
+		{uri: tarXzPath, baseDir: ""},
+		{uri: tarLz4Path, baseDir: ""},
 
-		{name: "newSevenZipFs", path: sevenZipPath, f: newSevenZipFS},
+		{uri: sevenZipPath, baseDir: ""},
+
+		{uri: singleZipPath, baseDir: "testassets", wantRootDirs: []string{"testassets"}},
+
+		{uri: nestedZipPath, baseDir: "testassets", wantRootDirs: nestedZipFSRootDirList},
+		{uri: nestedZipPath, baseDir: "single-testassets.zip-dir/testassets", isNested: true, wantRootDirs: nestedZipFSRootDirList},
+		{uri: nestedZipPath, baseDir: "testassets.tar-dir", isNested: true, wantRootDirs: nestedZipFSRootDirList},
+		{uri: nestedZipPath, baseDir: "testassets.tar.bz2-dir", isNested: true, wantRootDirs: nestedZipFSRootDirList},
+		{uri: nestedZipPath, baseDir: "testassets.tar.lz4-dir", isNested: true, wantRootDirs: nestedZipFSRootDirList},
+		{uri: nestedZipPath, baseDir: "testassets.zip-dir", isNested: true, wantRootDirs: nestedZipFSRootDirList},
 	}
 
 	for _, tc := range testCases {
 		tc := tc
-		t.Run(fmt.Sprintf("%s %s", tc.name, tc.path), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s %s", tc.uri, tc.baseDir), func(t *testing.T) {
 			t.Parallel()
 
-			vFS, cleanup, err := tc.f(tc.path)
+			vFS, err := newRawFSFromURI(tc.uri)
 			if err != nil {
 				t.Error(err)
 			}
-			defer cleanup()
+			defer vFS.Close()
+			nFS := newNestedFS(vFS)
+			defer nFS.Close()
 
-			fp, err := vFS.Open("index.html")
-			if err != nil {
-				t.Fatal(err)
-			}
-			data, err := io.ReadAll(fp)
-			if err != nil {
-				t.Fatal(err)
-			}
+			baseDir := tc.baseDir
+			t.Run("verifyFileSystem", func(t *testing.T) {
+				verifyFileSystem(t, vFS, nFS, baseDir)
+			})
 
-			if diff := cmp.Diff("index.html", string(data)); diff != "" {
-				t.Errorf("staged.localFilePath mismatch (-want +got):\n%s", diff)
+			if !tc.isNested {
+				t.Run("verifyReadDir rawFS", func(t *testing.T) {
+					verifyReadDir(t, vFS, baseDir, commonFSRootDirList)
+				})
 			}
-
-			// zip does not support strip prefix so testing/testassets/ is required.
-			verifyLocalFileFromDefaultAsset(t, vFS)
+			t.Run("verifyReadDir nestedFS", func(t *testing.T) {
+				verifyReadDir(t, nFS, baseDir, commonFSRootDirList)
+				if tc.wantRootDirs == nil {
+					verifyReadDir(t, nFS, "", commonFSRootDirList)
+				} else {
+					verifyReadDir(t, nFS, "", tc.wantRootDirs)
+				}
+			})
 		})
+	}
+}
+
+func verifyFileSystem(tb testing.TB, vFS FileSystem, nFS *nestedFS, baseDir string) {
+	indexFilePath := filepath.Join(baseDir, "index.html")
+	fp, err := nFS.Open(indexFilePath)
+	if err != nil {
+		tb.Fatalf("cannot open '%s', err=%s", indexFilePath, err)
+	}
+
+	if stat, err := fp.Stat(); err != nil {
+		tb.Errorf("'%s' stat error, %s", indexFilePath, err)
+	} else {
+		nStat, err := nFS.Stat(indexFilePath)
+		if err != nil {
+			tb.Errorf("cannto stat from nestedFS, %s", err)
+		}
+		if diff := cmp.Diff(stat.IsDir(), nStat.IsDir()); diff != "" {
+			tb.Errorf("nestedFS.IsDir() mismatch (-want +got):\n%s", diff)
+		}
+
+		if diff := cmp.Diff(stat.ModTime(), nStat.ModTime()); diff != "" {
+			tb.Errorf("nestedFS.ModTime() mismatch (-want +got):\n%s", diff)
+		}
+
+		if diff := cmp.Diff(stat.Mode(), nStat.Mode()); diff != "" {
+			tb.Errorf("nestedFS.Mode() mismatch (-want +got):\n%s", diff)
+		}
+
+		if diff := cmp.Diff(stat.Name(), nStat.Name()); diff != "" {
+			tb.Errorf("nestedFS.Name() mismatch (-want +got):\n%s", diff)
+		}
+
+		if diff := cmp.Diff(stat.Size(), nStat.Size()); diff != "" {
+			tb.Errorf("nestedFS.Size() mismatch (-want +got):\n%s", diff)
+		}
+
+		if diff := cmp.Diff(false, stat.IsDir()); diff != "" {
+			tb.Errorf("stat.Mode() mismatch (-want +got):\n%s", diff)
+		}
+
+		if time.UnixMilli(0).After(stat.ModTime()) {
+			tb.Errorf("stat.ModTime() should be in the past")
+		}
+		if diff := cmp.Diff(fs.FileMode(0644), stat.Mode()); diff != "" {
+			tb.Errorf("stat.Mode() mismatch (-want +got):\n%s", diff)
+		}
+		if diff := cmp.Diff("index.html", stat.Name()); diff != "" {
+			tb.Errorf("stat.Mode() mismatch (-want +got):\n%s", diff)
+		}
+
+		if diff := cmp.Diff(int64(10), stat.Size()); diff != "" {
+			tb.Errorf("stat.Size() mismatch (-want +got):\n%s", diff)
+		}
+	}
+	data, err := io.ReadAll(fp)
+	if err != nil {
+		tb.Fatalf("cannot read '%s', err=%s", indexFilePath, err)
+	}
+
+	if diff := cmp.Diff("index.html", string(data)); diff != "" {
+		tb.Errorf("index.html from FS mismatch (-want +got):\n%s", diff)
+	}
+
+	data, err = nFS.ReadFile(indexFilePath)
+	if err != nil {
+		tb.Errorf("cannot read %s via nestedFS, %s", indexFilePath, err)
+	}
+	if diff := cmp.Diff("index.html", string(data)); diff != "" {
+		tb.Errorf("index.html from nestedFS mismatch (-want +got):\n%s", diff)
+	}
+
+	// zip does not support strip prefix so testing/testassets/ is required.
+	verifyLocalFileFromDefaultAsset(tb, nFS, baseDir)
+}
+
+func verifyReadDir(tb testing.TB, vFS FileSystem, baseDir string, want []string) {
+	entries, err := vFS.ReadDir(baseDir)
+	if err != nil {
+		tb.Fatalf("cannot read directory '%s', %s", baseDir, err)
+	}
+
+	names := []string{}
+	for _, dir := range entries {
+		names = append(names, dir.Name())
+	}
+	if diff := cmp.Diff(want, names); diff != "" {
+		tb.Errorf("ReadDir mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -132,10 +306,17 @@ func TestIsSupported(t *testing.T) {
 	}
 }
 
-func verifyLocalFileFromDefaultAsset(tb testing.TB, vFS fs.FS) {
-	for _, fileName := range []string{"index.html", "site.js", "assets/1.txt", "assets/2.txt", "assets/more/3.txt", "assets/four/4.txt", "assets/fivesix/5.txt", "assets/fivesix/6.txt"} {
-		verifyLocalFile(tb, vFS, fileName)
+func verifyLocalFileFromDefaultAsset(tb testing.TB, vFS fs.FS, baseDir string) {
+	for _, fileName := range []string{"index.html", "site.js", "weird$.txt", "weird #1.txt", "weird#.txt", "assets/1.txt", "assets/2.txt", "assets/more/3.txt", "assets/four/4.txt", "assets/fivesix/5.txt", "assets/fivesix/6.txt"} {
+		name := fileName
+		if baseDir != "" {
+			name = filepath.Join(baseDir, name)
+		}
+		verifyLocalFile(tb, vFS, name)
 	}
+
+	verifyFileMissing(tb, vFS, "does-not-exist/")
+	verifyFileMissing(tb, vFS, "does-not-exist")
 }
 
 func verifyLocalFile(tb testing.TB, vFS fs.FS, assetPath string) error {
@@ -180,8 +361,13 @@ func TestGitFsOverHttp(t *testing.T) {
 }
 
 func runGitFsTest(tb testing.TB, path string) {
-	vFS, cleanup, err := newGitFS(path)
-	tb.Cleanup(cleanup)
+	vFS, err := newGitFS(path)
+	defer func() {
+		if err := vFS.Close(); err != nil {
+			tb.Error(err)
+		}
+	}()
+
 	if err != nil {
 		tb.Fatal(err)
 	}
@@ -204,7 +390,7 @@ func TestNestedFSPath(t *testing.T) {
 		{input: "a/b/c", want: []string{"a/b/c"}},
 		{input: "a/b/c.ok/d/e/f.zip", want: []string{"a/b/c.ok/d/e/f.zip"}},
 		{input: "./a/b/c.zip", want: []string{"./a/b/c.zip"}},
-		{input: "./a/b/c.zip/.d/e/f.tar.gz/g/h/i.txt", want: []string{"./a/b/c.zip", ".d/e/f.tar.gz", "g/h/i.txt"}},
+		{input: "./a/b/c.zip-dir/.d/e/f.tar.gz-dir/g/h/i.txt", want: []string{"./a/b/c.zip-dir", ".d/e/f.tar.gz-dir", "g/h/i.txt"}},
 	}
 
 	for _, tc := range testCases {
@@ -218,7 +404,7 @@ func TestNestedFSPath(t *testing.T) {
 			gotJoin := joinNestedFSPath(gotSplit)
 
 			if diff := cmp.Diff(tc.input, gotJoin); diff != "" {
-				t.Errorf("splitNestedFSPath mismatch (-want +got):\n%s", diff)
+				t.Errorf("joinNestedFSPath mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

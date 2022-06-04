@@ -15,17 +15,16 @@
 package gowebserver
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/bodgit/sevenzip"
-	git "github.com/go-git/go-git/v5"
 	archiver "github.com/mholt/archiver/v4"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -37,17 +36,26 @@ var (
 func splitNestedFSPath(path string) []string {
 	parts := strings.Split(path, "/")
 	segments := []string{}
+	archiveDir := false
 
 	cur := []string{}
 	for _, part := range parts {
 		cur = append(cur, part)
-		if isSupportedArchive(part) || isSupportedSevenZip(part) {
-			segments = append(segments, strings.Join(cur, "/"))
-			cur = []string{}
+		if strings.HasSuffix(part, nestedDirSuffix) {
+			undelimitedPart := strings.TrimSuffix(part, nestedDirSuffix)
+			if isSupportedArchive(undelimitedPart) || isSupportedSevenZip(undelimitedPart) {
+				segments = append(segments, strings.Join(cur, "/"))
+				cur = []string{}
+				archiveDir = true
+			} else {
+				archiveDir = false
+			}
 		}
 	}
 	if len(cur) > 0 {
 		segments = append(segments, strings.Join(cur, "/"))
+	} else if archiveDir {
+		segments = append(segments, ".")
 	}
 	return segments
 }
@@ -56,29 +64,29 @@ func joinNestedFSPath(paths []string) string {
 	return strings.Join(paths, "/")
 }
 
-func newHandlerFromFS(path string, tp trace.TracerProvider, enhancedList bool) (http.Handler, func(), error) {
+func newHandlerFromFS(path string, tp trace.TracerProvider, enhancedList bool) (http.Handler, func() error, error) {
 	if !isSupportedGit(path) && isSupportedHTTP(path) {
-		staged := newHTTPReverseProxy(path)
-		return staged.handler, staged.cleanup, staged.err
+		handler, err := newHTTPReverseProxy(path)
+		return handler, nilFuncWithError, err
 	}
-	vFS, cleanup, err := newRawFSFromURI(path)
+	vFS, err := newRawFSFromURI(path)
 	if err != nil {
-		cleanup()
-		return nil, nilFunc, err
+		return nil, nilFuncWithError, err
 	}
+	nFS := newNestedFS(vFS)
 
-	return newCustomIndex(http.FileServer(http.FS(vFS)), vFS, tp, enhancedList), cleanup, nil
+	return newCustomIndex(http.FileServer(http.FS(nFS)), nFS, tp, enhancedList), nFS.Close, nil
 }
 
-func newRawFSFromURI(path string) (fs.FS, func(), error) {
+func newRawFSFromURI(path string) (FileSystem, error) {
 	if isSupportedSevenZip(path) {
 		return newSevenZipFS(path)
 	} else if isSupportedArchive(path) {
-		return newArchiveFS(path)
+		return newArchiveFSFromLocalPath(path)
 	} else if isSupportedGit(path) {
 		return newGitFS(path)
 	}
-	return newLocalFS(path)
+	return newLocalFS(path, func() error { return nil })
 }
 
 func isSupportedArchive(filePath string) bool {
@@ -107,33 +115,17 @@ type opener interface {
 	Open() (io.ReadCloser, error)
 }
 
-func newLocalFS(directory string) (fs.FS, func(), error) {
-	dir, err := filepath.Abs(directory)
+func newSevenZipFS(filePath string) (*localFS, error) {
+	tmpDir, localFilePath, cleanup, err := stageRemoteFile(filePath)
 	if err != nil {
-		return nil, nilFunc, err
-	}
-	return os.DirFS(filepath.Clean(dirPath(dir))), nilFunc, nil
-}
-
-func newArchiveFS(filePath string) (fs.FS, func(), error) {
-	staged := stageRemoteFile(filePath)
-	if staged.err != nil {
-		return nil, staged.cleanup, staged.err
-	}
-	fs, err := archiver.FileSystem(filePath)
-	return fs, nilFunc, err
-}
-
-func newSevenZipFS(filePath string) (fs.FS, func(), error) {
-	staged := stageRemoteFile(filePath)
-	if staged.err != nil {
-		return nil, staged.cleanup, staged.err
+		return nil, err
 	}
 
 	// Extract archive
-	r, err := sevenzip.OpenReader(staged.localFilePath)
+	r, err := sevenzip.OpenReader(localFilePath)
 	if err != nil {
-		return nil, staged.cleanup, err
+		logError(cleanup())
+		return nil, err
 	}
 	defer r.Close()
 
@@ -141,71 +133,45 @@ func newSevenZipFS(filePath string) (fs.FS, func(), error) {
 	// printing some of their contents.
 	for _, f := range r.File {
 		name := sanitizeFileName(f.Name)
-		filePath := filepath.Join(staged.tmpDir, name)
+		filePath := filepath.Join(tmpDir, name)
 		if f.FileInfo().IsDir() {
 			err = createDirectory(filePath)
 			if err != nil {
-				return nil, staged.cleanup, fmt.Errorf("cannot create directory: %s, %s", filePath, err)
+				logError(cleanup())
+				return nil, fmt.Errorf("cannot create directory: %s, %s", filePath, err)
 			}
 		} else {
 			dirPath := filepath.Dir(filePath)
 			err = createDirectory(dirPath)
 			if err != nil {
-				return nil, staged.cleanup, fmt.Errorf("cannot create directory: %s, %s", dirPath, err)
+				logError(cleanup())
+				return nil, fmt.Errorf("cannot create directory: %s, %s", dirPath, err)
 			}
 
 			err := writeFileFromArchiveEntry(f, filePath)
 			if err != nil {
-				return nil, staged.cleanup, fmt.Errorf("cannot write zip file entry: %s, %s", name, err)
+				logError(cleanup())
+				return nil, fmt.Errorf("cannot write zip file entry: %s, %s", name, err)
 			}
 		}
 	}
 
-	localFS, cleanup, err := newLocalFS(staged.tmpDir)
-	return localFS, func() {
-		os.Remove(staged.localFilePath)
-		staged.cleanup()
-		cleanup()
-	}, err
+	return newLocalFS(tmpDir, cleanup)
 }
 
-func newGitFS(filePath string) (fs.FS, func(), error) {
-	if !isSupportedGit(filePath) {
-		return nil, nilFunc, fmt.Errorf("%s is not a valid git repository", filePath)
-	}
-
-	tmpDir, cleanup, err := createTempDirectory()
-	if err != nil {
-		return nil, nilFunc, fmt.Errorf("cannot create temp directory, %s", err)
-	}
-
-	if _, err := git.PlainClone(tmpDir, false, &git.CloneOptions{
-		URL:          filePath,
-		Progress:     os.Stdout,
-		Depth:        1,
-		SingleBranch: true,
-	}); err != nil {
-		return nil, nilFunc, fmt.Errorf("could not clone %s, %s", filePath, err)
-	}
-
-	tryDeleteDirectory(filepath.Join(tmpDir, ".git"))
-	tryDeleteFile(filepath.Join(tmpDir, ".gitignore"))
-	tryDeleteFile(filepath.Join(tmpDir, ".gitmodules"))
-	lFS, localCleanup, err := newLocalFS(tmpDir)
-	return lFS, func() {
-		cleanup()
-		localCleanup()
-	}, err
-}
-
-func isSupportedGit(filePath string) bool {
-	return strings.HasSuffix(strings.ToLower(filePath), ".git")
-}
-
-func archiverFileSystemFromArchive(file *os.File) (fs.FS, error) {
+func archiverFileSystemFromArchive(file fs.File) (fs.FS, error) {
 	stat, err := file.Stat()
 	if err != nil {
 		return nil, err
+	}
+	readerAt, ok := file.(io.ReaderAt)
+	if !ok {
+		// TODO: This is super inefficient because it's reading a nested zip file into memory.
+		data, err := io.ReadAll(file)
+		if err != nil {
+			return nil, err
+		}
+		readerAt = bytes.NewReader(data)
 	}
 
 	format, _, err := archiver.Identify(stat.Name(), file)
@@ -215,7 +181,7 @@ func archiverFileSystemFromArchive(file *os.File) (fs.FS, error) {
 	if format != nil {
 		// TODO: we only really need Extractor and Decompressor here, not the combined interfaces...
 		if af, ok := format.(archiver.Archival); ok {
-			r := io.NewSectionReader(file, 0, stat.Size())
+			r := io.NewSectionReader(readerAt, 0, stat.Size())
 			return archiver.ArchiveFS{Stream: r, Format: af}, nil
 		}
 	}

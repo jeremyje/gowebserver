@@ -101,7 +101,7 @@ func (ws *webServerImpl) getPorts() (int, int) {
 }
 
 func (ws *webServerImpl) Serve(termCh <-chan error) error {
-	allCleanups := []func(){}
+	allCleanups := []func() error{}
 
 	displayPath := ""
 	for i, paths := range ws.fileSystemServePath {
@@ -115,7 +115,10 @@ func (ws *webServerImpl) Serve(termCh <-chan error) error {
 		for endpoint, h := range ws.monitoringCtx.handlers {
 			serverMux.Handle(endpoint, h)
 		}
-		allCleanups = append(allCleanups, ws.monitoringCtx.shutdown)
+		allCleanups = append(allCleanups, func() error {
+			ws.monitoringCtx.shutdown()
+			return nil
+		})
 	}
 
 	hasIndex := false

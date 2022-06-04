@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"mime"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,46 +40,28 @@ func checkError(err error) {
 
 const fsDirMode = os.FileMode(0777)
 
-type createFsResult struct {
-	handler       http.Handler
-	cleanup       func()
-	localFilePath string
-	tmpDir        string
-	err           error
-}
-
-func (r createFsResult) withError(err error) createFsResult {
-	r.err = err
-	return r
-}
-
-func (r createFsResult) withHTTPHandler(handler http.Handler, cleanup func(), err error) createFsResult {
-	r.handler = handler
-	r.cleanup = cleanup
-	r.err = err
-	return r
-}
-
 func createDirectory(path string) error {
 	return os.MkdirAll(dirPath(path), fsDirMode)
 }
 
-func stageRemoteFile(maybeRemoteFilePath string) createFsResult {
-	localFilePath, err := downloadFile(maybeRemoteFilePath)
+func stageRemoteFile(maybeRemoteFilePath string) (string, string, func() error, error) {
+	localFilePath, fileCleanup, err := downloadFile(maybeRemoteFilePath)
 	if err != nil {
-		return createFsResult{err: fmt.Errorf("cannot download file %s, %s", maybeRemoteFilePath, err)}
-	}
-	tmpDir, cleanup, err := createTempDirectory()
-	if err != nil {
-		return createFsResult{err: fmt.Errorf("cannot create temp directory, %s", err)}
+		fileCleanup()
+		return "", "", nilFuncWithError, fmt.Errorf("cannot download file %s, %s", maybeRemoteFilePath, err)
 	}
 
-	return createFsResult{
-		localFilePath: localFilePath,
-		tmpDir:        tmpDir,
-		cleanup:       cleanup,
-		err:           nil,
+	tmpDir, cleanup, err := createTempDirectory()
+	if err != nil {
+		logError(fileCleanup())
+		cleanup()
+		return "", "", nilFuncWithError, fmt.Errorf("cannot create temp directory, %s", err)
 	}
+
+	return tmpDir, localFilePath, func() error {
+		cleanup()
+		return fileCleanup()
+	}, nil
 }
 
 func createTempDirectory() (string, func(), error) {
@@ -112,25 +95,30 @@ func tryDeleteFile(path string) {
 	}
 }
 
-func downloadFile(path string) (string, error) {
+func downloadFile(path string) (string, func() error, error) {
 	if strings.HasPrefix(strings.ToLower(path), "http") {
+		cleanup := nilFuncWithError
 		f, err := ioutil.TempFile(os.TempDir(), "gowebserverdl")
 		if err != nil {
-			return "", err
+			return "", cleanup, err
 		}
 		defer f.Close()
+		fileName := f.Name()
+		cleanup = func() error {
+			return os.Remove(fileName)
+		}
 		resp, err := http.Get(path)
 		if err != nil {
-			return "", err
+			return "", cleanup, err
 		}
 		defer resp.Body.Close()
 
 		if _, err := io.Copy(f, resp.Body); err != nil {
-			return "", err
+			return "", cleanup, err
 		}
-		return f.Name(), nil
+		return f.Name(), cleanup, nil
 	}
-	return path, nil
+	return path, nilFuncWithError, nil
 }
 
 func exists(path string) bool {
@@ -165,6 +153,8 @@ var (
 		' ':  nil,
 		'\\': nil,
 		'/':  nil,
+		'$':  nil,
+		'#':  nil,
 	}
 )
 
@@ -201,6 +191,10 @@ func sanitizeFileName(fileName string) string {
 func nilFunc() {
 }
 
+func nilFuncWithError() error {
+	return nil
+}
+
 func executeTemplate(tmplText []byte, params interface{}, w io.Writer) error {
 	tmpl := template.New("").Funcs(template.FuncMap{
 		"humanizeBytes": humanize.Bytes,
@@ -210,6 +204,7 @@ func executeTemplate(tmplText []byte, params interface{}, w io.Writer) error {
 		"humanizeDate":  humanizeDate,
 		"stepBegin":     stepBegin,
 		"stepEnd":       stepEnd,
+		"urlEncode":     urlEncode,
 	})
 	t, err := tmpl.Parse(string(tmplText))
 	if err != nil {
@@ -238,10 +233,20 @@ func isEven(v int) bool {
 	return v%2 == 0
 }
 
-func stepBegin(v int, base int, max int) bool {
-	return v%base == 0
+func stepBegin(val int, step int, max int) bool {
+	if step == 0 {
+		return true
+	}
+	return val%step == 0
 }
 
-func stepEnd(v int, base int, max int) bool {
-	return v%base == base-1 || v+1 == max
+func stepEnd(val int, step int, max int) bool {
+	if step == 0 {
+		return true
+	}
+	return val%step == step-1 || val+1 == max
+}
+
+func urlEncode(u string) string {
+	return url.PathEscape(u)
 }

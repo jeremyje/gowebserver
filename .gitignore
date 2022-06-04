@@ -79,3 +79,5 @@ bin/
 *.cert
 
 __debug_bin
+
+temp/
