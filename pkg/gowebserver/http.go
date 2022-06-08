@@ -40,17 +40,14 @@ func overlayURLProxy(target *url.URL, client *http.Client) *httputil.ReverseProx
 	}
 }
 
-func newHTTPReverseProxy(httpPath string) createFsResult {
-	staged := createFsResult{
-		localFilePath: httpPath,
-	}
+func newHTTPReverseProxy(httpPath string) (http.Handler, error) {
 	if !isSupportedHTTP(httpPath) {
-		return staged.withError(fmt.Errorf("%s is not a valid HTTP server", httpPath))
+		return nil, fmt.Errorf("%s is not a valid HTTP server", httpPath)
 	}
 
 	reverseProxy := overlayURLProxy(mustURLParse(httpPath), &http.Client{})
 
-	return staged.withHTTPHandler(reverseProxy, nilFunc, nil)
+	return reverseProxy, nil
 }
 
 func isSupportedHTTP(filePath string) bool {

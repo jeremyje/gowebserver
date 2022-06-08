@@ -32,20 +32,6 @@
       height: 128px;
     }
 
-    /*
-    
-    ​html,
-    body,
-    div,
-    img {
-      margin: 0;
-      padding: 0;
-      border: 0;
-      font-size: 100%;
-      vertical-align: baseline;
-    }
-      */
-
     body {
       line-height: 1;
     }
@@ -120,14 +106,14 @@
 
     <div class="container">
       {{range $index, $element := $.Images}}
-      <a href="{{$element.Name}}"><img src="{{$element.Name}}" class="square-image item" loading="lazy"
+      <a href="{{$element.Name}}"><img src="{{urlEncode $element.Name}}" class="square-image item" loading="lazy"
           alt="{{$element.ModTime}}" /></a>
       {{end}}
     </div>
 
     <ul class="file-list">
       {{range $index, $element := $.DirEntries}}
-      <a href="{{$element.Name}}" class="full-width">
+      <a href="{{urlEncode $element.Name}}" class="full-width">
         <li>
           {{$element.Name}}{{if $element.IsDir}}/{{else}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{humanizeBytes
           $element.Size}} {{humanizeDate
@@ -139,5 +125,4 @@
 
   </main>
 </body>
-
 </html>

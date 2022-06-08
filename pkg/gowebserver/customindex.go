@@ -45,10 +45,7 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 	if c.enhancedList {
 		path := r.URL.Path
-		if path == "/" {
-			path = "."
-		}
-		path = strings.ReplaceAll(filepath.Clean(path), "\\", "/")
+		path = cleanPath(strings.TrimPrefix(path, "/"))
 
 		zap.S().With("url", r.URL, "path", path).Info("custom index")
 		if strings.HasSuffix(r.URL.Path, "/") || path == "." {
