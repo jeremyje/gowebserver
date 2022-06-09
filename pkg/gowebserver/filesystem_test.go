@@ -33,6 +33,12 @@ var (
 	nestedZipFSRootDirList = []string{"single-testassets.zip", "single-testassets.zip-dir", "testassets", "testassets.7z", "testassets.tar", "testassets.tar-dir", "testassets.tar.bz2", "testassets.tar.bz2-dir", "testassets.tar.gz", "testassets.tar.gz-dir", "testassets.tar.lz4", "testassets.tar.lz4-dir", "testassets.tar.xz", "testassets.tar.xz-dir", "testassets.zip", "testassets.zip-dir", "testing.go", "testing_test.go"}
 )
 
+var (
+	_ FileSystem = (*localFS)(nil)
+	_ FileSystem = (*archiveFS)(nil)
+	_ FileSystem = (*nestedFS)(nil)
+)
+
 func TestVirtualDirectory(t *testing.T) {
 	nestedZipPath := gowsTesting.MustNestedZipFilePath(t)
 

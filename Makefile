@@ -345,4 +345,7 @@ pkg/gowebserver/static/bootstrap/:
 		&& mv bootstrap-5.1.3-dist/ bootstrap/ \
 		&& rm -f bootstrap.zip
 
+test-codecov:
+	curl -X POST --data-binary @codecov.yml https://codecov.io/validate
+
 .PHONY : all assets dist lint clean check test test-10 coverage bench benchmark test-all install run deps presubmit
