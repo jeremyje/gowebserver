@@ -42,6 +42,8 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 )
 
+replace github.com/mholt/archiver/v4 v4.0.0-alpha.7 => github.com/jeremyje/archiver/v4 v4.0.0-alpha.7.0.20220615081900-b9eb37f1176b
+
 require (
 	facette.io/natsort v0.0.0-20181210072756-2cd4dd1e2dcb
 	github.com/Microsoft/go-winio v0.5.2 // indirect
