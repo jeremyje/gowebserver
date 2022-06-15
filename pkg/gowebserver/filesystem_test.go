@@ -34,9 +34,11 @@ var (
 )
 
 var (
-	_ FileSystem = (*localFS)(nil)
-	_ FileSystem = (*archiveFS)(nil)
-	_ FileSystem = (*nestedFS)(nil)
+	_ FileSystem    = (*localFS)(nil)
+	_ FileSystem    = (*archiveFS)(nil)
+	_ FileSystem    = (*nestedFS)(nil)
+	_ io.ReaderAt   = (*augmentedFile)(nil)
+	_ io.ReadSeeker = (*augmentedFile)(nil)
 )
 
 func TestVirtualDirectory(t *testing.T) {
