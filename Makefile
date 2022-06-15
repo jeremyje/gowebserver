@@ -64,7 +64,7 @@ TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.7z
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.xz
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.lz4
-ASSETS = $(TEST_ARCHIVES) internal/gowebserver/testing/nested-testassets.zip internal/gowebserver/testing/single-testassets.zip
+ASSETS = $(TEST_ARCHIVES) internal/gowebserver/testing/nested-testassets.zip internal/gowebserver/testing/single-testassets.zip internal/gowebserver/testing/nodir-testassets.zip
 ALL_APPS = gowebserver certtool httpprobe
 
 ALL_BINARIES = $(foreach app,$(ALL_APPS),$(foreach platform,$(ALL_PLATFORMS),bin/go/$(platform)/$(app)$(if $(findstring windows_,$(platform)),.exe,)))
@@ -209,6 +209,10 @@ clean:
 	$(RM) -rf bin/
 
 check: test
+
+internal/gowebserver/testing/nodir-testassets.zip: $(TEST_ARCHIVES) internal/gowebserver/testing/single-testassets.zip internal/gowebserver/testing/nested-testassets.zip
+	cd internal/gowebserver/testing/testassets; $(ZIP) -qr9 ../../nodir-testassets.zip index.html assets/1.txt assets/2.txt site.js "weird #1.txt" weird#.txt weird$$.txt assets/more/3.txt assets/four/4.txt assets/fivesix/5.txt assets/fivesix/6.txt
+	mv internal/gowebserver/nodir-testassets.zip internal/gowebserver/testing/nodir-testassets.zip
 
 internal/gowebserver/testing/single-testassets.zip: $(TEST_ARCHIVES)
 	cd internal/gowebserver/testing/; $(ZIP) -qr9 ../single-testassets.zip testassets/
