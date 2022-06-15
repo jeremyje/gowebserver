@@ -1,6 +1,8 @@
 package gowebserver
 
 import (
+	"bytes"
+	"io"
 	"io/fs"
 	"os"
 	"sort"
@@ -49,9 +51,101 @@ func (n *nestedFS) Open(name string) (fs.File, error) {
 		return nil, err
 	}
 
-	r, err := subFS.Open(joinNestedFSPath(paths[1:]))
-	logError(err)
-	return r, err
+	return augmentFSFile(subFS.Open(joinNestedFSPath(paths[1:])))
+}
+
+type augmentedFile struct {
+	f                fs.File
+	requiresSeekRead bool
+	reader           *bytes.Reader
+	data             []byte
+	readErr          error
+}
+
+func (a *augmentedFile) Stat() (fs.FileInfo, error) {
+	return a.f.Stat()
+}
+
+func (a *augmentedFile) Read(d []byte) (int, error) {
+	if a.requiresSeekRead {
+		r, err := a.getReader()
+		if err != nil {
+			return 0, err
+		}
+		return r.Read(d)
+	}
+	return a.f.Read(d)
+}
+
+func (a *augmentedFile) Close() error {
+	a.data = nil
+	a.readErr = nil
+	return a.f.Close()
+}
+
+func (a *augmentedFile) getReader() (*bytes.Reader, error) {
+	if a.reader != nil || a.readErr != nil {
+		return a.reader, a.readErr
+	}
+	data, err := io.ReadAll(a.f)
+	a.data = data
+	a.readErr = err
+	a.reader = bytes.NewReader(data)
+	return a.reader, err
+}
+
+func (a *augmentedFile) Seek(offset int64, whence int) (int64, error) {
+	seeker, ok := a.f.(io.Seeker)
+	if ok {
+		return seeker.Seek(offset, whence)
+	}
+
+	r, err := a.getReader()
+	if err != nil {
+		return 0, err
+	}
+
+	return r.Seek(offset, whence)
+}
+
+func (a *augmentedFile) ReadAt(p []byte, off int64) (n int, err error) {
+	readerAt, ok := a.f.(io.ReaderAt)
+	if ok {
+		return readerAt.ReadAt(p, off)
+	}
+
+	r, err := a.getReader()
+	if err != nil {
+		return 0, err
+	}
+
+	return r.ReadAt(p, off)
+}
+
+func augmentFSFile(f fs.File, err error) (fs.File, error) {
+	if err != nil {
+		return f, err
+	}
+
+	if _, ok := f.(fs.ReadDirFile); ok {
+		return f, err
+	}
+
+	if _, ok := f.(*augmentedFile); ok {
+		return f, nil
+	}
+
+	if _, ok := f.(io.ReadSeeker); ok {
+		if _, ok := f.(io.ReaderAt); ok {
+			return &augmentedFile{
+				f: f,
+			}, nil
+		}
+	}
+	return &augmentedFile{
+		f:                f,
+		requiresSeekRead: true,
+	}, nil
 }
 
 func augmentFSFileDir(f fs.File, err error) (fs.File, error) {

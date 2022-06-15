@@ -159,19 +159,29 @@ func newSevenZipFS(filePath string) (*localFS, error) {
 	return newLocalFS(tmpDir, cleanup)
 }
 
-func archiverFileSystemFromArchive(file fs.File) (fs.FS, error) {
-	stat, err := file.Stat()
-	if err != nil {
-		return nil, err
-	}
+func coerceToReaderAt(file fs.File) (io.ReaderAt, error) {
 	readerAt, ok := file.(io.ReaderAt)
-	if !ok {
+	if ok {
+		return readerAt, nil
+	} else {
 		// TODO: This is super inefficient because it's reading a nested zip file into memory.
 		data, err := io.ReadAll(file)
 		if err != nil {
 			return nil, err
 		}
-		readerAt = bytes.NewReader(data)
+		return bytes.NewReader(data), err
+	}
+}
+
+func archiverFileSystemFromArchive(file fs.File) (fs.FS, error) {
+	stat, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	readerAt, err := coerceToReaderAt(file)
+	if err != nil {
+		return nil, err
 	}
 
 	format, _, err := archiver.Identify(stat.Name(), file)
