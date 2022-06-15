@@ -39,6 +39,20 @@ var (
 	_ FileSystem = (*nestedFS)(nil)
 )
 
+func xTestDirlessArchive(t *testing.T) {
+	nodirZipPath := gowsTesting.MustNoDirZipFilePath(t)
+
+	vFS, err := newRawFSFromURI(nodirZipPath)
+	if err != nil {
+		t.Error(err)
+	}
+	defer vFS.Close()
+	nFS := newNestedFS(vFS)
+	defer nFS.Close()
+
+	verifyReadDir(t, nFS, "assets", []string{"1.txt", "2.txt", "more", "four", "fivesix"})
+}
+
 func TestVirtualDirectory(t *testing.T) {
 	nestedZipPath := gowsTesting.MustNestedZipFilePath(t)
 
@@ -108,6 +122,7 @@ func TestNestedFileSystem(t *testing.T) {
 	tarBz2Path := gowsTesting.MustTarBzip2FilePath(t)
 	tarXzPath := gowsTesting.MustTarXzFilePath(t)
 	tarLz4Path := gowsTesting.MustTarLz4FilePath(t)
+	nodirZipPath := gowsTesting.MustNoDirZipFilePath(t)
 	singleZipPath := gowsTesting.MustSingleZipFilePath(t)
 	nestedZipPath := gowsTesting.MustNestedZipFilePath(t)
 
@@ -125,6 +140,8 @@ func TestNestedFileSystem(t *testing.T) {
 		{uri: tarLz4Path, baseDir: ""},
 
 		{uri: sevenZipPath, baseDir: ""},
+
+		{uri: nodirZipPath, baseDir: ""},
 
 		{uri: singleZipPath, baseDir: "testassets", wantRootDirs: []string{"testassets"}},
 
@@ -318,25 +335,29 @@ func verifyLocalFileFromDefaultAsset(tb testing.TB, vFS fs.FS, baseDir string) {
 		if baseDir != "" {
 			name = filepath.Join(baseDir, name)
 		}
-		verifyLocalFile(tb, vFS, name)
+		if err := verifyLocalFile(tb, vFS, baseDir, name); err != nil {
+			tb.Error(err)
+		}
 	}
 
 	verifyFileMissing(tb, vFS, "does-not-exist/")
 	verifyFileMissing(tb, vFS, "does-not-exist")
 }
 
-func verifyLocalFile(tb testing.TB, vFS fs.FS, assetPath string) error {
+func verifyLocalFile(tb testing.TB, vFS fs.FS, baseDir string, assetPath string) error {
 	f, err := vFS.Open(assetPath)
 	if err != nil {
-		tb.Fatal(fmt.Errorf("%s does not exist when it's expected to, %s", assetPath, err))
+		return fmt.Errorf("%s does not exist when it's expected to, %s", assetPath, err)
 	}
 
 	data, err := ioutil.ReadAll(f)
 	if err != nil {
 		return err
 	}
-	if string(data) != assetPath {
-		return fmt.Errorf("The test asset file does not contain it's relative file path as the body, File= %s, Body= %s", assetPath, string(data))
+	//parts := strings.Split(assetPath, nestedDirSuffix+"/")
+	wantContent := strings.TrimLeft(strings.TrimPrefix(assetPath, baseDir), "/")
+	if string(data) != wantContent {
+		return fmt.Errorf("The test asset file does not contain it's relative file path as the body, File= %s, WantBody= '%s', Body= '%s'", assetPath, wantContent, string(data))
 	}
 	return nil
 }

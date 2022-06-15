@@ -24,6 +24,8 @@ import (
 const testFileMode = os.FileMode(0644)
 
 var (
+	//go:embed nodir-testassets.zip
+	nodirZipAssets []byte
 	//go:embed single-testassets.zip
 	singleZipAssets []byte
 	//go:embed nested-testassets.zip
@@ -59,6 +61,11 @@ func MustWriteTempFile(tb testing.TB, content string) *os.File {
 
 	fatalOnFail(tb, ioutil.WriteFile(fp.Name(), []byte(content), testFileMode))
 	return fp
+}
+
+// MustNoDirZipFilePath gets the .zip test asset file without explicit directory lists.
+func MustNoDirZipFilePath(tb testing.TB) string {
+	return mustWriteData(tb, mustCreateTempArchive(tb, "-nodir.zip"), nodirZipAssets)
 }
 
 // MustSingleZipFilePath gets the .zip test asset file.

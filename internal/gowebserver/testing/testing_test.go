@@ -69,6 +69,7 @@ func TestMustFilePath(t *testing.T) {
 		name string
 		f    func(testing.TB) string
 	}{
+		{name: "MustNoDirZipFilePath", f: MustNoDirZipFilePath},
 		{name: "MustNestedZipFilePath", f: MustNestedZipFilePath},
 		{name: "MustSingleZipFilePath", f: MustSingleZipFilePath},
 		{name: "MustZipFilePath", f: MustZipFilePath},
