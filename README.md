@@ -55,7 +55,7 @@ sc.exe start gowebserver
 
 ## Build
 
-![example workflow](https://github.com/jeremyje/gowebserver/actions/workflows/deploy.yml/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/jeremyje/gowebserver)](https://goreportcard.com/report/github.com/jeremyje/gowebserver) [![Go Reference](https://pkg.go.dev/badge/github.com/jeremyje/gowebserver.svg)](https://pkg.go.dev/github.com/jeremyje/gowebserver) [![codebeat badge](https://codebeat.co/badges/de86a882-9038-4994-afe2-fea7d93f63cb)](https://codebeat.co/projects/github-com-jeremyje-gowebserver-master) [![codecov](https://codecov.io/gh/jeremyje/gowebserver/branch/master/graph/badge.svg)](https://codecov.io/gh/jeremyje/gowebserver) [![Total alerts](https://img.shields.io/lgtm/alerts/g/jeremyje/gowebserver.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jeremyje/gowebserver/alerts/)
+![example workflow](https://github.com/jeremyje/gowebserver/actions/workflows/deploy.yml/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/jeremyje/gowebserver)](https://goreportcard.com/report/github.com/jeremyje/gowebserver) [![Go Reference](https://pkg.go.dev/badge/github.com/jeremyje/gowebserver.svg)](https://pkg.go.dev/github.com/jeremyje/gowebserver) [![codebeat badge](https://codebeat.co/badges/de86a882-9038-4994-afe2-fea7d93f63cb)](https://codebeat.co/projects/github-com-jeremyje-gowebserver-main) [![codecov](https://codecov.io/gh/jeremyje/gowebserver/branch/main/graph/badge.svg)](https://codecov.io/gh/jeremyje/gowebserver) [![Total alerts](https://img.shields.io/lgtm/alerts/g/jeremyje/gowebserver.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jeremyje/gowebserver/alerts/)
 
 Install [Go 1.18 or newer](https://golang.org/dl/).
 

@@ -115,7 +115,7 @@ func TestDownloadFileOnLocalFile(t *testing.T) {
 }
 
 func TestDownloadFileOnHttpsFile(t *testing.T) {
-	remotePath := "https://raw.githubusercontent.com/jeremyje/gowebserver/master/Makefile"
+	remotePath := "https://raw.githubusercontent.com/jeremyje/gowebserver/main/Makefile"
 	localPath, cleanup, err := downloadFile(remotePath)
 	if err != nil {
 		t.Error(err)
