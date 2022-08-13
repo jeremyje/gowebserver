@@ -13,7 +13,12 @@
 # limitations under the License.
 
 name: CI
-on: push
+on:
+  push:
+    tags: ["v*"]
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 jobs:
   # Set the job key. The key is displayed as the job name
   # when a job name is not provided
