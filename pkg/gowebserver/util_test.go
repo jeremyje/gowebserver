@@ -301,7 +301,7 @@ func TestHumanizeDate(t *testing.T) {
 		t.Run(tc.date.String(), func(t *testing.T) {
 			t.Parallel()
 			if diff := cmp.Diff(tc.want, humanizeDate(tc.date)); diff != "" {
-				t.Errorf("isImage() mismatch (-want +got):\n%s", diff)
+				t.Errorf("humanizeDate() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -327,45 +327,69 @@ func TestIsOdd(t *testing.T) {
 
 func TestIsImage(t *testing.T) {
 	testCases := []struct {
-		name string
-		want bool
+		name    string
+		isImage bool
+		isAudio bool
+		isVideo bool
 	}{
 		{
-			name: "testdata/hi-template.html",
-			want: false,
+			name:    "testdata/hi-template.html",
+			isImage: false,
 		},
 		{
-			name: "testdata/image.jpg",
-			want: true,
+			name:    "testdata/image.jpg",
+			isImage: true,
 		},
 		{
-			name: "testdata/image.gif",
-			want: true,
+			name:    "testdata/image.gif",
+			isImage: true,
 		},
 		{
-			name: "testdata/image.jpeg",
-			want: true,
+			name:    "testdata/image.jpeg",
+			isImage: true,
 		},
 		{
-			name: "testdata/image.png",
-			want: true,
+			name:    "testdata/image.png",
+			isImage: true,
 		},
 		{
-			name: "testdata/image.mp4",
-			want: false,
+			name:    "testdata/image.mp4",
+			isVideo: true,
 		},
 		{
-			name: "testdata.png/image.mp4",
-			want: false,
+			name:    "testdata.png/image.mp4",
+			isVideo: true,
+		},
+		{
+			name:    "testdata/sound.mp3",
+			isAudio: true,
+		},
+		{
+			name:    "testdata/sound.wav",
+			isAudio: true,
 		},
 	}
 
 	for _, tc := range testCases {
 		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(fmt.Sprintf("isImage(%s)", tc.name), func(t *testing.T) {
 			t.Parallel()
-			if diff := cmp.Diff(tc.want, isImage(tc.name)); diff != "" {
+			if diff := cmp.Diff(tc.isImage, isImage(tc.name)); diff != "" {
 				t.Errorf("isImage() mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+		t.Run(fmt.Sprintf("isAudio(%s)", tc.name), func(t *testing.T) {
+			t.Parallel()
+			if diff := cmp.Diff(tc.isAudio, isAudio(tc.name)); diff != "" {
+				t.Errorf("isAudio() mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+		t.Run(fmt.Sprintf("isVideo(%s)", tc.name), func(t *testing.T) {
+			t.Parallel()
+			if diff := cmp.Diff(tc.isVideo, isVideo(tc.name)); diff != "" {
+				t.Errorf("isVideo() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

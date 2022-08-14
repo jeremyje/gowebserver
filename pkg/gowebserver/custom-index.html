@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<!-- https://www.w3schools.com/howto/howto_css_image_grid_responsive.asp -->
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,9 +23,7 @@
 
     .square-image {
       object-fit: cover;
-      /* Do not scale the image */
       object-position: center;
-      /* Center the image within the element */
       width: 128px;
       height: 128px;
     }
@@ -67,24 +63,24 @@
     .file-list a {
       color: black;
       text-decoration: none;
-      background-color: #FFFFFF;
+      display: block;
+      padding: .5em;
     }
 
-    .file-list a:nth-child(odd) {
+    .file-list a:nth-child(even) {
       background-color: #EEEEEE;
     }
 
     .file-list li {
       border-bottom: 1px solid #DDDDDD;
-      padding: .5em;
     }
 
-    .file-list li:nth-child(odd) {
+    .file-list li:nth-child(even) {
       background-color: #EEEEEE;
     }
 
     .file-list li:hover {
-      background-color: #DDDDDD;
+      background-color: #CCCCCC;
     }
 
     .file-list li:last-child {
@@ -98,31 +94,84 @@
     .right {
       float: right;
     }
+
+    .file-table {
+      width: 100%;
+      table-layout: fixed;
+      overflow-wrap: break-word;
+      font-size: 1.25em;
+      border-collapse: collapse;
+    }
+
+    .file-table tr {
+      -moz-transition: all .1s ease-in;
+      -o-transition: all .1s ease-in;
+      -webkit-transition: all .1s ease-in;
+      transition: all .1s ease-in;
+    }
+
+    .file-table td a {
+      display: block;
+      text-decoration: none;
+      color: black;
+      padding: .5em;
+    }
+
+    .file-table td a:hover {
+      color: black;
+    }
+
+    .file-table tr:nth-child(even) {
+      background-color: #EEEEEE;
+    }
+
+    .file-table td:nth-child(2) {
+      width: 10em;
+      text-align: center;
+    }
+
+    .file-table td:nth-child(3) {
+      width: 10em;
+      text-align: center;
+    }
+
+    .file-table tr:hover {
+      background-color: #CCCCCC;
+    }
   </style>
 </head>
 
 <body>
   <main>
 
-    <div class="container">
-      {{range $index, $element := $.Images}}
-      <a href="{{$element.Name}}"><img src="{{urlEncode $element.Name}}" class="square-image item" loading="lazy"
-          alt="{{$element.ModTime}}" /></a>
-      {{end}}
-    </div>
-
     <ul class="file-list">
-      {{range $index, $element := $.DirEntries}}
-      <a href="{{urlEncode $element.Name}}" class="full-width">
-        <li>
-          {{$element.Name}}{{if $element.IsDir}}/{{else}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{humanizeBytes
-          $element.Size}} {{humanizeDate
-          $element.ModTime}}{{end}}
-        </li>
-      </a>
-      {{end}}
+      {{range $index, $element := $.DirEntries}}{{if $element.IsDir}}<li><a
+          href="{{urlEncode $element.Name}}">{{$element.Name}}/</a></li>{{end}}{{end}}
     </ul>
 
+    <table class="file-table">
+      <tbody>
+        {{range $index, $element := $.DirEntries}}{{if not $element.IsDir}}
+        <tr>
+          <td>
+            <a href="{{urlEncode $element.Name}}">{{$element.Name}}{{if $element.IsDir}}/{{end}}</a>
+          </td>
+          <td><a href="/root/pkg/gowebserver/custom-index.html">{{if not $element.IsDir}}{{humanizeDate
+              $element.ModTime}}{{end}}</a></td>
+          <td><a href="/root/pkg/gowebserver/custom-index.html">{{if not $element.IsDir}}{{humanizeBytes
+              $element.Size}}{{end}}</a></td>
+        </tr>
+        {{end}}{{end}}
+      </tbody>
+    </table>
+
+    <div class="container">
+      {{range $index, $element := $.DirEntries}}{{if isImage $element.Name}}
+      <a href="{{$element.Name}}"><img src="{{urlEncode $element.Name}}" class="square-image item" loading="lazy"
+          alt="{{$element.Name}} - {{humanizeBytes $element.Size}}- {{$element.ModTime}}" /></a>
+      {{end}}{{end}}
+    </div>
   </main>
 </body>
+
 </html>

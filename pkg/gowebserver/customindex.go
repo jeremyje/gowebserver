@@ -72,7 +72,6 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				params := &CustomIndexReport{
 					Root:       path,
 					DirEntries: []*DirEntry{},
-					Images:     []*DirEntry{},
 				}
 
 				files := map[string]*DirEntry{}
@@ -107,11 +106,7 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				defer generateSpan.End()
 				for _, name := range sortedFiles {
 					entry := files[name]
-					if isImage(entry.Name) {
-						params.Images = append(params.Images, entry)
-					} else {
-						params.DirEntries = append(params.DirEntries, entry)
-					}
+					params.DirEntries = append(params.DirEntries, entry)
 				}
 
 				if err := executeTemplate(customIndexHTML, params, w); err != nil {
