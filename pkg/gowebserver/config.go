@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/user"
 	"strconv"
@@ -156,7 +155,7 @@ func Load() (*Config, error) {
 }
 
 func loadWithConfigFile(filePath string, conf *Config) error {
-	contents, err := ioutil.ReadFile(filePath)
+	contents, err := os.ReadFile(filePath)
 	if err != nil {
 		return err
 	}

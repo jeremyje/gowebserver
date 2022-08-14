@@ -2,7 +2,7 @@ package gowebserver
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -85,7 +85,7 @@ func TestWebServer_Serve_Multi(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			} else {
-				got, err := ioutil.ReadAll(resp.Body)
+				got, err := io.ReadAll(resp.Body)
 				if err != nil {
 					t.Error(err)
 				}

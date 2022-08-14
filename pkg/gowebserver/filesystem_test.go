@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -40,20 +39,6 @@ var (
 	_ io.ReaderAt   = (*augmentedFile)(nil)
 	_ io.ReadSeeker = (*augmentedFile)(nil)
 )
-
-func xTestDirlessArchive(t *testing.T) {
-	nodirZipPath := gowsTesting.MustNoDirZipFilePath(t)
-
-	vFS, err := newRawFSFromURI(nodirZipPath)
-	if err != nil {
-		t.Error(err)
-	}
-	defer vFS.Close()
-	nFS := newNestedFS(vFS)
-	defer nFS.Close()
-
-	verifyReadDir(t, nFS, "assets", []string{"1.txt", "2.txt", "more", "four", "fivesix"})
-}
 
 func TestVirtualDirectory(t *testing.T) {
 	nestedZipPath := gowsTesting.MustNestedZipFilePath(t)
@@ -352,7 +337,7 @@ func verifyLocalFile(tb testing.TB, vFS fs.FS, baseDir string, assetPath string)
 		return fmt.Errorf("%s does not exist when it's expected to, %s", assetPath, err)
 	}
 
-	data, err := ioutil.ReadAll(f)
+	data, err := io.ReadAll(f)
 	if err != nil {
 		return err
 	}

@@ -16,7 +16,6 @@ package testing
 
 import (
 	_ "embed"
-	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -48,7 +47,7 @@ var (
 
 // MustCreateTempFile creates a temp file for testing.
 func MustCreateTempFile(tb testing.TB) *os.File {
-	f, err := ioutil.TempFile(os.TempDir(), "tempfile")
+	f, err := os.CreateTemp(os.TempDir(), "tempfile")
 	fatalOnFail(tb, err)
 
 	cleanupFile(tb, f.Name())
@@ -59,7 +58,7 @@ func MustCreateTempFile(tb testing.TB) *os.File {
 func MustWriteTempFile(tb testing.TB, content string) *os.File {
 	fp := MustCreateTempFile(tb)
 
-	fatalOnFail(tb, ioutil.WriteFile(fp.Name(), []byte(content), testFileMode))
+	fatalOnFail(tb, os.WriteFile(fp.Name(), []byte(content), testFileMode))
 	return fp
 }
 
@@ -119,7 +118,7 @@ func mustCreateTempArchive(tb testing.TB, suffix string) string {
 }
 
 func mustWriteData(tb testing.TB, path string, data []byte) string {
-	fatalOnFail(tb, ioutil.WriteFile(path, data, testFileMode))
+	fatalOnFail(tb, os.WriteFile(path, data, testFileMode))
 	return path
 }
 

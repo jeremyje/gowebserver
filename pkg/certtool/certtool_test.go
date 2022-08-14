@@ -527,10 +527,10 @@ func TestCreateCertificate(t *testing.T) {
 	assert.FileExists(publicCertPath)
 	assert.FileExists(privateKeyPath)
 
-	publicCertFileData, err := ioutil.ReadFile(publicCertPath)
+	publicCertFileData, err := os.ReadFile(publicCertPath)
 	assert.Nil(err)
 
-	privateKeyFileData, err := ioutil.ReadFile(privateKeyPath)
+	privateKeyFileData, err := os.ReadFile(privateKeyPath)
 	assert.Nil(err)
 
 	// Verify that we can load the public/private key pair.

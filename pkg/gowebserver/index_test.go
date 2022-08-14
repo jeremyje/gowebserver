@@ -15,7 +15,7 @@
 package gowebserver
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http/httptest"
 	"testing"
 
@@ -48,7 +48,7 @@ func TestIndexHTTPHandlerServeHTTP(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Error(err)
 	}

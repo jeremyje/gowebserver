@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"mime"
 	"net/http"
 	"net/url"
@@ -65,7 +64,7 @@ func stageRemoteFile(maybeRemoteFilePath string) (string, string, func() error, 
 }
 
 func createTempDirectory() (string, func(), error) {
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "gowebserver")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "gowebserver")
 
 	if err != nil {
 		return "", nilFunc, fmt.Errorf("cannot create temp directory, %s", err)
@@ -98,7 +97,7 @@ func tryDeleteFile(path string) {
 func downloadFile(path string) (string, func() error, error) {
 	if strings.HasPrefix(strings.ToLower(path), "http") {
 		cleanup := nilFuncWithError
-		f, err := ioutil.TempFile(os.TempDir(), "gowebserverdl")
+		f, err := os.CreateTemp(os.TempDir(), "gowebserverdl")
 		if err != nil {
 			return "", cleanup, err
 		}
