@@ -15,7 +15,7 @@
 # https://helm.sh/docs/topics/charts/#the-chartyaml-file
 apiVersion: v2
 name: gowebserver
-version: "2.5.1"
+version: "2.5.2"
 kubeVersion: ">= 1.21.0"
 description: A simple, convenient, reliable, well tested HTTP/HTTPS web server to host static files.
 type: application
@@ -34,7 +34,7 @@ maintainers:
     email: jeremyje@googlegroups.com
     url: https://github.com/jeremyje
 icon: A URL to an SVG or PNG image to be used as an icon (optional).
-appVersion: "2.5.1"
+appVersion: "2.5.2"
 deprecated: false
 annotations:
   app: gowebserver
