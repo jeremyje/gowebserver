@@ -24,9 +24,9 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"net"
+	"os"
 	"strings"
 	"time"
 
@@ -390,11 +390,11 @@ func ReadKeyPairFromFile(publicCertificateFile string, privateKeyFile string) (*
 		return nil, fmt.Errorf("private key was provided without a public certificate")
 	}
 
-	pub, err := ioutil.ReadFile(publicCertificateFile)
+	pub, err := os.ReadFile(publicCertificateFile)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read the public certificate file (%s), %s", publicCertificateFile, err)
 	}
-	priv, err := ioutil.ReadFile(privateKeyFile)
+	priv, err := os.ReadFile(privateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read the private key file (%s), %s", privateKeyFile, err)
 	}
@@ -433,5 +433,5 @@ func WriteKeyPair(kp *KeyPair, publicCertificateFile string, privateKeyFile stri
 }
 
 func writeFile(fileName string, data []byte) error {
-	return ioutil.WriteFile(fileName, data, 0644)
+	return os.WriteFile(fileName, data, 0644)
 }

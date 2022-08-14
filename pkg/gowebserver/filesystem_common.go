@@ -3,7 +3,6 @@ package gowebserver
 import (
 	"io"
 	"io/fs"
-	"io/ioutil"
 )
 
 type FileSystem interface {
@@ -54,7 +53,7 @@ func (c *concreteFS) ReadFile(name string) ([]byte, error) {
 		return nil, err
 	}
 	defer f.Close()
-	return ioutil.ReadAll(f)
+	return io.ReadAll(f)
 }
 
 func (c *concreteFS) ReadDir(name string) ([]fs.DirEntry, error) {

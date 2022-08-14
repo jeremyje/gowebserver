@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -75,7 +74,7 @@ func TestCreateTempDirectory(t *testing.T) {
 }
 
 func TestDownloadFileOnLocalFile(t *testing.T) {
-	f, err := ioutil.TempFile(os.TempDir(), "gowebserver")
+	f, err := os.CreateTemp(os.TempDir(), "gowebserver")
 	if err != nil {
 		t.Error(err)
 	}
@@ -87,7 +86,7 @@ func TestDownloadFileOnLocalFile(t *testing.T) {
 	})
 
 	path := f.Name()
-	err = ioutil.WriteFile(path, []byte("ok"), os.FileMode(0644))
+	err = os.WriteFile(path, []byte("ok"), os.FileMode(0644))
 	if err != nil {
 		t.Error(err)
 	}
@@ -174,7 +173,7 @@ func mustTempDir(tb testing.TB) string {
 }
 
 func mustFile(tb testing.TB, path string) []byte {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		tb.Fatalf("cannot read file '%s', %s", path, err)
 	}

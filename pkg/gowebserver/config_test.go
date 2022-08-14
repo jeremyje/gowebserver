@@ -15,7 +15,6 @@
 package gowebserver
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -211,7 +210,7 @@ func TestPopulatedYamlConfig(t *testing.T) {
 }
 
 func createTempFile() (*os.File, error) {
-	return ioutil.TempFile(os.TempDir(), "tempfile")
+	return os.CreateTemp(os.TempDir(), "tempfile")
 }
 
 func writeTempFile(content string) (*os.File, error) {
@@ -219,7 +218,7 @@ func writeTempFile(content string) (*os.File, error) {
 	if err != nil {
 		return fp, err
 	}
-	err = ioutil.WriteFile(fp.Name(), []byte(content), os.FileMode(0644))
+	err = os.WriteFile(fp.Name(), []byte(content), os.FileMode(0644))
 	return fp, err
 }
 

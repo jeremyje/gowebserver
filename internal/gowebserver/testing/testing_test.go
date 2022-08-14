@@ -1,7 +1,7 @@
 package testing
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -53,7 +53,7 @@ func TestCreateTempFile(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			data, err := ioutil.ReadFile(name)
+			data, err := os.ReadFile(name)
 			if err != nil {
 				t.Error(err)
 			}
@@ -90,7 +90,7 @@ func TestMustFilePath(t *testing.T) {
 			if name == "" {
 				t.Error("file name is empty")
 			}
-			data, err := ioutil.ReadFile(name)
+			data, err := os.ReadFile(name)
 			if err != nil {
 				t.Error(err)
 			}

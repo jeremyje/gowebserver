@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -19,13 +19,13 @@ func TestProbe(t *testing.T) {
 
 	certFile := filepath.Join(t.TempDir(), "test-probe.cert")
 
-	if err := ioutil.WriteFile(certFile, pem.EncodeToMemory(&pem.Block{
+	if err := os.WriteFile(certFile, pem.EncodeToMemory(&pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: secure.Certificate().Raw,
 	}), 0644); err != nil {
 		t.Fatal(err)
 	}
-	content, err := ioutil.ReadFile(certFile)
+	content, err := os.ReadFile(certFile)
 	t.Logf("%s %s", content, err)
 
 	tests := []struct {

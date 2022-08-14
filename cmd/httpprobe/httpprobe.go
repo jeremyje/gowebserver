@@ -17,7 +17,6 @@ package main
 import (
 	"crypto/x509"
 	"flag"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -71,7 +70,7 @@ func readPublicCertificate(publicCertFile string) (*x509.CertPool, error) {
 		return nil, nil
 	}
 
-	data, err := ioutil.ReadFile(publicCertFile)
+	data, err := os.ReadFile(publicCertFile)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot read file %s", publicCertFile)
 	}
