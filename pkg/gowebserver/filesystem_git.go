@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 )
 
 func newGitFS(filePath string) (*localFS, error) {
@@ -20,12 +21,12 @@ func newGitFS(filePath string) (*localFS, error) {
 		return nil, fmt.Errorf("cannot create temp directory, %s", err)
 	}
 
-	if _, err := git.PlainClone(tmpDir, false, &git.CloneOptions{
-		URL:          filePath,
-		Progress:     os.Stdout,
-		Depth:        1,
-		SingleBranch: true,
-	}); err != nil {
+	for _, opts := range cloneOptions(filePath) {
+		if _, err = git.PlainClone(tmpDir, false, opts); err == nil {
+			break
+		}
+	}
+	if err != nil {
 		cleanup()
 		return nil, fmt.Errorf("could not clone %s, %s", filePath, err)
 	}
@@ -41,4 +42,22 @@ func newGitFS(filePath string) (*localFS, error) {
 
 func isSupportedGit(filePath string) bool {
 	return strings.HasSuffix(strings.ToLower(filePath), ".git")
+}
+
+func cloneOptions(filePath string) []*git.CloneOptions {
+	return []*git.CloneOptions{
+		{
+			URL:          filePath,
+			Progress:     os.Stdout,
+			Depth:        1,
+			SingleBranch: true,
+		},
+		{
+			URL:           filePath,
+			Progress:      os.Stdout,
+			Depth:         1,
+			SingleBranch:  true,
+			ReferenceName: plumbing.NewBranchReferenceName("main"),
+		},
+	}
 }

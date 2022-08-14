@@ -18,9 +18,9 @@ var (
 	//go:embed testdata/multiindex.html
 	wantMultiIndex []byte
 
-	wantIndex      = []byte(`index.html`)
-	wantSiteJs     = []byte(`site.js`)
-	wantAssets1Txt = []byte(`assets/1.txt`)
+	wantIndex      = []byte("index.html")
+	wantSiteJs     = []byte("site.js")
+	wantAssets1Txt = []byte("assets/1.txt")
 )
 
 func TestServe(t *testing.T) {
