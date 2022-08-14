@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Directories</title>
+  <style>
+    body {
+      background-color: white;
+      font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    pre {
+      overflow-x: auto;
+      white-space: pre-wrap;
+      white-space: -moz-pre-wrap;
+      white-space: -pre-wrap;
+      white-space: -o-pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .square-image {
+      object-fit: cover;
+      object-position: center;
+      width: 128px;
+      height: 128px;
+    }
+
+    body {
+      line-height: 1;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 5px;
+      justify-content: flex-start;
+    }
+
+    .item {
+      margin: 5px;
+    }
+
+    .file-container {
+      margin: 4px;
+      display: flex;
+      padding: 4px;
+      width: 100%;
+    }
+
+    .full-width {
+      width: 100%;
+    }
+
+    .file-list {
+      list-style-type: none;
+      padding-left: 0;
+      font-size: 1.25em;
+    }
+
+    .file-list a {
+      color: black;
+      text-decoration: none;
+      background-color: #FFFFFF;
+    }
+
+    .file-list a:nth-child(odd) {
+      background-color: #EEEEEE;
+    }
+
+    .file-list li {
+      border-bottom: 1px solid #DDDDDD;
+      padding: .5em;
+    }
+
+    .file-list li:nth-child(odd) {
+      background-color: #EEEEEE;
+    }
+
+    .file-list li:hover {
+      background-color: #DDDDDD;
+    }
+
+    .file-list li:last-child {
+      border: 0;
+    }
+
+    .left {
+      float: left;
+    }
+
+    .right {
+      float: right;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+
+    <ul class="file-list">
+      <a href="/ok" class="full-width">
+        <li>
+          /ok
+        </li>
+      </a>
+      <a href="/abc" class="full-width">
+        <li>
+          /abc
+        </li>
+      </a></ul>
+
+  </main>
+</body>
+</html>
