@@ -57,7 +57,7 @@ sc.exe start gowebserver
 
 ![example workflow](https://github.com/jeremyje/gowebserver/actions/workflows/deploy.yml/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/jeremyje/gowebserver)](https://goreportcard.com/report/github.com/jeremyje/gowebserver) [![Go Reference](https://pkg.go.dev/badge/github.com/jeremyje/gowebserver.svg)](https://pkg.go.dev/github.com/jeremyje/gowebserver) [![codebeat badge](https://codebeat.co/badges/55274aa8-2846-40d2-96c1-f0c9175534ae)](https://codebeat.co/projects/github-com-jeremyje-gowebserver-main) [![codecov](https://codecov.io/gh/jeremyje/gowebserver/branch/main/graph/badge.svg)](https://codecov.io/gh/jeremyje/gowebserver) [![Total alerts](https://img.shields.io/lgtm/alerts/g/jeremyje/gowebserver.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jeremyje/gowebserver/alerts/)
 
-Install [Go 1.18 or newer](https://golang.org/dl/).
+Install [Go 1.19 or newer](https://golang.org/dl/).
 
 ```bash
 git clone git@github.com:jeremyje/gowebserver.git

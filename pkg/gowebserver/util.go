@@ -198,6 +198,8 @@ func executeTemplate(tmplText []byte, params interface{}, w io.Writer) error {
 	tmpl := template.New("").Funcs(template.FuncMap{
 		"humanizeBytes": humanize.Bytes,
 		"isImage":       isImage,
+		"isAudio":       isAudio,
+		"isVideo":       isVideo,
 		"isOdd":         isOdd,
 		"isEven":        isEven,
 		"humanizeDate":  humanizeDate,
@@ -222,6 +224,14 @@ func humanizeDate(t time.Time) string {
 
 func isImage(name string) bool {
 	return strings.HasPrefix(mime.TypeByExtension(filepath.Ext(name)), "image")
+}
+
+func isAudio(name string) bool {
+	return strings.HasPrefix(mime.TypeByExtension(filepath.Ext(name)), "audio")
+}
+
+func isVideo(name string) bool {
+	return strings.HasPrefix(mime.TypeByExtension(filepath.Ext(name)), "video")
 }
 
 func isOdd(v int) bool {
