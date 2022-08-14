@@ -24,18 +24,24 @@ import (
 var (
 	//go:embed template-index.html
 	templateIndexHTML []byte
+	//go:embed template-modernindex.html
+	templateModernIndexHTML []byte
 )
 
 type indexHTTPHandler struct {
 	page []byte
 }
 
-func newIndexHTTPHandler(servePaths []string) (*indexHTTPHandler, error) {
+func newIndexHTTPHandler(servePaths []string, modern bool) (*indexHTTPHandler, error) {
+	templateHTML := templateIndexHTML
+	if modern {
+		templateHTML = templateModernIndexHTML
+	}
 	w := &bytes.Buffer{}
 	var params = struct {
 		ServePaths []string
 	}{servePaths}
-	if err := executeTemplate(templateIndexHTML, params, w); err != nil {
+	if err := executeTemplate(templateHTML, params, w); err != nil {
 		return nil, err
 	}
 

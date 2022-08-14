@@ -142,7 +142,7 @@ func (ws *webServerImpl) Serve(termCh <-chan error) error {
 	}
 
 	if !hasIndex {
-		h, err := newIndexHTTPHandler(endpoints)
+		h, err := newIndexHTTPHandler(endpoints, ws.enhancedListMode)
 		if err != nil {
 			return err
 		}

@@ -15,6 +15,7 @@
 package gowebserver
 
 import (
+	"fmt"
 	"io"
 	"net/http/httptest"
 	"testing"
@@ -27,6 +28,8 @@ import (
 var (
 	//go:embed testdata/test-index.html
 	testIndexHTML []byte
+	//go:embed testdata/test-modernindex.html
+	testModernIndexHTML []byte
 )
 
 func TestTemplateIndexHTML(t *testing.T) {
@@ -36,24 +39,39 @@ func TestTemplateIndexHTML(t *testing.T) {
 }
 
 func TestIndexHTTPHandlerServeHTTP(t *testing.T) {
-	h, err := newIndexHTTPHandler([]string{"/ok", "/abc"})
-	if err != nil {
-		t.Fatal(err)
+	testCases := []struct {
+		modern bool
+		want   []byte
+	}{
+		{modern: false, want: testIndexHTML},
+		{modern: true, want: testModernIndexHTML},
 	}
-	hs := httptest.NewServer(h)
-	defer hs.Close()
-	resp, err := hs.Client().Get(hs.URL + "/")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer resp.Body.Close()
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(fmt.Sprintf("modern= %t", tc.modern), func(t *testing.T) {
+			t.Parallel()
+			h, err := newIndexHTTPHandler([]string{"/ok", "/abc"}, tc.modern)
+			if err != nil {
+				t.Fatal(err)
+			}
+			hs := httptest.NewServer(h)
+			defer hs.Close()
+			resp, err := hs.Client().Get(hs.URL + "/")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer resp.Body.Close()
 
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Error(err)
-	}
+			data, err := io.ReadAll(resp.Body)
+			if err != nil {
+				t.Error(err)
+			}
 
-	if diff := cmp.Diff(string(testIndexHTML), string(data)); diff != "" {
-		t.Errorf("index mismatch (-want +got):\n%s", diff)
+			if diff := cmp.Diff(string(tc.want), string(data)); diff != "" {
+				t.Errorf("index mismatch (-want +got):\n%s", diff)
+
+				t.Errorf("Wanted:\n%s", string(tc.want))
+			}
+		})
 	}
 }
