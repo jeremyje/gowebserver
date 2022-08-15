@@ -34,7 +34,7 @@ SHORT_SHA = $(shell git rev-parse --short=7 HEAD | tr -d [:punct:])
 VERSION_SUFFIX = $(SHORT_SHA)
 VERSION = $(BASE_VERSION)-$(VERSION_SUFFIX)
 BUILD_DATE = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-TAG := $(VERSION)
+TAG := v$(VERSION)
 PKG := github.com/jeremyje/gowebserver
 
 SOURCE_DIRS=$(shell go list ./... | grep -v '/vendor/')

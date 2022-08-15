@@ -118,15 +118,15 @@ jobs:
       - name: Push Images (Release)
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          make DOCKER_PUSH=--push REGISTRY=docker.io/jeremyje TAG=${{ steps.get_version.outputs.VERSION }} images
-          make DOCKER_PUSH=--push REGISTRY=ghcr.io/jeremyje TAG=${{ steps.get_version.outputs.VERSION }} images
+          make DOCKER_PUSH=--push REGISTRY=docker.io/jeremyje VERSION=${{ steps.get_version.outputs.VERSION }} images
+          make DOCKER_PUSH=--push REGISTRY=ghcr.io/jeremyje VERSION=${{ steps.get_version.outputs.VERSION }} images
           make bin/release.tar.gz
 
       - name: Push Images (Latest)
         if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref, '-')
         run: |
-          make DOCKER_PUSH=--push REGISTRY=docker.io/jeremyje TAG=${{ steps.get_version.outputs.VERSION }} images
-          make DOCKER_PUSH=--push REGISTRY=ghcr.io/jeremyje TAG=${{ steps.get_version.outputs.VERSION }} images
+          make DOCKER_PUSH=--push REGISTRY=docker.io/jeremyje VERSION=${{ steps.get_version.outputs.VERSION }} images
+          make DOCKER_PUSH=--push REGISTRY=ghcr.io/jeremyje VERSION=${{ steps.get_version.outputs.VERSION }} images
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
