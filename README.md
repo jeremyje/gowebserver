@@ -5,7 +5,7 @@ It can host a local directory or contents of a zip file.
 
 ```bash
 # Download (linux amd64, see Downloads for other builds)
-curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.2/server-amd64; chmod +x gowebserver
+curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-amd64; chmod +x gowebserver
 
 # Host the current directory.
 ./gowebserver
@@ -14,7 +14,7 @@ curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/downl
 ./gowebserver --path=${HOME}
 
 # Host a zip file from the internet.
-./gowebserver --path=https://github.com/jeremyje/gowebserver/archive/v2.5.2.zip
+./gowebserver --path=https://github.com/jeremyje/gowebserver/archive/v2.5.3.zip
 ```
 
 ## Windows Service
@@ -45,13 +45,13 @@ sc.exe start gowebserver
 
 |    OS    | Arch  | Link
 |----------|-------|-------------------------------------------------------------------------------------------
-|Linux     | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.2/server-amd64
-|Linux     | arm   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.2/server-arm
-|Linux     | arm64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.2/server-arm64
-|Linux     | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.2/server-386
-|Windows   | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.2/server-amd64.exe
-|Windows   | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.2/server-386.exe
-|macOS     | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.2/server-amd64-darwin
+|Linux     | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-amd64
+|Linux     | arm   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-arm
+|Linux     | arm64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-arm64
+|Linux     | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-386
+|Windows   | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-amd64.exe
+|Windows   | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-386.exe
+|macOS     | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-amd64-darwin
 
 ## Build
 
