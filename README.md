@@ -15,6 +15,9 @@ curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/downl
 
 # Host a zip file from the internet.
 ./gowebserver --path=https://github.com/jeremyje/gowebserver/archive/v2.5.3.zip
+
+# Install in your Kubernetes Cluster.
+kubectl apply -f https://raw.githubusercontent.com/jeremyje/gowebserver/main/install/kubernetes.yaml
 ```
 
 ## Windows Service
@@ -43,15 +46,14 @@ sc.exe start gowebserver
 
 ## Downloads
 
-|    OS    | Arch  | Link
-|----------|-------|-------------------------------------------------------------------------------------------
-|Linux     | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-amd64
-|Linux     | arm   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-arm
-|Linux     | arm64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-arm64
-|Linux     | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-386
-|Windows   | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-amd64.exe
-|Windows   | 386   | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-386.exe
-|macOS     | amd64 | curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-amd64-darwin
+|   OS   | Arch  | Link
+|--------|-------|------------------------------------------------------------------------------------------------------------------------------------------------------
+|Linux   | amd64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-amd64`
+|Linux   | arm   | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-arm`
+|Linux   | arm64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-arm64`
+|Windows | amd64 | `(New-Object System.Net.WebClient).DownloadFile("https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-amd64.exe", "server-amd64.exe")`
+|macOS   | amd64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-amd64-darwin`
+|macOS   | arm64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.3/server-arm64-darwin`
 
 ## Build
 
