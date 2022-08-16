@@ -47,13 +47,13 @@ sc.exe start gowebserver
 ## Downloads
 
 |   OS   | Arch  | Link
-|--------|-------|------------------------------------------------------------------------------------------------------------------------------------------------------
-|Linux   | amd64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.4/server-amd64`
-|Linux   | arm   | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.4/server-arm`
-|Linux   | arm64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.4/server-arm64`
-|Windows | amd64 | `(New-Object System.Net.WebClient).DownloadFile("https://github.com/jeremyje/gowebserver/releases/download/v2.5.4/server-amd64.exe", "server-amd64.exe")`
-|macOS   | amd64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.4/server-amd64-darwin`
-|macOS   | arm64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.4/server-arm64-darwin`
+|--------|-------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+|Linux   | amd64 | <code>curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.4/server-amd64</code>
+|Linux   | arm   | <code>curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.4/server-arm</code>
+|Linux   | arm64 | <code>curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.4/server-arm64</code>
+|Windows | amd64 | <code>(New-Object System.Net.WebClient).DownloadFile("https://github.com/jeremyje/gowebserver/releases/download/v2.5.4/server-amd64.exe", "server-amd64.exe")</code>
+|macOS   | amd64 | <code>curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.4/server-amd64-darwin</code>
+|macOS   | arm64 | <code>curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.4/server-arm64-darwin</code>
 
 ## Build
 
