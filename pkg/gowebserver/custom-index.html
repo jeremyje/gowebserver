@@ -108,6 +108,7 @@
       -o-transition: all .1s ease-in;
       -webkit-transition: all .1s ease-in;
       transition: all .1s ease-in;
+      border-bottom: 1px solid #DDDDDD;
     }
 
     .file-table td a {
@@ -126,12 +127,8 @@
     }
 
     .file-table td:nth-child(2) {
-      width: 10em;
-      text-align: center;
-    }
-
-    .file-table td:nth-child(3) {
-      width: 10em;
+      font-size: 0.75em;
+      width: 6.5em;
       text-align: center;
     }
 
@@ -151,15 +148,10 @@
 
     <table class="file-table">
       <tbody>
-        {{range $index, $element := $.DirEntries}}{{if not $element.IsDir}}
+        {{range $index, $element := $.DirEntries}}{{if and (not $element.IsDir) (not (isImage $element.Name))}}
         <tr>
-          <td>
-            <a href="{{urlEncode $element.Name}}">{{$element.Name}}{{if $element.IsDir}}/{{end}}</a>
-          </td>
-          <td><a href="/root/pkg/gowebserver/custom-index.html">{{if not $element.IsDir}}{{humanizeDate
-              $element.ModTime}}{{end}}</a></td>
-          <td><a href="/root/pkg/gowebserver/custom-index.html">{{if not $element.IsDir}}{{humanizeBytes
-              $element.Size}}{{end}}</a></td>
+          <td><a href="{{urlEncode $element.Name}}">{{$element.Name}}</a></td>
+          <td><a href="{{urlEncode $element.Name}}">{{humanizeBytes $element.Size}}<br /><small>{{humanizeDate $element.ModTime}}</small></a></td>
         </tr>
         {{end}}{{end}}
       </tbody>
