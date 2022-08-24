@@ -20,7 +20,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/jeremyje/gowebserver/pkg/httpprobe"
+	"github.com/jeremyje/gowebserver/v2/pkg/httpprobe"
 	"github.com/pkg/errors"
 )
 

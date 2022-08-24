@@ -11,7 +11,7 @@ import (
 	_ "embed"
 
 	"github.com/google/go-cmp/cmp"
-	gowsTesting "github.com/jeremyje/gowebserver/internal/gowebserver/testing"
+	gowsTesting "github.com/jeremyje/gowebserver/v2/internal/gowebserver/testing"
 )
 
 var (

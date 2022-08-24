@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jeremyje/gowebserver/pkg/certtool"
+	"github.com/jeremyje/gowebserver/v2/pkg/certtool"
 	"go.uber.org/zap"
 )
 

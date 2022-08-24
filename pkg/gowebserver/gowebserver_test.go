@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jeremyje/gowebserver/pkg/certtool"
+	"github.com/jeremyje/gowebserver/v2/pkg/certtool"
 )
 
 func TestConfigLogger(t *testing.T) {
