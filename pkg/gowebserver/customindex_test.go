@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	gowsTesting "github.com/jeremyje/gowebserver/internal/gowebserver/testing"
+	gowsTesting "github.com/jeremyje/gowebserver/v2/internal/gowebserver/testing"
 )
 
 func TestCustomIndex(t *testing.T) {

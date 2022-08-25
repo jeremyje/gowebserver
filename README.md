@@ -81,7 +81,7 @@ Sample code for embedding a HTTP/HTTPS server in your application.
 package main
 
 import (
-  "github.com/jeremyje/gowebserver/pkg/gowebserver"
+  "github.com/jeremyje/gowebserver/v2/pkg/gowebserver"
   "go.uber.org/zap"
 )
 

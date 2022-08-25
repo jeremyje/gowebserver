@@ -35,7 +35,7 @@ VERSION_SUFFIX = $(SHORT_SHA)
 VERSION = $(BASE_VERSION)-$(VERSION_SUFFIX)
 BUILD_DATE = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 TAG := v$(VERSION)
-PKG := github.com/jeremyje/gowebserver
+PKG := github.com/jeremyje/gowebserver/v2
 
 SOURCE_DIRS=$(shell go list ./... | grep -v '/vendor/')
 export PATH := $(PWD)/bin/toolchain:$(PATH):/root/go/bin:/usr/lib/go-1.9/bin:/usr/local/go/bin:/usr/go/bin

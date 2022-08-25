@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jeremyje/gowebserver/pkg/certtool"
+	"github.com/jeremyje/gowebserver/v2/pkg/certtool"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

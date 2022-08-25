@@ -15,7 +15,7 @@
 package main
 
 import (
-	"github.com/jeremyje/gowebserver/pkg/gowebserver"
+	"github.com/jeremyje/gowebserver/v2/pkg/gowebserver"
 )
 
 func main() {
