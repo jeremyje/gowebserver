@@ -151,7 +151,8 @@
         {{range $index, $element := $.DirEntries}}{{if and (not $element.IsDir) (not (isImage $element.Name))}}
         <tr>
           <td><a href="{{urlEncode $element.Name}}">{{$element.Name}}</a></td>
-          <td><a href="{{urlEncode $element.Name}}">{{humanizeBytes $element.Size}}<br /><small>{{humanizeDate $element.ModTime}}</small></a></td>
+          <td><a href="{{urlEncode $element.Name}}">{{humanizeBytes $element.Size}}<br /><small>{{humanizeDate
+                $element.ModTime}}</small></a></td>
         </tr>
         {{end}}{{end}}
       </tbody>
