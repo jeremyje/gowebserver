@@ -29,10 +29,7 @@ KIND = kind
 HELM = helm
 
 EXE_EXTENSION =
-BASE_VERSION = 0.0.0-dev
-SHORT_SHA = $(shell git rev-parse --short=7 HEAD | tr -d [:punct:])
-VERSION_SUFFIX = $(SHORT_SHA)
-VERSION = $(BASE_VERSION)-$(VERSION_SUFFIX)
+VERSION = $(shell git describe --tags)
 BUILD_DATE = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 TAG := v$(VERSION)
 PKG := github.com/jeremyje/gowebserver/v2
