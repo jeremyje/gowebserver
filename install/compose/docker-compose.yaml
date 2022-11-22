@@ -16,12 +16,6 @@ services:
     volumes:
       - ./gowebserver:/etc/gowebserver
       - gowebserver_data:/gowebserver/upload
-    logging:
-      driver: loki
-      options:
-        loki-url: 'http://loki:3100/api/prom/push'
-    depends_on:
-      - loki
   prometheus:
     image: prom/prometheus
     container_name: prometheus
@@ -36,42 +30,6 @@ services:
     volumes:
       - ./prometheus:/etc/prometheus:ro
       - prom_data:/prometheus
-    logging:
-      driver: loki
-      options:
-        loki-url: 'http://loki:3100/api/prom/push'
-    depends_on:
-      - loki
-  loki:
-    image: grafana/loki:master
-    container_name: loki
-    hostname: loki
-    networks:
-      - gowebserver-net
-    ports:
-      - 3100:3100
-    command: -config.file=/etc/loki/local-config.yaml
-    # send Loki traces to Jaeger
-    environment:
-      - JAEGER_AGENT_HOST=jaeger
-      - JAEGER_AGENT_PORT=6831
-      - JAEGER_SAMPLER_TYPE=const
-      - JAEGER_SAMPLER_PARAM=1
-  promtail:
-    image: grafana/promtail:master
-    container_name: promtail
-    hostname: promtail
-    networks:
-      - gowebserver-net
-    command: -config.file=/etc/promtail/config.yml
-    volumes:
-      - /var/log:/var/log
-    logging:
-      driver: loki
-      options:
-        loki-url: 'http://loki:3100/api/prom/push'
-    depends_on:
-      - loki
   grafana:
     image: grafana/grafana
     container_name: grafana
@@ -87,12 +45,6 @@ services:
     volumes:
       - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-    logging:
-      driver: loki
-      options:
-        loki-url: 'http://loki:3100/api/prom/push'
-    depends_on:
-      - loki
   jaeger:
     image: jaegertracing/all-in-one:latest
     container_name: jaeger
@@ -103,12 +55,6 @@ services:
       - "6831:6831/udp"
       - 16686:16686
       - 14268:14268
-    logging:
-      driver: loki
-      options:
-        loki-url: 'http://loki:3100/api/prom/push'
-    depends_on:
-      - loki
 volumes:
   gowebserver_data:
   prom_data:
