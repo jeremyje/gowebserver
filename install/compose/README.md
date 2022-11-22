@@ -5,12 +5,12 @@ Example configuration for running an instrumented version of gowebserver via doc
 ## Running
 
 ```bash
-
 # Install the Grafana Loki Logging Plugin
 # https://grafana.com/docs/loki/latest/clients/docker-driver/
 docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions
+
 # Run the cluster.
-docker-compose up
+docker-compose up -d
 
 # Stop cluster
 docker-compose rm -v -s; docker-compose down --remove-orphans -v
