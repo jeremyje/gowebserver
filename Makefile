@@ -56,7 +56,7 @@ LINUX_PLATFORMS = linux_386 linux_amd64 linux_arm_v5 linux_arm_v6 linux_arm_v7 l
 LINUX_NICHE_PLATFORMS =
 WINDOWS_PLATFORMS = windows_386 windows_amd64 windows_arm64
 MAIN_PLATFORMS = windows_amd64 linux_amd64 linux_arm64
-ALL_PLATFORMS = $(LINUX_PLATFORMS) $(LINUX_NICHE_PLATFORMS) $(WINDOWS_PLATFORMS) $(foreach niche,$(NICHE_PLATFORMS),$(niche)_amd64 $(niche)_arm64)
+ALL_PLATFORMS = $(LINUX_PLATFORMS) $(LINUX_NICHE_PLATFORMS) $(WINDOWS_PLATFORMS) $(foreach niche,$(NICHE_PLATFORMS),$(niche)_amd64 $(niche)_arm64) js_wasm android_arm64 solaris_amd64 plan9_amd64
 TEST_ARCHIVES = internal/gowebserver/testing/testassets.zip
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.gz
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.bz2
@@ -64,6 +64,7 @@ TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.7z
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.xz
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.lz4
+WASM_ASSETS = install/wasm/wasm_exec.js install/wasm/wasm_exec.html install/wasm/gowebserver.wasm
 ASSETS = $(TEST_ARCHIVES) internal/gowebserver/testing/nested-testassets.zip internal/gowebserver/testing/single-testassets.zip internal/gowebserver/testing/nodir-testassets.zip
 ALL_APPS = gowebserver certtool httpprobe
 
@@ -94,8 +95,8 @@ else
 	endif
 endif
 
-all: $(ALL_BINARIES)
-assets: $(ASSETS)
+all: $(ALL_BINARIES) assets
+assets: $(ASSETS) $(WASM_ASSETS)
 
 bin/go/%: $(ASSETS)
 	GOOS=$(firstword $(subst _, ,$(notdir $(abspath $(dir $@))))) GOARCH=$(word 2, $(subst _, ,$(notdir $(abspath $(dir $@))))) GOARM=$(subst v,,$(word 3, $(subst _, ,$(notdir $(abspath $(dir $@)))))) CGO_ENABLED=0 \
@@ -207,8 +208,19 @@ clean:
 	$(RM) -rf upload/
 	$(RM) -rf toolchain/
 	$(RM) -rf bin/
+	$(RM) -f install/wasm/wasm_exec.js
+	$(RM) -f install/wasm/wasm_exec.html
 
 check: test
+
+install/wasm/gowebserver.wasm: bin/go/js_wasm/gowebserver
+	cp -f $< $@
+
+install/wasm/wasm_exec.js:
+	cp -f $(shell go env GOROOT)/misc/wasm/wasm_exec.js $@
+
+install/wasm/wasm_exec.html:
+	cp -f $(shell go env GOROOT)/misc/wasm/wasm_exec.html $@
 
 internal/gowebserver/testing/nodir-testassets.zip: $(TEST_ARCHIVES) internal/gowebserver/testing/single-testassets.zip internal/gowebserver/testing/nested-testassets.zip
 	cd internal/gowebserver/testing/testassets; $(ZIP) -qr9 ../../nodir-testassets.zip index.html assets/1.txt assets/2.txt site.js "weird #1.txt" weird#.txt weird$$.txt assets/more/3.txt assets/four/4.txt assets/fivesix/5.txt assets/fivesix/6.txt
@@ -351,5 +363,8 @@ pkg/gowebserver/static/bootstrap/:
 
 test-codecov:
 	curl -X POST --data-binary @codecov.yml https://codecov.io/validate
+
+run-wasm: clean assets lint
+	$(GO) run cmd/gowebserver/gowebserver.go -http.port 8181 -path=install/wasm/ -verbose
 
 .PHONY : all assets dist lint clean check test test-10 coverage bench benchmark test-all install run deps presubmit

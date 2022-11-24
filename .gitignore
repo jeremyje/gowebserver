@@ -80,3 +80,4 @@ bin/
 __debug_bin
 
 temp/
+*.wasm
