@@ -101,7 +101,7 @@ func createCertificate(conf *Config) error {
 				rootKeyPath)
 			zap.S().With("error", err, "certificateFile", rootCertPath, "privateKeyFile", rootKeyPath).Debug("GenerateAndWriteKeyPair")
 			if err != nil {
-				return fmt.Errorf("cannot write public certificate, %s", err)
+				return fmt.Errorf("cannot write public certificate, %w", err)
 			}
 
 			parentKP = kp
@@ -120,7 +120,7 @@ func createCertificate(conf *Config) error {
 			conf.HTTPS.Certificate.PrivateKeyFilePath)
 		zap.S().With("error", err, "certificateFile", conf.HTTPS.Certificate.CertificateFilePath, "privateKeyFile", conf.HTTPS.Certificate.PrivateKeyFilePath).Debug("GenerateAndWriteKeyPair")
 		if err != nil {
-			return fmt.Errorf("cannot write public certificate, %s", err)
+			return fmt.Errorf("cannot write public certificate, %w", err)
 		}
 	}
 	return nil

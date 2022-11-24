@@ -18,7 +18,7 @@ func newGitFS(filePath string) (*localFS, error) {
 	tmpDir, cleanup, err := createTempDirectory()
 	if err != nil {
 		cleanup()
-		return nil, fmt.Errorf("cannot create temp directory, %s", err)
+		return nil, fmt.Errorf("cannot create temp directory, %w", err)
 	}
 
 	for _, opts := range cloneOptions(filePath) {
@@ -28,7 +28,7 @@ func newGitFS(filePath string) (*localFS, error) {
 	}
 	if err != nil {
 		cleanup()
-		return nil, fmt.Errorf("could not clone %s, %s", filePath, err)
+		return nil, fmt.Errorf("could not clone %s, %w", filePath, err)
 	}
 
 	tryDeleteDirectory(filepath.Join(tmpDir, ".git"))

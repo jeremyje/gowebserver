@@ -105,7 +105,7 @@ func isSupportedSevenZip(filePath string) bool {
 func writeFileFromArchiveEntry(f opener, filePath string) error {
 	zf, err := f.Open()
 	if err != nil {
-		return fmt.Errorf("cannot open input file: %s", err)
+		return fmt.Errorf("cannot open input file: %w", err)
 	}
 	defer zf.Close()
 	return copyFile(zf, filePath)
@@ -138,20 +138,20 @@ func newSevenZipFS(filePath string) (*localFS, error) {
 			err = createDirectory(filePath)
 			if err != nil {
 				logError(cleanup())
-				return nil, fmt.Errorf("cannot create directory: %s, %s", filePath, err)
+				return nil, fmt.Errorf("cannot create directory: %s, %w", filePath, err)
 			}
 		} else {
 			dirPath := filepath.Dir(filePath)
 			err = createDirectory(dirPath)
 			if err != nil {
 				logError(cleanup())
-				return nil, fmt.Errorf("cannot create directory: %s, %s", dirPath, err)
+				return nil, fmt.Errorf("cannot create directory: %s, %w", dirPath, err)
 			}
 
 			err := writeFileFromArchiveEntry(f, filePath)
 			if err != nil {
 				logError(cleanup())
-				return nil, fmt.Errorf("cannot write zip file entry: %s, %s", name, err)
+				return nil, fmt.Errorf("cannot write zip file entry: %s, %w", name, err)
 			}
 		}
 	}
