@@ -19,7 +19,6 @@
 package gowebserver
 
 import (
-	"errors"
 	"fmt"
 	"go.uber.org/zap"
 	"golang.org/x/sys/windows/svc"
