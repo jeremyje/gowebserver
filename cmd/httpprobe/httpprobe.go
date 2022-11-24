@@ -21,8 +21,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/jeremyje/gowebserver/v2/pkg/httpprobe"
 	"errors"
+	"github.com/jeremyje/gowebserver/v2/pkg/httpprobe"
 )
 
 const (
