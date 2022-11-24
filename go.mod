@@ -3,10 +3,10 @@ module github.com/jeremyje/gowebserver/v2
 require (
 	github.com/bodgit/sevenzip v1.3.0
 	github.com/dustin/go-humanize v1.0.0
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.5.9
 	github.com/mholt/archiver/v4 v4.0.0-alpha.7
 	github.com/rs/cors v1.8.2
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	go.opentelemetry.io/contrib/instrumentation/host v0.34.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.34.0
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.34.0
@@ -18,8 +18,8 @@ require (
 	go.opentelemetry.io/otel/sdk v1.9.0
 	go.opentelemetry.io/otel/sdk/metric v0.31.0
 	go.opentelemetry.io/otel/trace v1.9.0
-	go.uber.org/zap v1.22.0
-	golang.org/x/sys v0.0.0-20220823224334-20c2bfdbfe24
+	go.uber.org/zap v1.23.0
+	golang.org/x/sys v0.2.0
 )
 
 require (
