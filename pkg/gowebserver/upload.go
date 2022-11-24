@@ -109,7 +109,7 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			file, err := files[i].Open()
 			if err != nil {
-				resp.Error = fmt.Errorf("InternalError: Cannot download file (%s), %s", fileName, err)
+				resp.Error = fmt.Errorf("InternalError: Cannot download file (%s), %w", fileName, err)
 				writeUploadResponse(w, resp, logger, childSpan)
 				return
 			}
@@ -118,21 +118,21 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			localPath := filepath.Join(uh.uploadDirectory, fileName)
 
 			if err := ensureDirs(localPath); err != nil {
-				resp.Error = fmt.Errorf("InternalError: Cannot create directory to store file (%s), %s", uh.uploadDirectory, err)
+				resp.Error = fmt.Errorf("InternalError: Cannot create directory to store file (%s), %w", uh.uploadDirectory, err)
 				writeUploadResponse(w, resp, logger, childSpan)
 				return
 			}
 
 			f, err := os.OpenFile(localPath, os.O_WRONLY|os.O_CREATE, 0644)
 			if err != nil {
-				resp.Error = fmt.Errorf("InternalError: Cannot create file (%s), %s", localPath, err)
+				resp.Error = fmt.Errorf("InternalError: Cannot create file (%s), %w", localPath, err)
 				writeUploadResponse(w, resp, logger, childSpan)
 				return
 			}
 			defer f.Close()
 			bytesWritten, err := io.Copy(f, file)
 			if err != nil {
-				resp.Error = fmt.Errorf("InternalError: Cannot write file (%s), %s", localPath, err)
+				resp.Error = fmt.Errorf("InternalError: Cannot write file (%s), %w", localPath, err)
 				writeUploadResponse(w, resp, logger, childSpan)
 			}
 			childSpan.SetAttributes(attribute.Int64("bytesWritten", bytesWritten))

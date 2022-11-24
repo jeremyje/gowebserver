@@ -5,7 +5,6 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/google/go-cmp v0.5.8
 	github.com/mholt/archiver/v4 v4.0.0-alpha.7
-	github.com/pkg/errors v0.9.1
 	github.com/rs/cors v1.8.2
 	github.com/stretchr/testify v1.8.0
 	go.opentelemetry.io/contrib/instrumentation/host v0.34.0

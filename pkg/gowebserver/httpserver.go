@@ -213,7 +213,7 @@ func New(conf *Config) (WebServer, error) {
 	for _, paths := range conf.Serve {
 		p, err := expandPath(paths.Source)
 		if err != nil {
-			return nil, fmt.Errorf("cannot expand path '%s', %s", paths.Source, err)
+			return nil, fmt.Errorf("cannot expand path '%s', %w", paths.Source, err)
 		}
 		sp = append(sp, servePath{
 			localPath: p,
@@ -225,14 +225,14 @@ func New(conf *Config) (WebServer, error) {
 	if conf.Upload.Source != "" {
 		dir, err := expandPath(conf.Upload.Source)
 		if err != nil {
-			return nil, fmt.Errorf("cannot expand path '%s', %s", conf.Upload.Source, err)
+			return nil, fmt.Errorf("cannot expand path '%s', %w", conf.Upload.Source, err)
 		}
 		uploadPath = dir
 	}
 
 	monitoringCtx, err := setupMonitoring(conf.Monitoring)
 	if err != nil {
-		return nil, fmt.Errorf("cannot setup monitoring '%+v', %s", conf.Monitoring, err)
+		return nil, fmt.Errorf("cannot setup monitoring '%+v', %w", conf.Monitoring, err)
 	}
 	ws := &webServerImpl{
 		httpAddr:            toAddr(conf.HTTP.Port),

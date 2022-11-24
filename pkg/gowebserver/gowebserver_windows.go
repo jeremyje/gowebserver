@@ -84,7 +84,7 @@ func (m *serviceHandler) Execute(args []string, r <-chan svc.ChangeRequest, chan
 				changes <- c.CurrentStatus
 			case svc.Stop, svc.Shutdown:
 				select {
-				case terminateCh <- errors.New("service is stopping"):
+				case terminateCh <- fmt.Errorf("service is stopping"):
 				default:
 				}
 				changes <- svc.Status{State: svc.StopPending}

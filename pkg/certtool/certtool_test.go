@@ -169,7 +169,7 @@ func TestCreateCertificateAndPrivateKeyPEMErrors(t *testing.T) {
 					KeyLength: 1,
 				},
 			},
-			wantErr: "cannot generate private key: 'RSA-1' key type has a key length below 2048",
+			wantErr: "cannot generate private key, 'RSA-1' key type has a key length below 2048",
 		},
 		{
 			args: &Args{
@@ -189,7 +189,7 @@ func TestCreateCertificateAndPrivateKeyPEMErrors(t *testing.T) {
 				},
 				ParentKeyPair: ca,
 			},
-			wantErr: "cannot create X.509 public certificate: x509: requested SignatureAlgorithm does not match private key type",
+			wantErr: "cannot create X.509 public certificate, x509: requested SignatureAlgorithm does not match private key type",
 		},
 	}
 	for _, tc := range testCases {
@@ -568,7 +568,7 @@ func TestBadValues(t *testing.T) {
 		{"public certificate file path must not be empty", "", "priv.key", &Args{Validity: time.Second, Hostnames: []string{"127.0.0.1"}, KeyType: defaultKeyType()}},
 		{"private key file path must not be empty", "pub.cert", "", &Args{Validity: time.Second, Hostnames: []string{"127.0.0.1"}, KeyType: defaultKeyType()}},
 		//{"hostname list was empty. At least 1 hostname is required for generating a certificate-key pair", "pub.cert", "priv.key", &Args{}},
-		{"cannot generate private key: key type '{ECDSA 2047}' is not valid", "pub.cert", "priv.key", &Args{Validity: time.Second, Hostnames: []string{"127.0.0.1"}, KeyType: &KeyType{
+		{"cannot generate private key, key type '{ECDSA 2047}' is not valid", "pub.cert", "priv.key", &Args{Validity: time.Second, Hostnames: []string{"127.0.0.1"}, KeyType: &KeyType{
 			Algorithm: "ECDSA",
 			KeyLength: 2047,
 		}}},

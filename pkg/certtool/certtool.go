@@ -29,8 +29,6 @@ import (
 	"os"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -147,7 +145,7 @@ func createCertificateAndPrivateKeyPEM(args *Args) (*KeyPair, error) {
 
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot create serial number for X.509 certificate")
+		return nil, fmt.Errorf("cannot create serial number for X.509 certificate, %w", err)
 	}
 
 	pkixName := argsToPkixName(args, serialNumber.String())
@@ -192,7 +190,7 @@ func createCertificateAndPrivateKeyPEM(args *Args) (*KeyPair, error) {
 
 	privateKey, err := generatePrivateKeyFromType(*keyType)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot generate private key")
+		return nil, fmt.Errorf("cannot generate private key, %w", err)
 	}
 
 	parentPrivateKey := privateKey
@@ -216,7 +214,7 @@ func createCertificateAndPrivateKeyPEM(args *Args) (*KeyPair, error) {
 
 	cert, err := x509.CreateCertificate(rand.Reader, &certTemplate, &parentTemplate, publicKey(privateKey), parentPrivateKey)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot create X.509 public certificate")
+		return nil, fmt.Errorf("cannot create X.509 public certificate, %w", err)
 	}
 
 	publicCertificatePemBytes := pem.EncodeToMemory(&pem.Block{
@@ -226,7 +224,7 @@ func createCertificateAndPrivateKeyPEM(args *Args) (*KeyPair, error) {
 
 	pemPrivateKey, err := pemBlockForKey(privateKey)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot create PEM block for private key")
+		return nil, fmt.Errorf("cannot create PEM block for private key, %w", err)
 	}
 
 	privateKeyPemBytes := pem.EncodeToMemory(pemPrivateKey)
@@ -253,7 +251,7 @@ func generatePrivateKeyFromType(keyType KeyType) (interface{}, error) {
 	switch strings.ToUpper(keyType.Algorithm) {
 	case "RSA":
 		if keyType.KeyLength < 2048 {
-			return nil, errors.Errorf("'%s-%d' key type has a key length below 2048", keyType.Algorithm, keyType.KeyLength)
+			return nil, fmt.Errorf("'%s-%d' key type has a key length below 2048", keyType.Algorithm, keyType.KeyLength)
 		}
 		return rsa.GenerateKey(rand.Reader, keyType.KeyLength)
 	case "ECDSA":
@@ -270,7 +268,7 @@ func generatePrivateKeyFromType(keyType KeyType) (interface{}, error) {
 			return ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
 		}
 	}
-	return nil, errors.Errorf("key type '%v' is not valid", keyType)
+	return nil, fmt.Errorf("key type '%v' is not valid", keyType)
 }
 
 // ReadKeyPair takes PEM-encoded public certificate/private key pairs and returns the Go classes for them so they can be used for encryption or signing.
@@ -278,36 +276,36 @@ func ReadKeyPair(publicCertFileData []byte, privateKeyFileData []byte) (*x509.Ce
 	// Verify that we can load the public/private key pair.
 	publicCertPemBlock, remainder := pem.Decode(publicCertFileData)
 	if len(remainder) > 0 {
-		return nil, nil, errors.Errorf("public certificate has a PEM remainder of %d bytes", len(remainder))
+		return nil, nil, fmt.Errorf("public certificate has a PEM remainder of %d bytes", len(remainder))
 	}
 
 	publicCertificate, err := x509.ParseCertificate(publicCertPemBlock.Bytes)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "cannot parse X.509 certificate")
+		return nil, nil, fmt.Errorf("cannot parse X.509 certificate, %w", err)
 	}
 
 	privateKeyPemBlock, remainder := pem.Decode(privateKeyFileData)
 	if len(remainder) > 0 {
-		return nil, nil, errors.Errorf("private key has a PEM remainder of %d bytes", len(remainder))
+		return nil, nil, fmt.Errorf("private key has a PEM remainder of %d bytes", len(remainder))
 	}
 
 	if privateKeyPemBlock.Type == rsaPrivateKeyPEMType {
 		privateKey, err := x509.ParsePKCS1PrivateKey(privateKeyPemBlock.Bytes)
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "cannot parse PKCS1 encoding for private key")
+			return nil, nil, fmt.Errorf("cannot parse PKCS1 encoding for private key, %w", err)
 		}
 
 		return publicCertificate, privateKey, nil
 	} else if privateKeyPemBlock.Type == ecPrivateKeyPEMType {
 		privateKey, err := x509.ParseECPrivateKey(privateKeyPemBlock.Bytes)
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "cannot parse elliptical curve private key")
+			return nil, nil, fmt.Errorf("cannot parse elliptical curve private key, %w", err)
 		}
 
 		return publicCertificate, privateKey, nil
 	}
 
-	return nil, nil, errors.Errorf("cannot parse private key PEM type, %s, is not supported", privateKeyPemBlock.Type)
+	return nil, nil, fmt.Errorf("cannot parse private key PEM type, %s, is not supported", privateKeyPemBlock.Type)
 }
 
 func publicKey(priv interface{}) interface{} {
@@ -333,7 +331,7 @@ func pemBlockForKey(privateKey interface{}) (*pem.Block, error) {
 
 		return &pem.Block{Type: ecPrivateKeyPEMType, Bytes: b}, nil
 	default:
-		return nil, errors.Errorf("private Key %v is not a valid private key", privateKey)
+		return nil, fmt.Errorf("private Key %v is not a valid private key", privateKey)
 	}
 }
 
@@ -348,7 +346,7 @@ func ParseName(subject string) (pkix.Name, error) {
 		if len(vals) < numDistinguishedNameSegmentParts {
 			continue
 		} else if len(vals) > numDistinguishedNameSegmentParts {
-			return pkix.Name{}, errors.Errorf("AttributeType '%s' has too many parts, %v", vals[0], vals)
+			return pkix.Name{}, fmt.Errorf("AttributeType '%s' has too many parts, %v", vals[0], vals)
 		}
 
 		value := strings.ReplaceAll(vals[1], subjectDelimiterReplacement, ",")
@@ -371,7 +369,7 @@ func ParseName(subject string) (pkix.Name, error) {
 		case "POSTALCODE":
 			name.PostalCode = append(name.PostalCode, value)
 		default:
-			return pkix.Name{}, errors.Errorf("'%s' is not a valid RFC-2253 AttributeType", vals[0])
+			return pkix.Name{}, fmt.Errorf("'%s' is not a valid RFC-2253 AttributeType", vals[0])
 		}
 	}
 
@@ -392,11 +390,11 @@ func ReadKeyPairFromFile(publicCertificateFile string, privateKeyFile string) (*
 
 	pub, err := os.ReadFile(publicCertificateFile)
 	if err != nil {
-		return nil, fmt.Errorf("cannot read the public certificate file (%s), %s", publicCertificateFile, err)
+		return nil, fmt.Errorf("cannot read the public certificate file (%s), %w", publicCertificateFile, err)
 	}
 	priv, err := os.ReadFile(privateKeyFile)
 	if err != nil {
-		return nil, fmt.Errorf("cannot read the private key file (%s), %s", privateKeyFile, err)
+		return nil, fmt.Errorf("cannot read the private key file (%s), %w", privateKeyFile, err)
 	}
 
 	return &KeyPair{

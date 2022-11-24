@@ -47,14 +47,14 @@ func stageRemoteFile(maybeRemoteFilePath string) (string, string, func() error, 
 	localFilePath, fileCleanup, err := downloadFile(maybeRemoteFilePath)
 	if err != nil {
 		fileCleanup()
-		return "", "", nilFuncWithError, fmt.Errorf("cannot download file %s, %s", maybeRemoteFilePath, err)
+		return "", "", nilFuncWithError, fmt.Errorf("cannot download file %s, %w", maybeRemoteFilePath, err)
 	}
 
 	tmpDir, cleanup, err := createTempDirectory()
 	if err != nil {
 		logError(fileCleanup())
 		cleanup()
-		return "", "", nilFuncWithError, fmt.Errorf("cannot create temp directory, %s", err)
+		return "", "", nilFuncWithError, fmt.Errorf("cannot create temp directory, %w", err)
 	}
 
 	return tmpDir, localFilePath, func() error {
@@ -67,7 +67,7 @@ func createTempDirectory() (string, func(), error) {
 	tmpDir, err := os.MkdirTemp(os.TempDir(), "gowebserver")
 
 	if err != nil {
-		return "", nilFunc, fmt.Errorf("cannot create temp directory, %s", err)
+		return "", nilFunc, fmt.Errorf("cannot create temp directory, %w", err)
 	}
 	return tmpDir, func() {
 		tryDeleteDirectory(tmpDir)
@@ -132,14 +132,14 @@ func dirPath(dirPath string) string {
 func copyFile(reader io.Reader, filePath string) error {
 	fsf, err := os.Create(filePath)
 	if err != nil {
-		return fmt.Errorf("cannot create target file %s, %s", filePath, err)
+		return fmt.Errorf("cannot create target file %s, %w", filePath, err)
 	}
 	defer fsf.Close()
 
 	_, err = io.Copy(fsf, reader)
 	if err != nil {
 		os.Remove(fsf.Name())
-		return fmt.Errorf("cannot copy to target file %s, %s", filePath, err)
+		return fmt.Errorf("cannot copy to target file %s, %w", filePath, err)
 	}
 	return nil
 }

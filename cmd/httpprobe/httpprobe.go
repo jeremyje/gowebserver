@@ -17,11 +17,12 @@ package main
 import (
 	"crypto/x509"
 	"flag"
+	"fmt"
 	"os"
 	"time"
 
 	"github.com/jeremyje/gowebserver/v2/pkg/httpprobe"
-	"github.com/pkg/errors"
+	"errors"
 )
 
 const (
@@ -72,12 +73,12 @@ func readPublicCertificate(publicCertFile string) (*x509.CertPool, error) {
 
 	data, err := os.ReadFile(publicCertFile)
 	if err != nil {
-		return nil, errors.Wrapf(err, "cannot read file %s", publicCertFile)
+		return nil, fmt.Errorf("cannot read file %s, %w", publicCertFile, err)
 	}
 
 	pool := x509.NewCertPool()
 	if !pool.AppendCertsFromPEM(data) {
-		return nil, errors.Wrapf(err, "cannot parse certificate file '%s'", publicCertFile)
+		return nil, fmt.Errorf("cannot parse certificate file '%s', %w", publicCertFile, err)
 	}
 	return pool, nil
 }
