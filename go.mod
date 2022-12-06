@@ -4,7 +4,7 @@ require (
 	github.com/bodgit/sevenzip v1.3.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/google/go-cmp v0.5.9
-	github.com/mholt/archiver/v4 v4.0.0-alpha.7
+	github.com/mholt/archiver/v4 v4.0.0-alpha.7.0.20221205195515-62ea3699423b
 	github.com/rs/cors v1.8.2
 	github.com/stretchr/testify v1.8.1
 	go.opentelemetry.io/contrib/instrumentation/host v0.34.0

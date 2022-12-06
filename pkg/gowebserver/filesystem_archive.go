@@ -1,6 +1,7 @@
 package gowebserver
 
 import (
+	"context"
 	"io/fs"
 
 	archiver "github.com/mholt/archiver/v4"
@@ -35,7 +36,8 @@ func (a *archiveFS) ReadDir(name string) ([]fs.DirEntry, error) {
 }
 
 func newArchiveFSFromLocalPath(name string) (*archiveFS, error) {
-	fs, err := archiver.FileSystem(name)
+	ctx := context.Background()
+	fs, err := archiver.FileSystem(ctx, name)
 	if err != nil {
 		return nil, err
 	}
