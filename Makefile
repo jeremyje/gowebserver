@@ -49,7 +49,8 @@ HTTPPROBE_IMAGE = $(REGISTRY)/httpprobe
 
 GO_TOOLCHAIN_DIR = $(dir $(abspath golang.mk))bin/toolchain
 
-LINUX_PLATFORMS = linux_386 linux_amd64 linux_arm_v5 linux_arm_v6 linux_arm_v7 linux_arm64 linux_s390x linux_ppc64 linux_ppc64le linux_riscv64 linux_mips64le linux_mips linux_mipsle linux_mips64
+# https://go.dev/doc/install/source#environment
+LINUX_PLATFORMS = linux_386 linux_amd64 linux_arm_v5 linux_arm_v6 linux_arm_v7 linux_arm64 linux_loong64 linux_s390x linux_ppc64 linux_ppc64le linux_riscv64 linux_mips64le linux_mips linux_mipsle linux_mips64
 ANDROID_PLATFORMS = android_arm64 # android_386 android_amd64 android_arm android_arm_v5 android_arm_v6 android_arm_v7
 WINDOWS_PLATFORMS = windows_386 windows_amd64 windows_arm64 windows_arm_v5 windows_arm_v6 windows_arm_v7
 MAIN_PLATFORMS = windows_amd64 linux_amd64 linux_arm64

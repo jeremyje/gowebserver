@@ -30,7 +30,7 @@ import (
 // WebServer is a convenience wrapper for Go's HTTP/HTTPS Web serving API.
 type WebServer interface {
 	// Serve starts serving the HTTP/HTTPS server synchronously.
-	Serve(<-chan error) error
+	Serve(func()) error
 }
 
 type webServerImpl struct {
@@ -100,7 +100,7 @@ func (ws *webServerImpl) getPorts() (int, int) {
 	return httpPort, httpsPort
 }
 
-func (ws *webServerImpl) Serve(termCh <-chan error) error {
+func (ws *webServerImpl) Serve(wait func()) error {
 	allCleanups := []func() error{}
 
 	displayPath := ""
@@ -201,7 +201,7 @@ func (ws *webServerImpl) Serve(termCh <-chan error) error {
 		checkError(http.Serve(httpSocket, httpHandler))
 	}()
 
-	<-termCh
+	wait()
 	return nil
 }
 

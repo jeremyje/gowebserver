@@ -4,6 +4,7 @@ require (
 	github.com/bodgit/sevenzip v1.3.0
 	github.com/dustin/go-humanize v1.0.0
 	github.com/google/go-cmp v0.5.9
+	github.com/jeremyje/gomain v0.5.0
 	github.com/mholt/archiver/v4 v4.0.0-alpha.7.0.20221205195515-62ea3699423b
 	github.com/prometheus/client_golang v1.14.0
 	github.com/rs/cors v1.8.2
@@ -20,7 +21,6 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v0.34.0
 	go.opentelemetry.io/otel/trace v1.11.2
 	go.uber.org/zap v1.24.0
-	golang.org/x/sys v0.3.0
 )
 
 require (
@@ -43,7 +43,8 @@ require (
 	github.com/tklauser/numcpus v0.6.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/tools v0.3.0 // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/tools v0.4.0 // indirect
 )
 
 require (
