@@ -22,7 +22,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opentelemetry.io/contrib/instrumentation/host"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/contrib/zpages"
 	"go.opentelemetry.io/otel"
@@ -80,7 +79,7 @@ func setupMonitoring(m Monitoring) (*monitoringContext, error) {
 			mc.handlers[m.Metrics.Path] = prom
 		}
 
-		if err := host.Start(); err != nil {
+		if err := startHostMetrics(); err != nil {
 			mc.shutdown()
 			return nil, err
 		}

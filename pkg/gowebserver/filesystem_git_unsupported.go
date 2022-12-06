@@ -12,15 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build plan9 || js || aix
+//go:build aix
+// +build aix
 
 package gowebserver
 
 import (
-	"go.opentelemetry.io/otel/sdk/resource"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"fmt"
 )
 
-func newJaegerExporter(m Monitoring, r *resource.Resource) (*sdktrace.TracerProvider, error) {
-	return nil, nil
+func newGitFS(filePath string) (*localFS, error) {
+	return nil, fmt.Errorf("%s is not a valid git repository", filePath)
+}
+
+func isSupportedGit(filePath string) bool {
+	return false
 }
