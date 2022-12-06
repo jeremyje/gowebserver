@@ -19,18 +19,17 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/host"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/contrib/zpages"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/prometheus"
+	otelprom "go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
-	"go.opentelemetry.io/otel/sdk/metric/aggregator/histogram"
-	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
-	"go.opentelemetry.io/otel/sdk/metric/export/aggregation"
-	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
-	selector "go.opentelemetry.io/otel/sdk/metric/selector/simple"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
@@ -69,13 +68,14 @@ func setupMonitoring(m Monitoring) (*monitoringContext, error) {
 		}
 	}
 
-	prom, err := newPrometheusExporter(m, r)
+	promExporter, promProvider, prom, err := newPrometheusExporter(m, r)
 	if err != nil {
 		mc.shutdown()
 		return nil, err
 	}
 	if prom != nil {
-		mc.prom = prom
+		mc.promProvider = promProvider
+		mc.promExporter = promExporter
 		if m.Metrics.Path != "" {
 			mc.handlers[m.Metrics.Path] = prom
 		}
@@ -86,7 +86,7 @@ func setupMonitoring(m Monitoring) (*monitoringContext, error) {
 		}
 
 		if err := runtime.Start(
-			runtime.WithMeterProvider(prom.MeterProvider()),
+			runtime.WithMeterProvider(promProvider),
 			runtime.WithMinimumReadMemStatsInterval(10*time.Second),
 		); err != nil {
 			mc.shutdown()
@@ -97,34 +97,31 @@ func setupMonitoring(m Monitoring) (*monitoringContext, error) {
 	return mc, nil
 }
 
-func newPrometheusExporter(m Monitoring, r *resource.Resource) (*prometheus.Exporter, error) {
-	config := prometheus.Config{
-		DefaultHistogramBoundaries: []float64{1, 2, 5, 10, 20, 50},
-	}
-	c := controller.New(
-		processor.NewFactory(
-			selector.NewWithHistogramDistribution(
-				histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
-			),
-			aggregation.CumulativeTemporalitySelector(),
-			processor.WithMemory(true),
-		),
-		controller.WithResource(r),
-	)
+func newPrometheusExporter(m Monitoring, r *resource.Resource) (*otelprom.Exporter, *sdkmetric.MeterProvider, http.Handler, error) {
+	registry := prometheus.NewRegistry()
+	registry.Register(collectors.NewBuildInfoCollector())
+	registry.Register(collectors.NewGoCollector())
+	registry.Register(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{
+		ReportErrors: true,
+	}))
 
-	exporter, err := prometheus.New(config, c)
+	prometheusExporter, err := otelprom.New(otelprom.WithRegisterer(registry))
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 
-	global.SetMeterProvider(exporter.MeterProvider())
-	return exporter, nil
+	provider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(prometheusExporter))
+	global.SetMeterProvider(provider)
+
+	h := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
+	return prometheusExporter, provider, h, nil
 }
 
 type monitoringContext struct {
-	handlers map[string]http.Handler
-	prom     *prometheus.Exporter
-	tp       *sdktrace.TracerProvider
+	handlers     map[string]http.Handler
+	promExporter *otelprom.Exporter
+	promProvider metric.MeterProvider
+	tp           *sdktrace.TracerProvider
 }
 
 func (m *monitoringContext) getTraceProvider() trace.TracerProvider {
@@ -135,19 +132,24 @@ func (m *monitoringContext) getTraceProvider() trace.TracerProvider {
 }
 
 func (m *monitoringContext) getMeterProvider() metric.MeterProvider {
-	if m == nil || m.prom == nil {
+	if m == nil || m.promProvider == nil {
 		return global.MeterProvider()
 	}
-	return m.prom.MeterProvider()
+	return m.promProvider
 }
+
 func (m *monitoringContext) shutdown() {
 	if m == nil {
 		return
 	}
 	ctx := context.Background()
-	if m.prom != nil {
+	if m.promProvider != nil {
 		runtime.Start()
-		m.prom = nil
+		m.promProvider = nil
+	}
+	if m.promExporter != nil {
+		m.promExporter.Shutdown(ctx)
+		m.promExporter = nil
 	}
 	if m.tp != nil {
 		m.tp.Shutdown(ctx)
