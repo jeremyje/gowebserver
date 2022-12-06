@@ -40,6 +40,20 @@ var (
 	_ io.ReadSeeker = (*augmentedFile)(nil)
 )
 
+func TestDirlessArchive(t *testing.T) {
+	nodirZipPath := gowsTesting.MustNoDirZipFilePath(t)
+
+	vFS, err := newRawFSFromURI(nodirZipPath)
+	if err != nil {
+		t.Error(err)
+	}
+	defer vFS.Close()
+	nFS := newNestedFS(vFS)
+	defer nFS.Close()
+
+	verifyReadDir(t, nFS, "assets", []string{"1.txt", "2.txt", "fivesix", "four", "more"})
+}
+
 func TestVirtualDirectory(t *testing.T) {
 	nestedZipPath := gowsTesting.MustNestedZipFilePath(t)
 
