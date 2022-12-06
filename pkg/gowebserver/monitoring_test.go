@@ -17,11 +17,18 @@ package gowebserver
 import (
 	"testing"
 
-	"go.opentelemetry.io/otel/exporters/prometheus"
+	"github.com/prometheus/client_golang/prometheus"
+	otelprom "go.opentelemetry.io/otel/exporters/prometheus"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
 func TestMonitoringContext(t *testing.T) {
+	registry := prometheus.NewRegistry()
+	prometheusExporter, err := otelprom.New(otelprom.WithRegisterer(registry))
+	if err != nil {
+		t.Fatal(err)
+	}
 	testCases := []struct {
 		name string
 		mc   *monitoringContext
@@ -33,8 +40,9 @@ func TestMonitoringContext(t *testing.T) {
 		{
 			name: "full",
 			mc: &monitoringContext{
-				prom: &prometheus.Exporter{},
-				tp:   sdktrace.NewTracerProvider(),
+				promExporter: prometheusExporter,
+				promProvider: sdkmetric.NewMeterProvider(sdkmetric.WithReader(prometheusExporter)),
+				tp:           sdktrace.NewTracerProvider(),
 			},
 		},
 	}
