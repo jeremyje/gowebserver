@@ -29,9 +29,11 @@ KIND = kind
 HELM = helm
 
 EXE_EXTENSION =
-VERSION = $(shell git describe --tags)
+SHORT_SHA = $(shell git rev-parse --short=7 HEAD | tr -d [:punct:])
+DIRTY_VERSION = v0.0.0-$(SHORT_SHA)
+VERSION = $(shell git describe --tags || (echo $(DIRTY_VERSION) && exit 1))
 BUILD_DATE = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-TAG := v$(VERSION)
+TAG := $(VERSION)
 PKG := github.com/jeremyje/gowebserver/v2
 
 SOURCE_DIRS=$(shell go list ./... | grep -v '/vendor/')
