@@ -49,13 +49,19 @@ HTTPPROBE_IMAGE = $(REGISTRY)/httpprobe
 
 GO_TOOLCHAIN_DIR = $(dir $(abspath golang.mk))bin/toolchain
 
-NICHE_PLATFORMS = freebsd openbsd netbsd darwin
-
 LINUX_PLATFORMS = linux_386 linux_amd64 linux_arm_v5 linux_arm_v6 linux_arm_v7 linux_arm64 linux_s390x linux_ppc64 linux_ppc64le linux_riscv64 linux_mips64le linux_mips linux_mipsle linux_mips64
-LINUX_NICHE_PLATFORMS =
-WINDOWS_PLATFORMS = windows_386 windows_amd64 windows_arm64
+ANDROID_PLATFORMS = android_arm64 # android_386 android_amd64 android_arm android_arm_v5 android_arm_v6 android_arm_v7
+WINDOWS_PLATFORMS = windows_386 windows_amd64 windows_arm64 windows_arm_v5 windows_arm_v6 windows_arm_v7
 MAIN_PLATFORMS = windows_amd64 linux_amd64 linux_arm64
-ALL_PLATFORMS = $(LINUX_PLATFORMS) $(LINUX_NICHE_PLATFORMS) $(WINDOWS_PLATFORMS) $(foreach niche,$(NICHE_PLATFORMS),$(niche)_amd64 $(niche)_arm64) js_wasm android_arm64 solaris_amd64 plan9_amd64
+IOS_PLATFORMS = #ios_amd64 ios_arm64
+DARWIN_PLATFORMS = darwin_amd64 darwin_arm64
+DRAGONFLY_PLATFORMS = dragonfly_amd64
+FREEBSD_PLATFORMS = freebsd_386 freebsd_amd64 freebsd_arm_v5 freebsd_arm_v6 freebsd_arm_v7 freebsd_arm64
+NETBSD_PLATFORMS = netbsd_386 netbsd_amd64 netbsd_arm_v5 netbsd_arm_v6 netbsd_arm_v7 netbsd_arm64
+OPENBSD_PLATFORMS = openbsd_386 openbsd_amd64 openbsd_arm_v5 openbsd_arm_v6 openbsd_arm_v7 openbsd_arm64 openbsd_mips64
+PLAN9_PLATFORMS = plan9_386 plan9_amd64 plan9_arm_v5 plan9_arm_v6 plan9_arm_v7
+NICHE_PLATFORMS = js_wasm solaris_amd64 illumos_amd64 aix_ppc64 $(ANDROID_PLATFORMS) $(DARWIN_PLATFORMS) $(IOS_PLATFORMS) $(DRAGONFLY_PLATFORMS) $(FREEBSD_PLATFORMS) $(NETBSD_PLATFORMS) $(OPENBSD_PLATFORMS) $(PLAN9_PLATFORMS)
+ALL_PLATFORMS = $(LINUX_PLATFORMS) $(WINDOWS_PLATFORMS) $(NICHE_PLATFORMS)
 TEST_ARCHIVES = internal/gowebserver/testing/testassets.zip
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.gz
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.bz2
@@ -70,7 +76,6 @@ ALL_APPS = gowebserver certtool httpprobe
 ALL_BINARIES = $(foreach app,$(ALL_APPS),$(foreach platform,$(ALL_PLATFORMS),bin/go/$(platform)/$(app)$(if $(findstring windows_,$(platform)),.exe,)))
 WINDOWS_VERSIONS = 1709 1803 1809 1903 1909 2004 20H2 ltsc2022
 BUILDX_BUILDER = buildx-builder
-LINUX_CPU_PLATFORMS = amd64 arm64 ppc64 ppc64le s390x arm/v5 arm/v6 arm/v7
 space := $(null) #
 comma := ,
 
