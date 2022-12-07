@@ -22,7 +22,10 @@ func TestCustomIndex(t *testing.T) {
 	defer nFS.Close()
 
 	mc := &monitoringContext{}
-	ci := newCustomIndex(http.FileServer(http.FS(nFS)), nFS, mc.getTraceProvider(), true)
+	ci, err := newCustomIndex(http.FileServer(http.FS(nFS)), nFS, mc.getTraceProvider(), true)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ts := httptest.NewUnstartedServer(ci)
 	ts.EnableHTTP2 = true

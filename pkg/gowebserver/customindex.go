@@ -2,6 +2,7 @@ package gowebserver
 
 import (
 	_ "embed"
+	"html/template"
 	"io/fs"
 	"net/http"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"facette.io/natsort"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
@@ -37,12 +39,14 @@ type customIndexHandler struct {
 	baseFS       fs.FS
 	enhancedList bool
 	tp           trace.TracerProvider
+	tmpl         *template.Template
 }
 
 func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rootTrace := c.tp.Tracer("customIndex")
 	ctx, span := rootTrace.Start(r.Context(), r.URL.Path)
 	defer span.End()
+	span.SetAttributes(attribute.Bool("enhanced_list", c.enhancedList))
 	if c.enhancedList {
 		path := r.URL.Path
 		path = cleanPath(strings.TrimPrefix(path, "/"))
@@ -50,20 +54,29 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		zap.S().With("url", r.URL, "path", path).Info("custom index")
 		if strings.HasSuffix(r.URL.Path, "/") || path == "." {
 			_, openSpan := rootTrace.Start(ctx, "Open")
+			openSpan.SetAttributes(attribute.String("path", path))
 			f, err := c.baseFS.Open(path)
 			openSpan.End()
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			defer f.Close()
+			defer func() {
+				_, closeSpan := rootTrace.Start(ctx, "Close")
+				closeSpan.SetAttributes(attribute.String("path", path))
+				f.Close()
+				closeSpan.End()
+			}()
 
-			readDirCtx, readDirSpan := rootTrace.Start(ctx, "Read Directory")
+			readDirCtx, readDirSpan := rootTrace.Start(ctx, "readDirectory")
 			defer readDirSpan.End()
 			rdf, ok := f.(fs.ReadDirFile)
 			if ok {
+				span.SetAttributes(attribute.Bool("custom_directory_list", true))
+				readDirSpan.AddEvent("")
 				now := time.Now()
 				entries, err := rdf.ReadDir(-1)
+				span.SetAttributes(attribute.Int("num_entries", len(entries)))
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
@@ -78,7 +91,6 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				sortedFiles := []string{}
 				for _, entry := range entries {
 					_, statFileSpan := rootTrace.Start(readDirCtx, entry.Name())
-					defer statFileSpan.End()
 
 					size := int64(0)
 					t := now
@@ -96,20 +108,23 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					}
 					files[newEntry.Name] = newEntry
 					sortedFiles = append(sortedFiles, newEntry.Name)
+					statFileSpan.End()
 				}
 
 				_, sortFileSpan := rootTrace.Start(readDirCtx, "sort")
+				sortFileSpan.SetAttributes(attribute.Int("num_files", len(sortedFiles)))
 				natsort.Sort(sortedFiles)
 				sortFileSpan.End()
 
-				_, generateSpan := rootTrace.Start(readDirCtx, "generate")
+				_, generateSpan := rootTrace.Start(readDirCtx, "applyTemplate")
+				generateSpan.SetAttributes(attribute.Int("num_files", len(sortedFiles)))
 				defer generateSpan.End()
 				for _, name := range sortedFiles {
 					entry := files[name]
 					params.DirEntries = append(params.DirEntries, entry)
 				}
 
-				if err := executeTemplate(customIndexHTML, params, w); err != nil {
+				if err := c.tmpl.Execute(w, params); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
@@ -118,14 +133,20 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	span.SetAttributes(attribute.Bool("custom_directory_list", false))
 	c.baseHandler.ServeHTTP(w, r)
 }
 
-func newCustomIndex(baseHandler http.Handler, baseFS fs.FS, tp trace.TracerProvider, enhancedList bool) http.Handler {
+func newCustomIndex(baseHandler http.Handler, baseFS fs.FS, tp trace.TracerProvider, enhancedList bool) (http.Handler, error) {
+	tmpl, err := createTemplate(customIndexHTML)
+	if err != nil {
+		return nil, err
+	}
 	return &customIndexHandler{
 		baseHandler:  baseHandler,
 		baseFS:       baseFS,
 		enhancedList: enhancedList,
 		tp:           tp,
-	}
+		tmpl:         tmpl,
+	}, nil
 }

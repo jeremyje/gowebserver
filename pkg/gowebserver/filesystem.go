@@ -75,7 +75,11 @@ func newHandlerFromFS(path string, tp trace.TracerProvider, enhancedList bool) (
 	}
 	nFS := newNestedFS(vFS)
 
-	return newCustomIndex(http.FileServer(http.FS(nFS)), nFS, tp, enhancedList), nFS.Close, nil
+	ci, err := newCustomIndex(http.FileServer(http.FS(nFS)), nFS, tp, enhancedList)
+	if err != nil {
+		return nil, nilFuncWithError, err
+	}
+	return ci, nFS.Close, nil
 }
 
 func newRawFSFromURI(path string) (FileSystem, error) {
