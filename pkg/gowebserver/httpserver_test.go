@@ -11,6 +11,7 @@ import (
 	_ "embed"
 
 	"github.com/google/go-cmp/cmp"
+	gomainTesting "github.com/jeremyje/gomain/testing"
 	gowsTesting "github.com/jeremyje/gowebserver/v2/internal/gowebserver/testing"
 )
 
@@ -31,12 +32,13 @@ func TestServe(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	close := gomainTesting.Main(httpServer.Serve)
 	go func() {
 		time.Sleep(time.Second)
-		ch <- nil
+		ch <- close()
 	}()
 
-	if err := httpServer.Serve(ch); err != nil {
+	if err := <-ch; err != nil {
 		if !strings.Contains(err.Error(), "closed network connection") {
 			t.Error(err)
 		}
@@ -190,11 +192,7 @@ func serveAsync(tb testing.TB, cfg *Config) (string, func()) {
 		tb.Fatalf("WebServer is not of type *webServerImpl, %+v", ws)
 	}
 
-	ch := make(chan error)
-
-	go func() {
-		wsi.Serve(ch)
-	}()
+	close := gomainTesting.Main(wsi.Serve)
 
 	var httpPort int
 	for i := 0; i < 600; i++ {
@@ -214,7 +212,7 @@ func serveAsync(tb testing.TB, cfg *Config) (string, func()) {
 	}
 
 	return baseURL, func() {
-		close(ch)
+		close()
 	}
 }
 

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/jeremyje/gomain"
 	"github.com/jeremyje/gowebserver/v2/pkg/certtool"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -26,10 +27,12 @@ import (
 func Run() {
 	_, syncFunc := configLogger(true)
 	defer syncFunc()
-	if err := platformMain(); err != nil {
-		zap.S().Error(err)
-		zap.S().Sync()
-	}
+
+	gomain.Run(runInteractive, gomain.Config{
+		ServiceName:        "gowebserver",
+		ServiceDescription: "A simple, convenient, reliable, well tested HTTP/HTTPS web server to host static files.",
+		Command:            "",
+	})
 }
 
 func configLogger(verbose bool) (*zap.Logger, func() error) {
@@ -52,13 +55,11 @@ func configLogger(verbose bool) (*zap.Logger, func() error) {
 	return logger, logger.Sync
 }
 
-func runInteractive() error {
-	terminateCh := make(chan error, 1)
-	defer close(terminateCh)
-	return runApplication(terminateCh)
+func runInteractive(wait func()) error {
+	return runApplication(wait)
 }
 
-func runApplication(termCh <-chan error) error {
+func runApplication(wait func()) error {
 	conf, err := Load()
 	if err != nil {
 		return err
@@ -75,7 +76,7 @@ func runApplication(termCh <-chan error) error {
 		return err
 	}
 
-	return httpServer.Serve(termCh)
+	return httpServer.Serve(wait)
 }
 
 func createCertificate(conf *Config) error {

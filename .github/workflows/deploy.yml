@@ -65,7 +65,7 @@ jobs:
 
       - name: Build
         run: |
-          make all
+          make all -j$(nproc)
           make bin/release.tar.gz
           make release-binaries
 

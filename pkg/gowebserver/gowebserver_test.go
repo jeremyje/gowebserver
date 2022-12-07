@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	gomainTesting "github.com/jeremyje/gomain/testing"
 	"github.com/jeremyje/gowebserver/v2/pkg/certtool"
 )
 
@@ -22,13 +23,14 @@ func TestConfigLogger(t *testing.T) {
 func TestRunApplication(t *testing.T) {
 	httpPortFlag = new(int)
 	httpsPortFlag = new(int)
+	close := gomainTesting.Main(runApplication)
 
 	ch := make(chan error)
 	go func() {
 		time.Sleep(time.Second)
-		ch <- nil
+		ch <- close()
 	}()
-	err := runApplication(ch)
+	err := <-ch
 	if err != nil {
 		if !strings.Contains(err.Error(), "closed network connection") {
 			t.Error(err)
@@ -103,6 +105,7 @@ func ExampleWebServer_Serve() {
 		termCh <- nil
 	}()
 
-	httpServer.Serve(termCh)
+	close := gomainTesting.Main(httpServer.Serve)
+	close()
 	// Output:
 }
