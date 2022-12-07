@@ -194,7 +194,7 @@ func nilFuncWithError() error {
 	return nil
 }
 
-func executeTemplate(tmplText []byte, params interface{}, w io.Writer) error {
+func createTemplate(tmplText []byte) (*template.Template, error) {
 	tmpl := template.New("").Funcs(template.FuncMap{
 		"humanizeBytes": humanize.Bytes,
 		"isImage":       isImage,
@@ -207,7 +207,12 @@ func executeTemplate(tmplText []byte, params interface{}, w io.Writer) error {
 		"stepEnd":       stepEnd,
 		"urlEncode":     urlEncode,
 	})
-	t, err := tmpl.Parse(string(tmplText))
+	return tmpl.Parse(string(tmplText))
+}
+
+// Deprecated: Use createTemplate() instead.
+func executeTemplate(tmplText []byte, params interface{}, w io.Writer) error {
+	t, err := createTemplate(tmplText)
 	if err != nil {
 		return err
 	}
