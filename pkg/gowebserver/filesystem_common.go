@@ -65,6 +65,7 @@ func (c *concreteFS) ReadDir(name string) ([]fs.DirEntry, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer f.Close()
 
 	readDirFile, ok := f.(fs.ReadDirFile)
 	if !ok {
