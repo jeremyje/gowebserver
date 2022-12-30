@@ -288,7 +288,7 @@ run: clean $(ASSETS) lint
 	$(GO) run cmd/gowebserver/gowebserver.go -http.port 8181 -path=git@github.com:jeremyje/gowebserver.git -verbose
 
 multirun: clean $(ASSETS) lint
-	$(GO) run cmd/gowebserver/gowebserver.go -path=./cmd/,./pkg/,. -servepath=mains,code,root -http.port 8181 -enhancedindex=true
+	$(GO) run cmd/gowebserver/gowebserver.go -path=./cmd/,./pkg/,. -verbose=true -servepath=mains,code,root -http.port 8181 -enhancedindex=true
 
 install: gowebserver
 	mkdir -p $(DESTDIR)$(bindir) $(DESTDIR)$(man1dir)

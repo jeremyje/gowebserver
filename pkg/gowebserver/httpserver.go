@@ -113,6 +113,7 @@ func (ws *webServerImpl) Serve(wait func()) error {
 	serverMux := http.NewServeMux()
 	if ws.monitoringCtx != nil {
 		for endpoint, h := range ws.monitoringCtx.handlers {
+			zap.S().With("http", endpoint).Info("Endpoint")
 			serverMux.Handle(endpoint, h)
 		}
 		allCleanups = append(allCleanups, func() error {
