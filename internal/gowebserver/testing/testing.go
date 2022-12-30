@@ -31,6 +31,8 @@ var (
 	nestedZipAssets []byte
 	//go:embed testassets.zip
 	zipAssets []byte
+	//go:embed testassets.rar
+	rarAssets []byte
 	//go:embed testassets.7z
 	sevenZipAssets []byte
 	//go:embed testassets.tar
@@ -80,6 +82,11 @@ func MustNestedZipFilePath(tb testing.TB) string {
 // MustZipFilePath gets the .zip test asset file.
 func MustZipFilePath(tb testing.TB) string {
 	return mustWriteData(tb, mustCreateTempArchive(tb, ".zip"), zipAssets)
+}
+
+// MustRarFilePath gets the .rar test asset file.
+func MustRarFilePath(tb testing.TB) string {
+	return mustWriteData(tb, mustCreateTempArchive(tb, ".rar"), rarAssets)
 }
 
 // MustSevenZipFilePath gets the .7z test asset file.

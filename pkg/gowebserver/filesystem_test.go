@@ -30,7 +30,7 @@ import (
 var (
 	zeroTime               = time.Time{}
 	commonFSRootDirList    = []string{"assets", "index.html", "site.js", "weird #1.txt", "weird#.txt", "weird$.txt"}
-	nestedZipFSRootDirList = []string{"single-testassets.zip", "single-testassets.zip-dir", "testassets", "testassets.7z", "testassets.tar", "testassets.tar-dir", "testassets.tar.bz2", "testassets.tar.bz2-dir", "testassets.tar.gz", "testassets.tar.gz-dir", "testassets.tar.lz4", "testassets.tar.lz4-dir", "testassets.tar.xz", "testassets.tar.xz-dir", "testassets.zip", "testassets.zip-dir", "testing.go", "testing_test.go"}
+	nestedZipFSRootDirList = []string{"single-testassets.zip", "single-testassets.zip-dir", "testassets", "testassets.7z", "testassets.rar", "testassets.rar-dir", "testassets.tar", "testassets.tar-dir", "testassets.tar.bz2", "testassets.tar.bz2-dir", "testassets.tar.gz", "testassets.tar.gz-dir", "testassets.tar.lz4", "testassets.tar.lz4-dir", "testassets.tar.xz", "testassets.tar.xz-dir", "testassets.zip", "testassets.zip-dir", "testing.go", "testing_test.go"}
 )
 
 var (
@@ -118,6 +118,7 @@ func TestVirtualDirectory(t *testing.T) {
 
 func TestNestedFileSystem(t *testing.T) {
 	zipPath := gowsTesting.MustZipFilePath(t)
+	rarPath := gowsTesting.MustRarFilePath(t)
 	sevenZipPath := gowsTesting.MustSevenZipFilePath(t)
 	tarPath := gowsTesting.MustTarFilePath(t)
 	tarGzPath := gowsTesting.MustTarGzFilePath(t)
@@ -135,6 +136,7 @@ func TestNestedFileSystem(t *testing.T) {
 		wantRootDirs []string
 	}{
 		{uri: zipPath, baseDir: ""},
+		{uri: rarPath, baseDir: ""},
 		{uri: tarPath, baseDir: ""},
 		{uri: tarGzPath, baseDir: ""},
 		{uri: tarBz2Path, baseDir: ""},
@@ -225,19 +227,15 @@ func verifyFileSystem(tb testing.TB, vFS FileSystem, nFS *nestedFS, baseDir stri
 		}
 
 		if diff := cmp.Diff(false, stat.IsDir()); diff != "" {
-			tb.Errorf("[%s].Stat.Mode() mismatch (-want +got):\n%s", stat.Name(), diff)
+			tb.Errorf("[%s].Stat.IsDir() mismatch (-want +got):\n%s", stat.Name(), diff)
 		}
 
 		if zeroTime.After(stat.ModTime()) {
 			tb.Errorf("[%s].Stat.ModTime() should be in the past, %v", stat.Name(), stat.ModTime())
 		}
 
-		if diff := cmp.Diff(defaultFileMode, stat.Mode()); diff != "" {
-			tb.Errorf("[%s].Stat.Mode() mismatch (-want +got):\n%s", stat.Name(), diff)
-		}
-
 		if diff := cmp.Diff("index.html", stat.Name()); diff != "" {
-			tb.Errorf("[%s].Stat.Mode() mismatch (-want +got):\n%s", stat.Name(), diff)
+			tb.Errorf("[%s].Stat.Name() mismatch (-want +got):\n%s", stat.Name(), diff)
 		}
 
 		if diff := cmp.Diff(int64(10), stat.Size()); diff != "" {

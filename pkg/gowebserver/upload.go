@@ -123,7 +123,7 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			f, err := os.OpenFile(localPath, os.O_WRONLY|os.O_CREATE, 0644)
+			f, err := os.Create(localPath)
 			if err != nil {
 				resp.Error = fmt.Errorf("InternalError: Cannot create file (%s), %w", localPath, err)
 				writeUploadResponse(w, resp, logger, childSpan)

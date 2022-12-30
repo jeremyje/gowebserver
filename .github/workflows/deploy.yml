@@ -39,7 +39,11 @@ jobs:
 
       - name: Install Prerequisites
         run: |
-          sudo apt-get -y -q install lz4 p7zip-full
+          sudo apt-get update
+          sudo apt -y -q install software-properties-common
+          sudo add-apt-repository universe
+          sudo apt-get update
+          sudo apt-get -y -q install lz4 p7zip-full rar unrar
 
       - name: Prepare Build
         run: |
