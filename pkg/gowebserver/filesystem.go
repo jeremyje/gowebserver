@@ -23,10 +23,15 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/bodgit/sevenzip"
 	archiver "github.com/mholt/archiver/v4"
 	"go.opentelemetry.io/otel/trace"
+)
+
+const (
+	defaultFileMode = fs.FileMode(0644)
 )
 
 var (
@@ -112,11 +117,14 @@ func writeFileFromArchiveEntry(f opener, filePath string) error {
 		return fmt.Errorf("cannot open input file: %w", err)
 	}
 	defer zf.Close()
-	return copyFile(zf, filePath)
+
+	return copyFile(zf, f.CreatedTime(), f.ModTime(), filePath)
 }
 
 type opener interface {
 	Open() (io.ReadCloser, error)
+	ModTime() time.Time
+	CreatedTime() time.Time
 }
 
 func newSevenZipFS(filePath string) (*localFS, error) {
@@ -152,7 +160,7 @@ func newSevenZipFS(filePath string) (*localFS, error) {
 				return nil, fmt.Errorf("cannot create directory: %s, %w", dirPath, err)
 			}
 
-			err := writeFileFromArchiveEntry(f, filePath)
+			err := writeFileFromArchiveEntry(&sevenZipOpener{f: f}, filePath)
 			if err != nil {
 				logError(cleanup())
 				return nil, fmt.Errorf("cannot write zip file entry: %s, %w", name, err)
@@ -161,6 +169,22 @@ func newSevenZipFS(filePath string) (*localFS, error) {
 	}
 
 	return newLocalFS(tmpDir, cleanup)
+}
+
+type sevenZipOpener struct {
+	f *sevenzip.File
+}
+
+func (s *sevenZipOpener) Open() (io.ReadCloser, error) {
+	return s.f.Open()
+}
+
+func (s *sevenZipOpener) ModTime() time.Time {
+	return s.f.Modified
+}
+
+func (s *sevenZipOpener) CreatedTime() time.Time {
+	return s.f.Created
 }
 
 func coerceToReaderAt(file fs.File) (io.ReaderAt, error) {

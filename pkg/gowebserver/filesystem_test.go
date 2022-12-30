@@ -28,6 +28,7 @@ import (
 )
 
 var (
+	zeroTime               = time.Time{}
 	commonFSRootDirList    = []string{"assets", "index.html", "site.js", "weird #1.txt", "weird#.txt", "weird$.txt"}
 	nestedZipFSRootDirList = []string{"single-testassets.zip", "single-testassets.zip-dir", "testassets", "testassets.7z", "testassets.tar", "testassets.tar-dir", "testassets.tar.bz2", "testassets.tar.bz2-dir", "testassets.tar.gz", "testassets.tar.gz-dir", "testassets.tar.lz4", "testassets.tar.lz4-dir", "testassets.tar.xz", "testassets.tar.xz-dir", "testassets.zip", "testassets.zip-dir", "testing.go", "testing_test.go"}
 )
@@ -201,7 +202,7 @@ func verifyFileSystem(tb testing.TB, vFS FileSystem, nFS *nestedFS, baseDir stri
 	} else {
 		nStat, err := nFS.Stat(indexFilePath)
 		if err != nil {
-			tb.Errorf("cannto stat from nestedFS, %s", err)
+			tb.Errorf("cannot stat from nestedFS, %s", err)
 		}
 		if diff := cmp.Diff(stat.IsDir(), nStat.IsDir()); diff != "" {
 			tb.Errorf("nestedFS.IsDir() mismatch (-want +got):\n%s", diff)
@@ -224,23 +225,23 @@ func verifyFileSystem(tb testing.TB, vFS FileSystem, nFS *nestedFS, baseDir stri
 		}
 
 		if diff := cmp.Diff(false, stat.IsDir()); diff != "" {
-			tb.Errorf("stat.Mode() mismatch (-want +got):\n%s", diff)
+			tb.Errorf("[%s].Stat.Mode() mismatch (-want +got):\n%s", stat.Name(), diff)
 		}
 
-		if time.UnixMilli(0).After(stat.ModTime()) {
-			tb.Errorf("stat.ModTime() should be in the past")
+		if zeroTime.After(stat.ModTime()) {
+			tb.Errorf("[%s].Stat.ModTime() should be in the past, %v", stat.Name(), stat.ModTime())
 		}
-		/*
-			if diff := cmp.Diff(fs.FileMode(0644), stat.Mode()); diff != "" {
-				tb.Errorf("stat.Mode() mismatch (-want +got):\n%s", diff)
-			}
-		*/
+
+		if diff := cmp.Diff(defaultFileMode, stat.Mode()); diff != "" {
+			tb.Errorf("[%s].Stat.Mode() mismatch (-want +got):\n%s", stat.Name(), diff)
+		}
+
 		if diff := cmp.Diff("index.html", stat.Name()); diff != "" {
-			tb.Errorf("stat.Mode() mismatch (-want +got):\n%s", diff)
+			tb.Errorf("[%s].Stat.Mode() mismatch (-want +got):\n%s", stat.Name(), diff)
 		}
 
 		if diff := cmp.Diff(int64(10), stat.Size()); diff != "" {
-			tb.Errorf("stat.Size() mismatch (-want +got):\n%s", diff)
+			tb.Errorf("[%s].Stat.Size() mismatch (-want +got):\n%s", stat.Name(), diff)
 		}
 	}
 	data, err := io.ReadAll(fp)

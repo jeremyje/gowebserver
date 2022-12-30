@@ -129,7 +129,7 @@ func dirPath(dirPath string) string {
 	return strings.TrimRight(dirPath, "/") + "/"
 }
 
-func copyFile(reader io.Reader, filePath string) error {
+func copyFile(reader io.Reader, createdTime time.Time, modifiedTime time.Time, filePath string) error {
 	fsf, err := os.Create(filePath)
 	if err != nil {
 		return fmt.Errorf("cannot create target file %s, %w", filePath, err)
@@ -141,7 +141,7 @@ func copyFile(reader io.Reader, filePath string) error {
 		os.Remove(fsf.Name())
 		return fmt.Errorf("cannot copy to target file %s, %w", filePath, err)
 	}
-	return nil
+	return os.Chtimes(filePath, createdTime, modifiedTime)
 }
 
 var (

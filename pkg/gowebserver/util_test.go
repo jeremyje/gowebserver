@@ -266,7 +266,7 @@ func TestCopyFileErrors(t *testing.T) {
 		tc := tc
 		t.Run(tc.filePath, func(t *testing.T) {
 			t.Parallel()
-			if err := copyFile(tc.r, tc.filePath); err != nil {
+			if err := copyFile(tc.r, time.Now(), time.Now(), tc.filePath); err != nil {
 				if diff := cmp.Diff(tc.wantErr, err.Error()); diff != "" {
 					t.Errorf("copyFile() mismatch (-want +got):\n%s", diff)
 				}
