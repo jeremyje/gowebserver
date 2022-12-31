@@ -51,7 +51,7 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		path = cleanPath(strings.TrimPrefix(path, "/"))
 
-		zap.S().With("url", r.URL, "path", path).Info("custom index")
+		zap.S().With("url", r.URL, "path", path).Info("customIndexHandler")
 		if strings.HasSuffix(r.URL.Path, "/") || path == "." {
 			_, openSpan := rootTrace.Start(ctx, "Open")
 			openSpan.SetAttributes(attribute.String("path", path))

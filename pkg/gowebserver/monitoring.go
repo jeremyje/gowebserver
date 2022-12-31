@@ -17,6 +17,7 @@ package gowebserver
 import (
 	"context"
 	"net/http"
+	"net/http/pprof"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -38,6 +39,14 @@ import (
 func setupMonitoring(m Monitoring) (*monitoringContext, error) {
 	mc := &monitoringContext{
 		handlers: map[string]http.Handler{},
+	}
+
+	if len(m.DebugEndpoint) > 0 {
+		mc.handlers[m.DebugEndpoint+"/pprof/"] = http.HandlerFunc(pprof.Index)
+		mc.handlers[m.DebugEndpoint+"/pprof/cmdline"] = http.HandlerFunc(pprof.Cmdline)
+		mc.handlers[m.DebugEndpoint+"/pprof/profile"] = http.HandlerFunc(pprof.Profile)
+		mc.handlers[m.DebugEndpoint+"/pprof/symbol"] = http.HandlerFunc(pprof.Symbol)
+		mc.handlers[m.DebugEndpoint+"/pprof/trace"] = http.HandlerFunc(pprof.Trace)
 	}
 
 	r, err := resource.Merge(
