@@ -5,7 +5,7 @@ It can host a local directory or contents of a zip file.
 
 ```bash
 # Download (linux amd64, see Downloads for other builds)
-curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.5/server-amd64; chmod +x gowebserver
+curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.6/server-amd64; chmod +x gowebserver
 
 # Host the current directory.
 ./gowebserver
@@ -14,7 +14,7 @@ curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/downl
 ./gowebserver --path=${HOME}
 
 # Host a zip file from the internet.
-./gowebserver --path=https://github.com/jeremyje/gowebserver/archive/v2.5.5.zip
+./gowebserver --path=https://github.com/jeremyje/gowebserver/archive/v2.5.6.zip
 
 # Install in your Kubernetes Cluster.
 kubectl apply -f https://raw.githubusercontent.com/jeremyje/gowebserver/main/install/kubernetes.yaml
@@ -48,12 +48,12 @@ sc.exe start gowebserver
 
 |   OS   | Arch  | Link
 |--------|-------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-|Linux   | amd64 | <code>curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.5/server-amd64</code>
-|Linux   | arm   | <code>curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.5/server-arm</code>
-|Linux   | arm64 | <code>curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.5/server-arm64</code>
-|Windows | amd64 | <code>(New-Object System.Net.WebClient).DownloadFile("https://github.com/jeremyje/gowebserver/releases/download/v2.5.5/server-amd64.exe", "server-amd64.exe")</code>
-|macOS   | amd64 | <code>curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.5/server-amd64-darwin</code>
-|macOS   | arm64 | <code>curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.5/server-arm64-darwin</code>
+|Linux   | amd64 | <code>curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.6/server-amd64</code>
+|Linux   | arm   | <code>curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.6/server-arm</code>
+|Linux   | arm64 | <code>curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.6/server-arm64</code>
+|Windows | amd64 | <code>(New-Object System.Net.WebClient).DownloadFile("https://github.com/jeremyje/gowebserver/releases/download/v2.5.6/server-amd64.exe", "server-amd64.exe")</code>
+|macOS   | amd64 | <code>curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.6/server-amd64-darwin</code>
+|macOS   | arm64 | <code>curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.5.6/server-arm64-darwin</code>
 
 ## Build
 
