@@ -30,10 +30,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-const (
-	defaultFileMode = fs.FileMode(0644)
-)
-
 var (
 	archives = []string{".tar", ".tar.gz", ".tar.bz2", ".tar.xz", ".tar.lz4", ".tar.br", ".tar.zst", ".rar", ".zip"}
 )
@@ -192,7 +188,7 @@ func coerceToReaderAt(file fs.File) (io.ReaderAt, error) {
 	if ok {
 		return readerAt, nil
 	} else {
-		// TODO: This is super inefficient because it's reading a nested zip file into memory.
+		// TODO: This is very inefficient because it's reading a nested zip file into memory.
 		data, err := io.ReadAll(file)
 		if err != nil {
 			return nil, err

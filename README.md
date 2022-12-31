@@ -62,8 +62,17 @@ sc.exe start gowebserver
 Install [Go 1.19 or newer](https://golang.org/dl/).
 
 ```bash
+# Install Dependencies for Building and Testing
+sudo apt-add-repository non-free
+sudo apt-get update
+sudo apt-get -y -q install lz4 p7zip-full rar unrar
+```
+
+```bash
+# Clone the Codebase
 git clone git@github.com:jeremyje/gowebserver.git
-make
+# Build the Code
+make -j$(nproc)
 ```
 
 ## Test

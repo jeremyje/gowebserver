@@ -20,6 +20,7 @@ man1dir = $(mandir)/man1
 
 RM = rm
 ZIP = zip
+RAR = rar
 TAR = tar
 SEVENZIP = 7z
 ECHO = @echo
@@ -64,6 +65,7 @@ PLAN9_PLATFORMS = plan9_386 plan9_amd64 plan9_arm_v5 plan9_arm_v6 plan9_arm_v7
 NICHE_PLATFORMS = js_wasm solaris_amd64 illumos_amd64 aix_ppc64 $(ANDROID_PLATFORMS) $(DARWIN_PLATFORMS) $(IOS_PLATFORMS) $(DRAGONFLY_PLATFORMS) $(FREEBSD_PLATFORMS) $(NETBSD_PLATFORMS) $(OPENBSD_PLATFORMS) $(PLAN9_PLATFORMS)
 ALL_PLATFORMS = $(LINUX_PLATFORMS) $(WINDOWS_PLATFORMS) $(NICHE_PLATFORMS)
 TEST_ARCHIVES = internal/gowebserver/testing/testassets.zip
+TEST_ARCHIVES += internal/gowebserver/testing/testassets.rar
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.gz
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.bz2
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar
@@ -241,6 +243,9 @@ internal/gowebserver/testing/nested-testassets.zip: $(TEST_ARCHIVES) internal/go
 
 internal/gowebserver/testing/testassets.zip:
 	cd internal/gowebserver/testing/testassets/; $(ZIP) -qr9 ../testassets.zip *
+
+internal/gowebserver/testing/testassets.rar:
+	cd internal/gowebserver/testing/testassets/; $(RAR) a ../testassets.rar *
 
 internal/gowebserver/testing/testassets.tar.gz:
 	cd internal/gowebserver/testing/testassets/; $(TAR) -I 'gzip -9' -cf ../testassets.tar.gz *

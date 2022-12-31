@@ -47,6 +47,7 @@ func TestServe(t *testing.T) {
 
 func TestWebServer_Serve_Multi(t *testing.T) {
 	zipPath := gowsTesting.MustZipFilePath(t)
+	rarPath := gowsTesting.MustRarFilePath(t)
 	tarXzPath := gowsTesting.MustTarXzFilePath(t)
 
 	cfg := &Config{
@@ -54,6 +55,10 @@ func TestWebServer_Serve_Multi(t *testing.T) {
 			{
 				Source:   zipPath,
 				Endpoint: "/zip",
+			},
+			{
+				Source:   rarPath,
+				Endpoint: "/rar",
 			},
 			{
 				Source:   tarXzPath,
@@ -74,6 +79,10 @@ func TestWebServer_Serve_Multi(t *testing.T) {
 		{url: baseURL + "/zip/", want: wantIndex},
 		{url: baseURL + "/zip/site.js", want: wantSiteJs},
 		{url: baseURL + "/zip/assets/1.txt", want: wantAssets1Txt},
+		{url: baseURL + "/rar", want: wantIndex},
+		{url: baseURL + "/rar/", want: wantIndex},
+		{url: baseURL + "/rar/site.js", want: wantSiteJs},
+		{url: baseURL + "/rar/assets/1.txt", want: wantAssets1Txt},
 		{url: baseURL + "/tar.gz", want: wantIndex},
 		{url: baseURL + "/tar.gz/", want: wantIndex},
 		{url: baseURL + "/tar.gz/site.js", want: wantSiteJs},
@@ -107,6 +116,10 @@ func TestWebServer_Serve(t *testing.T) {
 	}{
 		{
 			source: gowsTesting.MustZipFilePath(t),
+			paths:  archivePaths,
+		},
+		{
+			source: gowsTesting.MustRarFilePath(t),
 			paths:  archivePaths,
 		},
 		{
