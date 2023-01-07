@@ -3,6 +3,7 @@ serve:
 - source: "/home/example"
   endpoint: "/serving"
 enhancedList: true
+debug: true
 configurationfile: "/something.yaml"
 http:
   port: 1

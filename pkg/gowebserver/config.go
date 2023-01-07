@@ -60,6 +60,7 @@ var (
 	monitoringMetricsPath       = flag.String("monitoring.metrics.path", "/metrics", "The URL path for exporting server metrics for Prometheus monitoring.")
 
 	enhancedListFlag = flag.Bool("enhancedindex", false, "Enable enhanced index.")
+	debugFlag        = flag.Bool("debug", false, "Enable debug HTTP methods.")
 
 	version = "UNKNOWN"
 )
@@ -111,6 +112,7 @@ type Config struct {
 	Serve             []Serve `yaml:"serve"`
 	ConfigurationFile string  `yaml:"-"`
 	EnhancedList      bool    `yaml:"enhancedList"`
+	Debug             bool    `yaml:"debug"`
 
 	HTTP       HTTP       `yaml:"http"`
 	HTTPS      HTTPS      `yaml:"https"`
@@ -201,6 +203,7 @@ func loadFromFlags() (*Config, error) {
 		Serve:             sl,
 		ConfigurationFile: *configFileFlag,
 		EnhancedList:      *enhancedListFlag,
+		Debug:             *debugFlag,
 		HTTP: HTTP{
 			Port: *httpPortFlag,
 		},

@@ -45,6 +45,7 @@ type webServerImpl struct {
 	uploadPath          string
 	uploadHTTPPath      string
 	enhancedListMode    bool
+	enableDebugMethods  bool
 	monitoringCtx       *monitoringContext
 
 	httpListenPort  int
@@ -98,6 +99,17 @@ func (ws *webServerImpl) getPorts() (int, int) {
 	httpsPort := ws.httpsListenPort
 	ws.RUnlock()
 	return httpPort, httpsPort
+}
+
+type killHTTPServerHandler struct {
+	killFunc func()
+}
+
+func (k *killHTTPServerHandler) ServeHTTP(http.ResponseWriter, *http.Request) {
+	if k.killFunc != nil {
+		k.killFunc()
+		os.Exit(0)
+	}
 }
 
 func (ws *webServerImpl) Serve(wait func()) error {
@@ -164,8 +176,6 @@ func (ws *webServerImpl) Serve(wait func()) error {
 		ws.addHandler(serverMux, ws.uploadHTTPPath, uploadHandler)
 	}
 
-	httpHandler := cors.Default().Handler(serverMux)
-
 	httpSocket, err := net.Listen("tcp", ws.httpAddr)
 	if err != nil {
 		return err
@@ -178,7 +188,23 @@ func (ws *webServerImpl) Serve(wait func()) error {
 		return err
 	}
 
+	if ws.enableDebugMethods {
+		killFunc := func() {
+			if httpsSocket != nil {
+				httpsSocket.Close()
+			}
+			if httpSocket != nil {
+				httpSocket.Close()
+			}
+		}
+
+		zap.S().With("http", "/diediedie").Info("Endpoint")
+		ws.addHandler(serverMux, "/diediedie", &killHTTPServerHandler{killFunc: killFunc})
+	}
+
 	defer httpsSocket.Close()
+
+	httpHandler := cors.Default().Handler(serverMux)
 
 	httpPort, err := getPort(httpSocket)
 	if err != nil {
@@ -245,6 +271,7 @@ func New(conf *Config) (WebServer, error) {
 		certificateFilePath: conf.HTTPS.Certificate.CertificateFilePath,
 		privateKeyFilePath:  conf.HTTPS.Certificate.PrivateKeyFilePath,
 		enhancedListMode:    conf.EnhancedList,
+		enableDebugMethods:  conf.Debug,
 		uploadPath:          uploadPath,
 		uploadHTTPPath:      conf.Upload.Endpoint,
 		verbose:             conf.Verbose,
