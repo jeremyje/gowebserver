@@ -24,6 +24,36 @@ var (
 	wantAssets1Txt = []byte("assets/1.txt")
 )
 
+func TestServeAndDie(t *testing.T) {
+	baseURL, close := serveAsync(t, &Config{Debug: true})
+	defer close()
+
+	resp, err := http.Get(baseURL + "/diediedie")
+	if err == nil || resp != nil {
+		t.Errorf("got response when server should be dead., Response: %v, Err: %s", resp, err)
+	}
+
+	resp, err = http.Get(baseURL)
+	if err == nil || resp != nil {
+		t.Errorf("got response when server should be dead., Response: %v, Err: %s", resp, err)
+	}
+}
+
+func TestDieDieDieDisabled(t *testing.T) {
+	baseURL, close := serveAsync(t, &Config{})
+	defer close()
+
+	resp, err := http.Get(baseURL + "/diediedie")
+	if resp.StatusCode != http.StatusOK || err != nil {
+		t.Errorf("got error response, Response: %v, Err: %s", resp, err)
+	}
+
+	resp, err = http.Get(baseURL)
+	if resp.StatusCode != http.StatusOK || err != nil {
+		t.Errorf("server should still be alive, Response: %v, Err: %s", resp, err)
+	}
+}
+
 func TestServe(t *testing.T) {
 	ch := make(chan error)
 
