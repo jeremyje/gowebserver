@@ -60,8 +60,11 @@ DARWIN_PLATFORMS = darwin_amd64 darwin_arm64
 DRAGONFLY_PLATFORMS = dragonfly_amd64
 FREEBSD_PLATFORMS = freebsd_386 freebsd_amd64 freebsd_arm_v5 freebsd_arm_v6 freebsd_arm_v7 freebsd_arm64
 NETBSD_PLATFORMS = netbsd_386 netbsd_amd64 netbsd_arm_v5 netbsd_arm_v6 netbsd_arm_v7 netbsd_arm64
-OPENBSD_PLATFORMS = openbsd_386 openbsd_amd64 openbsd_arm_v5 openbsd_arm_v6 openbsd_arm_v7 openbsd_arm64 openbsd_mips64
-PLAN9_PLATFORMS = plan9_386 plan9_amd64 plan9_arm_v5 plan9_arm_v6 plan9_arm_v7
+# These OSes don't build with prometheus.
+# OPENBSD_PLATFORMS = openbsd_386 openbsd_amd64 openbsd_arm_v5 openbsd_arm_v6 openbsd_arm_v7 openbsd_arm64 openbsd_mips64
+# PLAN9_PLATFORMS = plan9_386 plan9_amd64 plan9_arm_v5 plan9_arm_v6 plan9_arm_v7
+OPENBSD_PLATFORMS =
+PLAN9_PLATFORMS =
 NICHE_PLATFORMS = js_wasm solaris_amd64 illumos_amd64 aix_ppc64 $(ANDROID_PLATFORMS) $(DARWIN_PLATFORMS) $(IOS_PLATFORMS) $(DRAGONFLY_PLATFORMS) $(FREEBSD_PLATFORMS) $(NETBSD_PLATFORMS) $(OPENBSD_PLATFORMS) $(PLAN9_PLATFORMS)
 ALL_PLATFORMS = $(LINUX_PLATFORMS) $(WINDOWS_PLATFORMS) $(NICHE_PLATFORMS)
 TEST_ARCHIVES = internal/gowebserver/testing/testassets.zip
@@ -79,6 +82,7 @@ ALL_APPS = gowebserver certtool httpprobe
 ALL_BINARIES = $(foreach app,$(ALL_APPS),$(foreach platform,$(ALL_PLATFORMS),bin/go/$(platform)/$(app)$(if $(findstring windows_,$(platform)),.exe,)))
 WINDOWS_VERSIONS = 1709 1803 1809 1903 1909 2004 20H2 ltsc2022
 BUILDX_BUILDER = buildx-builder
+DOCKER_BUILDER_FLAG = --builder $(BUILDX_BUILDER)
 space := $(null) #
 comma := ,
 
@@ -328,25 +332,25 @@ ALL_LINUX_IMAGES = $(foreach app,$(ALL_APPS),$(foreach platform,$(LINUX_PLATFORM
 linux-images: $(ALL_LINUX_IMAGES)
 
 linux-image-certtool-%: bin/go/%/certtool ensure-builder
-	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform $(subst _,/,$*) --build-arg BINARY_PATH=$< -f cmd/certtool/Dockerfile -t $(CERTTOOL_IMAGE):$(TAG)-$* . $(DOCKER_PUSH)
+	$(DOCKER) buildx build $(DOCKER_BUILDER_FLAG) --platform $(subst _,/,$*) --build-arg BINARY_PATH=$< -f cmd/certtool/Dockerfile -t $(CERTTOOL_IMAGE):$(TAG)-$* . $(DOCKER_PUSH)
 
 linux-image-gowebserver-%: bin/go/%/gowebserver ensure-builder
-	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform $(subst _,/,$*) --build-arg BINARY_PATH=$< -f cmd/gowebserver/Dockerfile -t $(GOWEBSERVER_IMAGE):$(TAG)-$* . $(DOCKER_PUSH)
+	$(DOCKER) buildx build $(DOCKER_BUILDER_FLAG) --platform $(subst _,/,$*) --build-arg BINARY_PATH=$< -f cmd/gowebserver/Dockerfile -t $(GOWEBSERVER_IMAGE):$(TAG)-$* . $(DOCKER_PUSH)
 
 linux-image-httpprobe-%: bin/go/%/httpprobe ensure-builder
-	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform $(subst _,/,$*) --build-arg BINARY_PATH=$< -f cmd/httpprobe/Dockerfile -t $(HTTPPROBE_IMAGE):$(TAG)-$* . $(DOCKER_PUSH)
+	$(DOCKER) buildx build $(DOCKER_BUILDER_FLAG) --platform $(subst _,/,$*) --build-arg BINARY_PATH=$< -f cmd/httpprobe/Dockerfile -t $(HTTPPROBE_IMAGE):$(TAG)-$* . $(DOCKER_PUSH)
 
 ALL_WINDOWS_IMAGES = $(foreach app,$(ALL_APPS),$(foreach winver,$(WINDOWS_VERSIONS),windows-image-$(app)-$(winver)))
 windows-images: $(ALL_WINDOWS_IMAGES)
 
 windows-image-certtool-%: bin/go/windows_amd64/certtool.exe ensure-builder
-	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform windows/amd64 -f cmd/certtool/Dockerfile.windows --build-arg WINDOWS_VERSION=$* -t $(CERTTOOL_IMAGE):$(TAG)-windows_amd64-$* . $(DOCKER_PUSH)
+	$(DOCKER) buildx build $(DOCKER_BUILDER_FLAG) --platform windows/amd64 -f cmd/certtool/Dockerfile.windows --build-arg WINDOWS_VERSION=$* -t $(CERTTOOL_IMAGE):$(TAG)-windows_amd64-$* . $(DOCKER_PUSH)
 
 windows-image-gowebserver-%: bin/go/windows_amd64/gowebserver.exe ensure-builder
-	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform windows/amd64 -f cmd/gowebserver/Dockerfile.windows --build-arg WINDOWS_VERSION=$* -t $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$* . $(DOCKER_PUSH)
+	$(DOCKER) buildx build $(DOCKER_BUILDER_FLAG) --platform windows/amd64 -f cmd/gowebserver/Dockerfile.windows --build-arg WINDOWS_VERSION=$* -t $(GOWEBSERVER_IMAGE):$(TAG)-windows_amd64-$* . $(DOCKER_PUSH)
 
 windows-image-httpprobe-%: bin/go/windows_amd64/httpprobe.exe ensure-builder
-	$(DOCKER) buildx build --builder $(BUILDX_BUILDER) --platform windows/amd64 -f cmd/httpprobe/Dockerfile.windows --build-arg WINDOWS_VERSION=$* -t $(HTTPPROBE_IMAGE):$(TAG)-windows_amd64-$* . $(DOCKER_PUSH)
+	$(DOCKER) buildx build $(DOCKER_BUILDER_FLAG) --platform windows/amd64 -f cmd/httpprobe/Dockerfile.windows --build-arg WINDOWS_VERSION=$* -t $(HTTPPROBE_IMAGE):$(TAG)-windows_amd64-$* . $(DOCKER_PUSH)
 
 presubmit: clean check coverage all release-binaries images
 

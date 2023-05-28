@@ -149,7 +149,7 @@
     <table class="file-table">
       <tbody>
         {{range $index, $element := $.DirEntries}}{{if and (not $element.IsDir) (not (isImage $element.Name))}}
-        <tr>
+        <tr title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}">
           <td><a href="{{urlEncode $element.Name}}">{{$element.Name}}</a></td>
           <td><a href="{{urlEncode $element.Name}}">{{humanizeBytes $element.Size}}<br /><small>{{humanizeDate $element.ModTime}}</small></a></td>
         </tr>
@@ -160,7 +160,7 @@
     <div class="container">
       {{range $index, $element := $.DirEntries}}{{if isImage $element.Name}}
       <a href="{{$element.Name}}"><img src="{{urlEncode $element.Name}}" class="square-image item" loading="lazy"
-          alt="{{$element.Name}} - {{humanizeBytes $element.Size}}- {{$element.ModTime}}" /></a>
+          title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}" /></a>
       {{end}}{{end}}
     </div>
   </main>
