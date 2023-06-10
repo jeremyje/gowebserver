@@ -1,6 +1,7 @@
 package gowebserver
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -111,14 +112,20 @@ func ExampleWebServer_Serve() {
 }
 
 func xTestWebServerFull(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	backback := filepath.Dir(filepath.Dir(cwd))
 	conf := &Config{
 		Verbose: true,
 		Serve: []Serve{
-			{Source: ".", Endpoint: "/"},
+			{Source: cwd, Endpoint: "/cwd"},
+			{Source: backback, Endpoint: "/root"},
 		},
 		EnhancedList: true,
 		Debug:        true,
-		HTTP:         HTTP{Port: 8081},
+		HTTP:         HTTP{Port: 8082},
 		HTTPS:        HTTPS{Port: 0},
 		Monitoring: Monitoring{
 			DebugEndpoint: "/debug",
