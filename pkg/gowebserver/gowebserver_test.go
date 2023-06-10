@@ -109,3 +109,44 @@ func ExampleWebServer_Serve() {
 	close()
 	// Output:
 }
+
+func xTestWebServerFull(t *testing.T) {
+	conf := &Config{
+		Verbose: true,
+		Serve: []Serve{
+			{Source: ".", Endpoint: "/"},
+		},
+		EnhancedList: true,
+		Debug:        true,
+		HTTP:         HTTP{Port: 8081},
+		HTTPS:        HTTPS{Port: 0},
+		Monitoring: Monitoring{
+			DebugEndpoint: "/debug",
+			Metrics: Metrics{
+				Enabled: true,
+				Path:    "/metrics",
+			},
+			Trace: Trace{
+				Enabled: true,
+				URI:     "http://jaeger:14268/api/traces",
+			},
+		},
+		Upload: Serve{
+			Source:   "/tmp/upload",
+			Endpoint: "/upload",
+		},
+	}
+
+	logger, syncFunc := configLogger(conf.Verbose)
+	defer syncFunc()
+
+	httpServer, err := New(conf)
+	if err != nil {
+		logger.Sugar().Fatal(err)
+	}
+
+	close := gomainTesting.Main(httpServer.Serve)
+	time.Sleep(500 * time.Second)
+	close()
+	// Output:
+}
