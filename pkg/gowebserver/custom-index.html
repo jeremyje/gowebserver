@@ -114,6 +114,10 @@
       border-bottom: 1px solid #DDDDDD;
     }
 
+    .file-table td {
+      padding-right: .5em;
+      padding-left: .5em;
+    }
     .file-table td a {
       display: block;
       text-decoration: none;
@@ -139,7 +143,18 @@
       background-color: #CCCCCC;
     }
 
-    h3 {
+    .file-table tr .different-link {
+      border: 4px;
+      border-color: #333333;
+      background-color: #CCCCCC;
+      border-radius: .5em;
+    }
+
+    .file-table tr:nth-child(even) .different-link {
+      background-color: #BBBBBB;
+    }
+
+    h4 {
       display: flex;
       padding: .75em;
       background-color: #333333;
@@ -149,10 +164,10 @@
       justify-content: space-between;
       margin-top: 0;
     }
-    h3 .fill {
+    h4 .fill {
       flex-basis: auto;
     }
-    h3 a {
+    h4 a {
       text-decoration: none;
       background-color: #444444;
       padding-left: 1em;
@@ -161,7 +176,7 @@
       flex-basis: 1;
       border-radius: .25em;
     }
-    h3 a:hover {
+    h4 a:hover {
       background-color: #888888;
       color: #222222;
     }
@@ -170,22 +185,34 @@
 
 <body>
   <main>
-    <h3><span class="left">{{.Root}}</span><span class="options">
+    <h4><span class="left">{{.RootName}}</span><span class="options">
       {{if eq .SortBy "name"}}<a href="?sort=name-desc">Name ↓</a>{{else}}<a href="?sort=name">Name ↑</a>{{end}}
       &nbsp; {{if eq .SortBy "date"}}<a href="?sort=date-desc">Date ↓</a>{{else}}<a href="?sort=date">Date ↑</a>{{end}}
       &nbsp; {{if eq .SortBy "size"}}<a href="?sort=size-desc">Size ↓</a>{{else}}<a href="?sort=size">Size ↑</a>{{end}}</span>
-    </h3>
-    <ul class="file-list">
-      {{range $index, $element := $.DirEntries}}{{if $element.IsDir}}<li><a
-          href="{{urlEncode $element.Name}}">{{$element.Name}}/</a></li>{{end}}{{end}}
-    </ul>
-
+    </h4>
     <table class="file-table">
       <tbody>
-        {{range $index, $element := $.DirEntries}}{{if and (not $element.IsDir) (not (isImage $element.Name))}}
+        {{range $index, $element := $.DirEntries}}{{if $element.IsArchive}}
+        <tr title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}">
+          <td><a href="{{urlEncode $element.Name}}-dir/">{{$element.Name}}/</a></td>
+          <td><a href="{{urlEncode $element.Name}}" class="different-link">↓ {{humanizeBytes $element.Size}}<br /><small>{{if $.UseTimestamp}}{{humanizeTimestamp $element.ModTime}}{{else}}{{humanizeDate $element.ModTime}}{{end}}</small></a></td>
+        </tr>
+        {{else if $element.IsDir}}
+        <tr title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}">
+          <td><a href="{{urlEncode $element.Name}}">{{$element.Name}}/</a></td>
+          <td><a href="{{urlEncode $element.Name}}">Directory <small>{{if $.UseTimestamp}}{{humanizeTimestamp $element.ModTime}}{{else}}{{humanizeDate $element.ModTime}}{{end}}</small></a></td>
+        </tr>
+        {{end}}
+        {{end}}
+      </tbody>
+    </table>
+    <br/>
+    <table class="file-table">
+      <tbody>
+        {{range $index, $element := $.DirEntries}}{{if and (not $element.IsArchive) (and (not $element.IsDir) (not (isImage $element.Name)))}}
         <tr title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}">
           <td><a href="{{urlEncode $element.Name}}">{{$element.Name}}</a></td>
-          <td><a href="{{urlEncode $element.Name}}">{{humanizeBytes $element.Size}}<br /><small>{{humanizeDate $element.ModTime}}</small></a></td>
+          <td><a href="{{urlEncode $element.Name}}">{{humanizeBytes $element.Size}}<br /><small>{{if $.UseTimestamp}}{{humanizeTimestamp $element.ModTime}}{{else}}{{humanizeDate $element.ModTime}}{{end}}</small></a></td>
         </tr>
         {{end}}{{end}}
       </tbody>

@@ -196,16 +196,17 @@ func nilFuncWithError() error {
 
 func createTemplate(tmplText []byte) (*template.Template, error) {
 	tmpl := template.New("").Funcs(template.FuncMap{
-		"humanizeBytes": humanize.Bytes,
-		"isImage":       isImage,
-		"isAudio":       isAudio,
-		"isVideo":       isVideo,
-		"isOdd":         isOdd,
-		"isEven":        isEven,
-		"humanizeDate":  humanizeDate,
-		"stepBegin":     stepBegin,
-		"stepEnd":       stepEnd,
-		"urlEncode":     urlEncode,
+		"humanizeBytes":     humanize.Bytes,
+		"isImage":           isImage,
+		"isAudio":           isAudio,
+		"isVideo":           isVideo,
+		"isOdd":             isOdd,
+		"isEven":            isEven,
+		"humanizeDate":      humanizeDate,
+		"humanizeTimestamp": humanizeTimestamp,
+		"stepBegin":         stepBegin,
+		"stepEnd":           stepEnd,
+		"urlEncode":         urlEncode,
 	})
 	return tmpl.Parse(string(tmplText))
 }
@@ -224,7 +225,11 @@ func executeTemplate(tmplText []byte, params interface{}, w io.Writer) error {
 }
 
 func humanizeDate(t time.Time) string {
-	return t.Format("2006/01/02")
+	return t.Format("2006-01-02")
+}
+
+func humanizeTimestamp(t time.Time) string {
+	return t.Format("2006-01-02 03:04:05PM")
 }
 
 func isImage(name string) bool {

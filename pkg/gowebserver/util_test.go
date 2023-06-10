@@ -279,20 +279,24 @@ func TestCopyFileErrors(t *testing.T) {
 
 func TestHumanizeDate(t *testing.T) {
 	testCases := []struct {
-		date time.Time
-		want string
+		date          time.Time
+		wantDate      string
+		wantTimestamp string
 	}{
 		{
-			date: time.Date(2022, time.January, 1, 0, 0, 0, 0, time.UTC),
-			want: "2022/01/01",
+			date:          time.Date(2022, time.January, 1, 3, 4, 5, 0, time.UTC),
+			wantDate:      "2022-01-01",
+			wantTimestamp: "2022-01-01 03:04:05AM",
 		},
 		{
-			date: time.Date(2040, time.December, 31, 0, 0, 0, 0, time.UTC),
-			want: "2040/12/31",
+			date:          time.Date(2040, time.December, 31, 6, 7, 8, 0, time.UTC),
+			wantDate:      "2040-12-31",
+			wantTimestamp: "2040-12-31 06:07:08AM",
 		},
 		{
-			date: time.Date(2000, time.May, 25, 0, 0, 0, 0, time.UTC),
-			want: "2000/05/25",
+			date:          time.Date(2000, time.May, 25, 0, 0, 0, 0, time.UTC),
+			wantDate:      "2000-05-25",
+			wantTimestamp: "2000-05-25 12:00:00AM",
 		},
 	}
 
@@ -300,8 +304,11 @@ func TestHumanizeDate(t *testing.T) {
 		tc := tc
 		t.Run(tc.date.String(), func(t *testing.T) {
 			t.Parallel()
-			if diff := cmp.Diff(tc.want, humanizeDate(tc.date)); diff != "" {
+			if diff := cmp.Diff(tc.wantDate, humanizeDate(tc.date)); diff != "" {
 				t.Errorf("humanizeDate() mismatch (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.wantTimestamp, humanizeTimestamp(tc.date)); diff != "" {
+				t.Errorf("humanizeTimestamp() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

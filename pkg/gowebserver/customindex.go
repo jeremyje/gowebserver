@@ -2,6 +2,7 @@ package gowebserver
 
 import (
 	_ "embed"
+	"fmt"
 	"html/template"
 	"io/fs"
 	"net/http"
@@ -73,18 +74,28 @@ func newEntryList(sortBy string) *EntryList {
 }
 
 type DirEntry struct {
-	Name     string
-	FullPath string
-	Size     uint64
-	ModTime  time.Time
-	IsDir    bool
+	Name      string
+	FullPath  string
+	Size      uint64
+	ModTime   time.Time
+	IsDir     bool
+	IsArchive bool
+}
+
+func (d *DirEntry) String() string {
+	if d == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("%s - %t/%t", d.Name, d.IsDir, d.IsArchive)
 }
 
 type CustomIndexReport struct {
-	Root       string
-	DirEntries []*DirEntry
-	Images     []*DirEntry
-	SortBy     string
+	Root         string
+	RootName     string
+	DirEntries   []*DirEntry
+	Images       []*DirEntry
+	SortBy       string
+	UseTimestamp bool
 }
 
 type customIndexHandler struct {
@@ -147,14 +158,37 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 
 				params := &CustomIndexReport{
-					Root:       path,
-					DirEntries: []*DirEntry{},
-					SortBy:     sortBy,
+					Root:         path,
+					RootName:     strings.TrimSuffix(filepath.Base(path), nestedDirSuffix),
+					DirEntries:   []*DirEntry{},
+					SortBy:       sortBy,
+					UseTimestamp: strings.Contains(sortBy, "date"),
+				}
+
+				allFiles := map[string]any{}
+				archiveDirs := map[string]fs.DirEntry{}
+				for _, entry := range entries {
+					if strings.HasSuffix(entry.Name(), nestedDirSuffix) {
+						archiveDirs[entry.Name()] = entry
+					}
+					allFiles[entry.Name()] = entry
+				}
+				actualArchiveDir := map[string]fs.DirEntry{}
+				for name := range allFiles {
+					if archiveDir, ok := archiveDirs[name+nestedDirSuffix]; ok {
+						actualArchiveDir[name] = archiveDir
+					}
 				}
 
 				files := newEntryList(sortBy)
 				for _, entry := range entries {
 					_, statFileSpan := rootTrace.Start(readDirCtx, entry.Name())
+
+					if strings.HasSuffix(entry.Name(), nestedDirSuffix) {
+						if _, ok := actualArchiveDir[strings.TrimSuffix(entry.Name(), nestedDirSuffix)]; ok {
+							continue
+						}
+					}
 
 					size := int64(0)
 					t := now
@@ -163,12 +197,15 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						t = stat.ModTime()
 						size = stat.Size()
 					}
+
+					_, isArchive := actualArchiveDir[entry.Name()]
 					newEntry := &DirEntry{
-						FullPath: filepath.Join(path, entry.Name()),
-						Name:     entry.Name(),
-						Size:     uint64(size),
-						ModTime:  t,
-						IsDir:    entry.IsDir(),
+						FullPath:  filepath.Join(path, entry.Name()),
+						Name:      entry.Name(),
+						Size:      uint64(size),
+						ModTime:   t,
+						IsDir:     entry.IsDir() || isArchive,
+						IsArchive: isArchive,
 					}
 					files.add(newEntry)
 					statFileSpan.End()
