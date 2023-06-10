@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"net/http"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -20,6 +21,57 @@ var (
 	customIndexHTML []byte
 )
 
+type EntryList struct {
+	Entries    map[string]*DirEntry
+	EntryOrder []string
+	sortBy     string
+}
+
+func (l *EntryList) Len() int {
+	return len(l.Entries)
+}
+
+func (l *EntryList) Less(i, j int) bool {
+	iElem := l.Entries[l.EntryOrder[i]]
+	jElem := l.Entries[l.EntryOrder[j]]
+	if iElem.IsDir != jElem.IsDir {
+		return iElem.IsDir
+	}
+	switch l.sortBy {
+	case "size":
+		return iElem.Size < jElem.Size
+	case "size-desc":
+		return jElem.Size < iElem.Size
+	case "date":
+		return iElem.ModTime.Before(jElem.ModTime)
+	case "date-desc":
+		return jElem.ModTime.Before(iElem.ModTime)
+	case "name":
+		return natsort.Compare(iElem.Name, jElem.Name)
+	case "name-desc":
+		return natsort.Compare(jElem.Name, iElem.Name)
+	default:
+		return natsort.Compare(iElem.Name, jElem.Name)
+	}
+}
+
+func (l *EntryList) Swap(i, j int) {
+	l.EntryOrder[i], l.EntryOrder[j] = l.EntryOrder[j], l.EntryOrder[i]
+}
+
+func (l *EntryList) add(entry *DirEntry) {
+	l.Entries[entry.Name] = entry
+	l.EntryOrder = append(l.EntryOrder, entry.Name)
+}
+
+func newEntryList(sortBy string) *EntryList {
+	return &EntryList{
+		sortBy:     sortBy,
+		Entries:    map[string]*DirEntry{},
+		EntryOrder: []string{},
+	}
+}
+
 type DirEntry struct {
 	Name     string
 	FullPath string
@@ -32,6 +84,7 @@ type CustomIndexReport struct {
 	Root       string
 	DirEntries []*DirEntry
 	Images     []*DirEntry
+	SortBy     string
 }
 
 type customIndexHandler struct {
@@ -42,7 +95,18 @@ type customIndexHandler struct {
 	tmpl         *template.Template
 }
 
+func canonicalizeSortBy(v string) string {
+	parts := strings.Split(strings.ToLower(v), "=")
+	key := parts[0]
+	switch key {
+	case "name", "name-desc", "size", "size-desc", "date", "date-desc":
+		return key
+	}
+	return "name"
+}
+
 func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	sortBy := canonicalizeSortBy(r.URL.Query().Get("sort"))
 	rootTrace := c.tp.Tracer("customIndex")
 	ctx, span := rootTrace.Start(r.Context(), r.URL.Path)
 	defer span.End()
@@ -85,10 +149,10 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				params := &CustomIndexReport{
 					Root:       path,
 					DirEntries: []*DirEntry{},
+					SortBy:     sortBy,
 				}
 
-				files := map[string]*DirEntry{}
-				sortedFiles := []string{}
+				files := newEntryList(sortBy)
 				for _, entry := range entries {
 					_, statFileSpan := rootTrace.Start(readDirCtx, entry.Name())
 
@@ -106,21 +170,20 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						ModTime:  t,
 						IsDir:    entry.IsDir(),
 					}
-					files[newEntry.Name] = newEntry
-					sortedFiles = append(sortedFiles, newEntry.Name)
+					files.add(newEntry)
 					statFileSpan.End()
 				}
 
 				_, sortFileSpan := rootTrace.Start(readDirCtx, "sort")
-				sortFileSpan.SetAttributes(attribute.Int("num_files", len(sortedFiles)))
-				natsort.Sort(sortedFiles)
+				sortFileSpan.SetAttributes(attribute.Int("num_files", files.Len()))
+				sort.Sort(files)
 				sortFileSpan.End()
 
 				_, generateSpan := rootTrace.Start(readDirCtx, "applyTemplate")
-				generateSpan.SetAttributes(attribute.Int("num_files", len(sortedFiles)))
+				generateSpan.SetAttributes(attribute.Int("num_files", files.Len()))
 				defer generateSpan.End()
-				for _, name := range sortedFiles {
-					entry := files[name]
+				for _, name := range files.EntryOrder {
+					entry := files.Entries[name]
 					params.DirEntries = append(params.DirEntries, entry)
 				}
 

@@ -6,10 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>{{.Root}}</title>
+
   <style>
     body {
       background-color: white;
       font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
     }
 
     pre {
@@ -135,12 +138,43 @@
     .file-table tr:hover {
       background-color: #CCCCCC;
     }
+
+    h3 {
+      display: flex;
+      padding: .75em;
+      background-color: #333333;
+      color: #CCCCCC;
+      border-bottom-right-radius: .5em;
+      border-bottom-left-radius: .5em;
+      justify-content: space-between;
+      margin-top: 0;
+    }
+    h3 .fill {
+      flex-basis: auto;
+    }
+    h3 a {
+      text-decoration: none;
+      background-color: #444444;
+      padding-left: 1em;
+      padding-right: 1em;
+      color: #EEEEEE;
+      flex-basis: 1;
+      border-radius: .25em;
+    }
+    h3 a:hover {
+      background-color: #888888;
+      color: #222222;
+    }
   </style>
 </head>
 
 <body>
   <main>
-
+    <h3><span class="left">{{.Root}}</span><span class="options">
+      {{if eq .SortBy "name"}}<a href="?sort=name-desc">Name ↓</a>{{else}}<a href="?sort=name">Name ↑</a>{{end}}
+      &nbsp; {{if eq .SortBy "date"}}<a href="?sort=date-desc">Date ↓</a>{{else}}<a href="?sort=date">Date ↑</a>{{end}}
+      &nbsp; {{if eq .SortBy "size"}}<a href="?sort=size-desc">Size ↓</a>{{else}}<a href="?sort=size">Size ↑</a>{{end}}</span>
+    </h3>
     <ul class="file-list">
       {{range $index, $element := $.DirEntries}}{{if $element.IsDir}}<li><a
           href="{{urlEncode $element.Name}}">{{$element.Name}}/</a></li>{{end}}{{end}}
@@ -149,7 +183,7 @@
     <table class="file-table">
       <tbody>
         {{range $index, $element := $.DirEntries}}{{if and (not $element.IsDir) (not (isImage $element.Name))}}
-        <tr>
+        <tr title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}">
           <td><a href="{{urlEncode $element.Name}}">{{$element.Name}}</a></td>
           <td><a href="{{urlEncode $element.Name}}">{{humanizeBytes $element.Size}}<br /><small>{{humanizeDate $element.ModTime}}</small></a></td>
         </tr>
@@ -160,7 +194,7 @@
     <div class="container">
       {{range $index, $element := $.DirEntries}}{{if isImage $element.Name}}
       <a href="{{$element.Name}}"><img src="{{urlEncode $element.Name}}" class="square-image item" loading="lazy"
-          alt="{{$element.Name}} - {{humanizeBytes $element.Size}}- {{$element.ModTime}}" /></a>
+          title="{{$element.Name}} - {{humanizeBytes $element.Size}}- {{$element.ModTime}}" /></a>
       {{end}}{{end}}
     </div>
   </main>
