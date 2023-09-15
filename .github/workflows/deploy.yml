@@ -58,7 +58,7 @@ jobs:
           make coverage.txt
 
       - name: Push Code Coverage
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
           files: ./coverage.txt # optional
