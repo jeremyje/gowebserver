@@ -286,7 +286,7 @@
 
     <section id="previews">
       {{range $index, $element := $.DirEntries}}{{if isImage $element.Name}}
-      <a href="{{$element.Name}}"><img src="{{urlEncode $element.Name}}" class="square-image item" loading="lazy"
+      <a href="{{$element.Name}}"><img loading="lazy" src="{{urlEncode $element.Name}}" class="square-image item"
           title="{{$element.Name}} - {{humanizeBytes $element.Size}}- {{$element.ModTime}}" /></a>
       {{end}}{{end}}
     </section>
