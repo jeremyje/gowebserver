@@ -30,9 +30,7 @@ import (
 	_ "embed"
 
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric/instrument"
-	"go.opentelemetry.io/otel/metric/instrument/syncint64"
-	"go.opentelemetry.io/otel/metric/unit"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
@@ -51,8 +49,8 @@ type uploadHTTPHandler struct {
 	tp                 trace.TracerProvider
 	uploadHTTPPath     string
 	uploadDirectory    string
-	uploadedBytesTotal syncint64.Counter
-	uploadedFilesTotal syncint64.Counter
+	uploadedBytesTotal metric.Int64Counter
+	uploadedFilesTotal metric.Int64Counter
 }
 
 type uploadResponse struct {
@@ -149,11 +147,11 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func newUploadHandler(mc *monitoringContext, uploadHTTPPath string, uploadDirectory string) (http.Handler, error) {
 	m := mc.getMeterProvider().Meter(uploadDirectory)
 
-	uploadedBytesTotal, err := m.SyncInt64().Counter("uploaded_bytes_total", instrument.WithDescription("Number of bytes uploaded."), instrument.WithUnit(unit.Bytes))
+	uploadedBytesTotal, err := m.Int64Counter("uploaded_bytes_total", metric.WithDescription("Number of bytes uploaded."), metric.WithUnit("bytes"))
 	if err != nil {
 		return nil, err
 	}
-	uploadedFilesTotal, err := m.SyncInt64().Counter("uploaded_files_total", instrument.WithDescription("Number of files uploaded."), instrument.WithUnit(unit.Dimensionless))
+	uploadedFilesTotal, err := m.Int64Counter("uploaded_files_total", metric.WithDescription("Number of files uploaded."))
 	if err != nil {
 		return nil, err
 	}

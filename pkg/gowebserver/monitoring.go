@@ -28,11 +28,10 @@ import (
 	"go.opentelemetry.io/otel"
 	otelprom "go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/global"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -119,7 +118,7 @@ func newPrometheusExporter(m Monitoring, r *resource.Resource) (*otelprom.Export
 	}
 
 	provider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(prometheusExporter))
-	global.SetMeterProvider(provider)
+	otel.SetMeterProvider(provider)
 
 	h := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
 	return prometheusExporter, provider, h, nil
@@ -141,7 +140,7 @@ func (m *monitoringContext) getTraceProvider() trace.TracerProvider {
 
 func (m *monitoringContext) getMeterProvider() metric.MeterProvider {
 	if m == nil || m.promProvider == nil {
-		return global.MeterProvider()
+		return otel.GetMeterProvider()
 	}
 	return m.promProvider
 }

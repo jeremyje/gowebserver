@@ -20,8 +20,8 @@ docker-compose rm -v -s; docker-compose down --remove-orphans -v
 
 Application | Endpoint
 ------------|-------------------------------
-Gowebserver | http://localhost:28080
-Prometheus  | http://localhost:9090
-Jaeger      | http://localhost:16686
-Loki        | http://localhost:3100/metrics
-Grafana     | http://localhost:3000
+Gowebserver | <http://localhost:28080>
+Prometheus  | <http://localhost:9090>
+Jaeger      | <http://localhost:16686>
+Loki        | <http://localhost:3100/metrics>
+Grafana     | <http://localhost:3000>
