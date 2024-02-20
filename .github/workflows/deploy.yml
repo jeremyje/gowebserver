@@ -16,26 +16,25 @@ name: CI
 on:
   push:
     tags: ["v*"]
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 jobs:
   # Set the job key. The key is displayed as the job name
   # when a job name is not provided
   push-image:
     name: Push Images
-    # Set the type of machine to run on
     runs-on: ubuntu-latest
     steps:
-      # Checks out a copy of your repository on the ubuntu-latest machine
       - name: Checkout code
-        uses: actions/checkout@v3
+        # https://github.com/actions/checkout
+        uses: actions/checkout@v4
 
-      # https://github.com/actions/setup-go
       - name: Setup Go
-        uses: actions/setup-go@v4
+        # https://github.com/actions/setup-go
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: "1.22"
 
       - name: Install Prerequisites
         run: |
@@ -58,7 +57,8 @@ jobs:
           make coverage.txt
 
       - name: Push Code Coverage
-        uses: codecov/codecov-action@v3
+        # https://github.com/codecov/codecov-action
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
           files: ./coverage.txt # optional
@@ -73,26 +73,28 @@ jobs:
           make bin/release.tar.gz
           make release-binaries
 
-        # https://github.com/docker/login-action#github-packages-docker-registry
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        # https://github.com/docker/login-action#github-packages-docker-registry
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # https://github.com/docker/login-action#github-packages-docker-registry
       - name: Login to Docker Hub
-        uses: docker/login-action@v2
+        # https://github.com/docker/login-action#github-packages-docker-registry
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        # https://github.com/docker/setup-qemu-action
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        # https://github.com/docker/setup-buildx-action
+        uses: docker/setup-buildx-action@v3
 
       - name: Push Images (Commit)
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
@@ -114,6 +116,7 @@ jobs:
           make DOCKER_PUSH=--push REGISTRY=ghcr.io/jeremyje images
 
       - name: Create Release
+        # https://github.com/softprops/action-gh-release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
@@ -152,7 +155,8 @@ jobs:
             bin/release/server-arm64.exe
 
       - name: Publish Application
-        uses: actions/upload-artifact@v3
+        # https://github.com/actions/upload-artifact
+        uses: actions/upload-artifact@v4
         if: startsWith(github.ref, 'refs/tags/')
         with:
           name: release.tar.gz
