@@ -43,7 +43,11 @@
     }
 
     .item {
-      margin: 5px;
+      margin: 0;
+      max-height: 1000px;
+      max-width: 1000px;
+      height: auto;
+      width: auto;
     }
 
     .file-container {
@@ -118,6 +122,7 @@
       padding-right: .5em;
       padding-left: .5em;
     }
+
     .file-table td a {
       display: block;
       text-decoration: none;
@@ -164,9 +169,11 @@
       justify-content: space-between;
       margin-top: 0;
     }
+
     h4 .fill {
       flex-basis: auto;
     }
+
     h4 a {
       text-decoration: none;
       background-color: #444444;
@@ -176,9 +183,60 @@
       flex-basis: 1;
       border-radius: .25em;
     }
+
     h4 a:hover {
       background-color: #888888;
       color: #222222;
+    }
+
+    #previews {
+      /* Prevent vertical gaps */
+      line-height: 0;
+
+      -webkit-column-count: 5;
+      -webkit-column-gap: 0px;
+      -moz-column-count: 5;
+      -moz-column-gap: 0px;
+      column-count: 5;
+      column-gap: 0px;
+    }
+
+    #previews img {
+      /* Just in case there are inline attributes */
+      width: 100% !important;
+      height: auto !important;
+    }
+
+    @media (max-width: 1200px) {
+      #previews {
+        -moz-column-count: 4;
+        -webkit-column-count: 4;
+        column-count: 4;
+      }
+    }
+
+    @media (max-width: 1000px) {
+      #previews {
+        -moz-column-count: 3;
+        -webkit-column-count: 3;
+        column-count: 3;
+      }
+    }
+
+    @media (max-width: 800px) {
+      #previews {
+        -moz-column-count: 2;
+        -webkit-column-count: 2;
+        column-count: 2;
+      }
+    }
+
+    @media (max-width: 400px) {
+      #previews {
+        -moz-column-count: 1;
+        -webkit-column-count: 1;
+        column-count: 1;
+      }
     }
   </style>
 </head>
@@ -186,44 +244,52 @@
 <body>
   <main>
     <h4><span class="left">{{.RootName}}</span><span class="options">
-      {{if eq .SortBy "name"}}<a href="?sort=name-desc">Name ↓</a>{{else}}<a href="?sort=name">Name ↑</a>{{end}}
-      &nbsp; {{if eq .SortBy "date"}}<a href="?sort=date-desc">Date ↓</a>{{else}}<a href="?sort=date">Date ↑</a>{{end}}
-      &nbsp; {{if eq .SortBy "size"}}<a href="?sort=size-desc">Size ↓</a>{{else}}<a href="?sort=size">Size ↑</a>{{end}}</span>
+        {{if eq .SortBy "name"}}<a href="?sort=name-desc">Name ↓</a>{{else}}<a href="?sort=name">Name ↑</a>{{end}}
+        &nbsp; {{if eq .SortBy "date"}}<a href="?sort=date-desc">Date ↓</a>{{else}}<a href="?sort=date">Date
+          ↑</a>{{end}}
+        &nbsp; {{if eq .SortBy "size"}}<a href="?sort=size-desc">Size ↓</a>{{else}}<a href="?sort=size">Size
+          ↑</a>{{end}}</span>
     </h4>
     <table class="file-table">
       <tbody>
         {{range $index, $element := $.DirEntries}}{{if $element.IsArchive}}
         <tr title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}">
           <td><a href="{{urlEncode $element.Name}}-dir/">{{$element.Name}}/</a></td>
-          <td><a href="{{urlEncode $element.Name}}" class="different-link">↓ {{humanizeBytes $element.Size}}<br /><small>{{if $.UseTimestamp}}{{humanizeTimestamp $element.ModTime}}{{else}}{{humanizeDate $element.ModTime}}{{end}}</small></a></td>
+          <td><a href="{{urlEncode $element.Name}}" class="different-link">↓ {{humanizeBytes
+              $element.Size}}<br /><small>{{if $.UseTimestamp}}{{humanizeTimestamp
+                $element.ModTime}}{{else}}{{humanizeDate $element.ModTime}}{{end}}</small></a></td>
         </tr>
         {{else if $element.IsDir}}
         <tr title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}">
           <td><a href="{{urlEncode $element.Name}}">{{$element.Name}}/</a></td>
-          <td><a href="{{urlEncode $element.Name}}">Directory <small>{{if $.UseTimestamp}}{{humanizeTimestamp $element.ModTime}}{{else}}{{humanizeDate $element.ModTime}}{{end}}</small></a></td>
+          <td><a href="{{urlEncode $element.Name}}">Directory <small>{{if $.UseTimestamp}}{{humanizeTimestamp
+                $element.ModTime}}{{else}}{{humanizeDate $element.ModTime}}{{end}}</small></a></td>
         </tr>
         {{end}}
         {{end}}
       </tbody>
     </table>
-    <br/>
+    <br />
     <table class="file-table">
       <tbody>
-        {{range $index, $element := $.DirEntries}}{{if and (not $element.IsArchive) (and (not $element.IsDir) (not (isImage $element.Name)))}}
+        {{range $index, $element := $.DirEntries}}{{if and (not $element.IsArchive) (and (not $element.IsDir) (not
+        (isImage $element.Name)))}}
         <tr title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}">
           <td><a href="{{urlEncode $element.Name}}">{{$element.Name}}</a></td>
-          <td><a href="{{urlEncode $element.Name}}">{{humanizeBytes $element.Size}}<br /><small>{{if $.UseTimestamp}}{{humanizeTimestamp $element.ModTime}}{{else}}{{humanizeDate $element.ModTime}}{{end}}</small></a></td>
+          <td><a href="{{urlEncode $element.Name}}">{{humanizeBytes $element.Size}}<br /><small>{{if
+                $.UseTimestamp}}{{humanizeTimestamp $element.ModTime}}{{else}}{{humanizeDate
+                $element.ModTime}}{{end}}</small></a></td>
         </tr>
         {{end}}{{end}}
       </tbody>
     </table>
 
-    <div class="container">
+    <section id="previews">
       {{range $index, $element := $.DirEntries}}{{if isImage $element.Name}}
       <a href="{{$element.Name}}"><img src="{{urlEncode $element.Name}}" class="square-image item" loading="lazy"
           title="{{$element.Name}} - {{humanizeBytes $element.Size}}- {{$element.ModTime}}" /></a>
       {{end}}{{end}}
-    </div>
+    </section>
   </main>
 </body>
 
