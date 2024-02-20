@@ -59,7 +59,7 @@ IOS_PLATFORMS = #ios_amd64 ios_arm64
 DARWIN_PLATFORMS = darwin_amd64 darwin_arm64
 DRAGONFLY_PLATFORMS = dragonfly_amd64
 FREEBSD_PLATFORMS = freebsd_386 freebsd_amd64 freebsd_arm_v5 freebsd_arm_v6 freebsd_arm_v7 freebsd_arm64
-NETBSD_PLATFORMS = netbsd_386 netbsd_amd64 netbsd_arm_v5 netbsd_arm_v6 netbsd_arm_v7 netbsd_arm64
+NETBSD_PLATFORMS = netbsd_amd64 netbsd_arm64 # netbsd_386 netbsd_arm_v5 netbsd_arm_v6 netbsd_arm_v7
 OPENBSD_PLATFORMS = openbsd_386 openbsd_amd64 openbsd_arm_v5 openbsd_arm_v6 openbsd_arm_v7 openbsd_arm64 # openbsd_mips64
 PLAN9_PLATFORMS = plan9_386 plan9_amd64 plan9_arm_v5 plan9_arm_v6 plan9_arm_v7
 NICHE_PLATFORMS = js_wasm solaris_amd64 illumos_amd64 aix_ppc64 $(ANDROID_PLATFORMS) $(DARWIN_PLATFORMS) $(IOS_PLATFORMS) $(DRAGONFLY_PLATFORMS) $(FREEBSD_PLATFORMS) $(NETBSD_PLATFORMS) $(OPENBSD_PLATFORMS) $(PLAN9_PLATFORMS)
@@ -293,7 +293,7 @@ test-all: test test-10 benchmark coverage
 run: clean $(ASSETS) lint
 	$(GO) run cmd/gowebserver/gowebserver.go -http.port 8181 -path=git@github.com:jeremyje/gowebserver.git -verbose -debug
 
-multirun: clean $(ASSETS) lint
+multirun:  $(ASSETS) lint
 	$(GO) run cmd/gowebserver/gowebserver.go -path=./cmd/,./pkg/,. -verbose=true -servepath=mains,code,root -http.port 8181 -enhancedindex=true -debug
 
 install: gowebserver
