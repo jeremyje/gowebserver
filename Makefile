@@ -77,7 +77,7 @@ ASSETS = $(TEST_ARCHIVES) internal/gowebserver/testing/nested-testassets.zip int
 ALL_APPS = gowebserver certtool httpprobe
 
 ALL_BINARIES = $(foreach app,$(ALL_APPS),$(foreach platform,$(ALL_PLATFORMS),bin/go/$(platform)/$(app)$(if $(findstring windows_,$(platform)),.exe,)))
-WINDOWS_VERSIONS = 1709 1803 1809 1903 1909 2004 20H2 ltsc2022
+WINDOWS_VERSIONS = 1709 1803 1809 1903 1909 2004 20H2 ltsc2022 ltsc2025
 BUILDX_BUILDER = buildx-builder
 DOCKER_BUILDER_FLAG = --builder $(BUILDX_BUILDER) --provenance=false
 space := $(null) #
