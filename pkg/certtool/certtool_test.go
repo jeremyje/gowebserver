@@ -256,7 +256,9 @@ func TestReadKeyPair_MalformedPrivateKey(t *testing.T) {
 
 	malformedPriv = pair.PrivateKey
 	// Increment some bit in the middle of the payload.
-	malformedPriv[500]++
+	for i := 500; i < 510; i++ {
+		malformedPriv[i] += 4
+	}
 
 	pubCert, pk, err = ReadKeyPair(pair.PublicCertificate, malformedPriv)
 	assert.Nil(pubCert)
