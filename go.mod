@@ -9,7 +9,7 @@ require (
 	github.com/jeremyje/gomain v0.10.0
 	github.com/mholt/archiver/v4 v4.0.0-alpha.8
 	github.com/prometheus/client_golang v1.19.0
-	github.com/rs/cors v1.10.1
+	github.com/rs/cors v1.11.1
 	github.com/stretchr/testify v1.8.4
 	go.opentelemetry.io/contrib/instrumentation/host v0.49.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0
