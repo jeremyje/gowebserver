@@ -222,13 +222,17 @@ clean:
 check: test
 
 install/wasm/gowebserver.wasm: bin/go/js_wasm/gowebserver
+	mkdir -p $(dir $@)
 	cp -f $< $@
 
 install/wasm/wasm_exec.js:
-	cp -f $(shell go env GOROOT)/misc/wasm/wasm_exec.js $@
+	mkdir -p $(dir $@)
+	cp -f $(shell go env GOROOT)/lib/wasm/wasm_exec.js $@
 
 install/wasm/wasm_exec.html:
+	mkdir -p $(dir $@)
 	cp -f $(shell go env GOROOT)/misc/wasm/wasm_exec.html $@
+	sed -i 's/..\/..\/lib\/wasm\///g' $@
 
 internal/gowebserver/testing/nodir-testassets.zip: $(TEST_ARCHIVES) internal/gowebserver/testing/single-testassets.zip internal/gowebserver/testing/nested-testassets.zip
 	cd internal/gowebserver/testing/testassets; $(ZIP) -qr9 ../../nodir-testassets.zip index.html assets/1.txt assets/2.txt site.js "weird #1.txt" weird#.txt weird$$.txt assets/more/3.txt assets/four/4.txt assets/fivesix/5.txt assets/fivesix/6.txt
