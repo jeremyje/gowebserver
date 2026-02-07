@@ -55,6 +55,18 @@ sc.exe start gowebserver
 |macOS   | amd64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.7.1/server-amd64-darwin`
 |macOS   | arm64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v2.7.1/server-arm64-darwin`
 
+## Docker Images
+
+* [gowebserver](https://hub.docker.com/r/jeremyje/gowebserver/tags)
+* [certtool](https://hub.docker.com/r/jeremyje/certtool/tags)
+* [httpprobe](https://hub.docker.com/r/jeremyje/httpprobe/tags)
+
+```bash
+docker pull docker.io/jeremyje/gowebserver
+docker pull docker.io/jeremyje/certtool
+docker pull docker.io/jeremyje/httpprobe
+```
+
 ## Build
 
 ![example workflow](https://github.com/jeremyje/gowebserver/actions/workflows/deploy.yml/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/jeremyje/gowebserver)](https://goreportcard.com/report/github.com/jeremyje/gowebserver) [![Go Reference](https://pkg.go.dev/badge/github.com/jeremyje/gowebserver.svg)](https://pkg.go.dev/github.com/jeremyje/gowebserver) [![codebeat badge](https://codebeat.co/badges/55274aa8-2846-40d2-96c1-f0c9175534ae)](https://codebeat.co/projects/github-com-jeremyje-gowebserver-main) [![codecov](https://codecov.io/gh/jeremyje/gowebserver/branch/main/graph/badge.svg)](https://codecov.io/gh/jeremyje/gowebserver) [![Total alerts](https://img.shields.io/lgtm/alerts/g/jeremyje/gowebserver.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jeremyje/gowebserver/alerts/)
@@ -62,6 +74,13 @@ sc.exe start gowebserver
 Install [Go 1.19 or newer](https://golang.org/dl/).
 
 ```bash
+echo '# Non-free Repositories' | sudo tee /etc/apt/sources.list.d/debian-nonfree.list > /dev/null
+for target in $(lsb_release -c -s)
+do
+  echo "deb http://deb.debian.org/debian $target contrib non-free non-free-firmware" | sudo tee -a /etc/apt/sources.list.d/debian-nonfree.list > /dev/null
+  echo "deb-src http://deb.debian.org/debian $target contrib non-free non-free-firmware" | sudo tee -a /etc/apt/sources.list.d/debian-nonfree.list > /dev/null
+done
+
 # Install Dependencies for Building and Testing
 sudo apt-add-repository non-free
 sudo apt-get update
@@ -87,6 +106,7 @@ make bench
 Sample code for embedding a HTTP/HTTPS server in your application.
 
 ```go
+// Package main provides a web server to serve the file system of the host system. This is very insecure!
 package main
 
 import (
@@ -113,5 +133,4 @@ func main() {
   termCh := make(chan error)
   httpServer.Serve(termCh)
 }
-
 ```

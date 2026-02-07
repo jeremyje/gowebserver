@@ -16,6 +16,12 @@ ARG WINDOWS_VERSION=1809
 
 FROM mcr.microsoft.com/windows/nanoserver:${WINDOWS_VERSION}
 
+ARG BUILD_DATE
+ARG VCS_REF
+ARG BUILD_TIME
+ARG BUILD_VERSION
+ARG BINARY_NAME
+
 COPY bin/go/windows_amd64/httpprobe.exe /app/httpprobe.exe
 COPY LICENSE /app/LICENSE
 
