@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>/projects/photos/ - Index</title>
+<style>
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f5f6f8;
+    --text: #1a1a1a;
+    --text-secondary: #555;
+    --border: #dde0e4;
+    --hover-bg: #e8eaee;
+    --link: #0366d6;
+    --overlay-bg: rgba(255, 255, 255, 0.85);
+    --shadow: rgba(0, 0, 0, 0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1b1e;
+      --bg-secondary: #232528;
+      --text: #e0e0e0;
+      --text-secondary: #999;
+      --border: #3a3d42;
+      --hover-bg: #35383e;
+      --link: #58a6ff;
+      --overlay-bg: rgba(30, 31, 34, 0.88);
+      --shadow: rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  html {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text);
+    background: var(--bg);
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    padding: 16px;
+  }
+
+  h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+    word-break: break-all;
+  }
+
+  /* Directory listing */
+  .listing {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+
+  .listing-header {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .listing-header .col-name { flex: 1; min-width: 0; }
+  .listing-header .col-size { width: 80px; text-align: right; }
+  .listing-header .col-modified { width: 110px; text-align: right; padding-left: 12px; }
+
+  .sort-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.12s ease;
+  }
+
+  .sort-link:hover {
+    color: var(--text);
+  }
+
+  .sort-arrow {
+    font-size: 0.6rem;
+    line-height: 1;
+  }
+
+  .entry {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+    transition: background-color 0.12s ease;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: pointer;
+  }
+
+  .entry:last-child {
+    border-bottom: none;
+  }
+
+  .entry:hover,
+  .entry:focus {
+    background-color: var(--hover-bg);
+  }
+
+  .entry:active {
+    background-color: var(--hover-bg);
+  }
+
+  .entry .col-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--link);
+    font-weight: 500;
+  }
+
+  .entry .icon {
+    width: 24px;
+    margin-right: 8px;
+    flex-shrink: 0;
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .entry .col-size {
+    width: 80px;
+    text-align: right;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+
+  .entry .col-modified {
+    width: 110px;
+    text-align: right;
+    flex-shrink: 0;
+    padding-left: 12px;
+  }
+
+  .entry .col-modified .date,
+  .entry .col-modified .time {
+    display: block;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    color: var(--text-secondary);
+  }
+
+  /* Responsive: compact on small screens */
+  @media (max-width: 480px) {
+    body { padding: 8px; }
+
+    .listing-header .col-size,
+    .listing-header .col-modified { display: none; }
+
+    .entry .col-size { width: 60px; font-size: 0.7rem; }
+    .entry .col-modified { width: 90px; }
+    .entry .col-modified .date,
+    .entry .col-modified .time { font-size: 0.65rem; }
+    .entry { padding: 10px 12px; }
+  }
+
+  /* Photo grid section */
+  .photos-heading {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-secondary);
+  }
+
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 480px) {
+    .photo-grid {
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+    }
+  }
+
+  @media (min-width: 900px) {
+    .photo-grid {
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+    }
+  }
+
+  .photo-card {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    cursor: pointer;
+  }
+
+  .photo-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.2s ease;
+  }
+
+  .photo-card:hover img,
+  .photo-card:focus-within img {
+    transform: scale(1.06);
+  }
+
+  .photo-card .photo-meta {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 28px 10px 8px;
+    background: linear-gradient(to top, var(--overlay-bg) 60%, transparent);
+    transform: translateY(100%);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0;
+  }
+
+  .photo-card:hover .photo-meta,
+  .photo-card:focus-within .photo-meta {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .photo-meta .photo-name {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .photo-meta .photo-info {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  /* Touch: show meta on tap via focus */
+  .photo-card:focus .photo-meta {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .photo-card:focus img {
+    transform: scale(1.06);
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<h1>/projects/photos/</h1>
+
+<!-- Directory Listing -->
+<div class="listing">
+  <div class="listing-header">
+    <span class="col-name"><a class="sort-link" href="?sort=name&order=asc">Name <span class="sort-arrow">&#x25B2;</span></a></span>
+    <span class="col-size"><a class="sort-link" href="?sort=size&order=desc">Size <span class="sort-arrow">&#x25BC;</span></a></span>
+    <span class="col-modified"><a class="sort-link" href="?sort=modified&order=desc">Modified <span class="sort-arrow">&#x25BC;</span></a></span>
+  </div>
+
+  <a class="entry" href="../">
+    <span class="icon">&#x1F4C1;</span>
+    <span class="col-name">..</span>
+    <span class="col-size">&mdash;</span>
+    <span class="col-modified">
+      <span class="date">&mdash;</span>
+      <span class="time"></span>
+    </span>
+  </a>
+
+  <a class="entry" href="documents/">
+    <span class="icon">&#x1F4C1;</span>
+    <span class="col-name">documents</span>
+    <span class="col-size">&mdash;</span>
+    <span class="col-modified">
+      <span class="date">2026-01-15</span>
+      <span class="time">09:32:10</span>
+    </span>
+  </a>
+
+  <a class="entry" href="vacation/">
+    <span class="icon">&#x1F4C1;</span>
+    <span class="col-name">vacation</span>
+    <span class="col-size">&mdash;</span>
+    <span class="col-modified">
+      <span class="date">2026-02-01</span>
+      <span class="time">14:05:33</span>
+    </span>
+  </a>
+
+  <a class="entry" href="thumbnails/">
+    <span class="icon">&#x1F4C1;</span>
+    <span class="col-name">thumbnails</span>
+    <span class="col-size">&mdash;</span>
+    <span class="col-modified">
+      <span class="date">2026-02-04</span>
+      <span class="time">22:17:45</span>
+    </span>
+  </a>
+
+  <a class="entry" href="readme.txt">
+    <span class="icon">&#x1F4C4;</span>
+    <span class="col-name">readme.txt</span>
+    <span class="col-size">1.2 KB</span>
+    <span class="col-modified">
+      <span class="date">2025-12-20</span>
+      <span class="time">08:00:04</span>
+    </span>
+  </a>
+
+  <a class="entry" href="notes.md">
+    <span class="icon">&#x1F4C4;</span>
+    <span class="col-name">notes.md</span>
+    <span class="col-size">4.7 KB</span>
+    <span class="col-modified">
+      <span class="date">2026-01-28</span>
+      <span class="time">17:44:12</span>
+    </span>
+  </a>
+
+  <a class="entry" href="archive.zip">
+    <span class="icon">&#x1F4C4;</span>
+    <span class="col-name">archive.zip</span>
+    <span class="col-size">52 MB</span>
+    <span class="col-modified">
+      <span class="date">2026-02-05</span>
+      <span class="time">11:23:59</span>
+    </span>
+  </a>
+
+  <a class="entry" href="sunset.jpg">
+    <span class="icon">&#x1F5BC;</span>
+    <span class="col-name">sunset.jpg</span>
+    <span class="col-size">3.4 MB</span>
+    <span class="col-modified">
+      <span class="date">2026-01-10</span>
+      <span class="time">18:45:02</span>
+    </span>
+  </a>
+
+  <a class="entry" href="mountain.png">
+    <span class="icon">&#x1F5BC;</span>
+    <span class="col-name">mountain.png</span>
+    <span class="col-size">5.1 MB</span>
+    <span class="col-modified">
+      <span class="date">2026-01-22</span>
+      <span class="time">07:12:30</span>
+    </span>
+  </a>
+
+  <a class="entry" href="city-skyline.jpg">
+    <span class="icon">&#x1F5BC;</span>
+    <span class="col-name">city-skyline.jpg</span>
+    <span class="col-size">2.8 MB</span>
+    <span class="col-modified">
+      <span class="date">2026-02-02</span>
+      <span class="time">20:30:18</span>
+    </span>
+  </a>
+
+  <a class="entry" href="forest-trail.jpg">
+    <span class="icon">&#x1F5BC;</span>
+    <span class="col-name">forest-trail.jpg</span>
+    <span class="col-size">4.2 MB</span>
+    <span class="col-modified">
+      <span class="date">2026-01-30</span>
+      <span class="time">13:55:44</span>
+    </span>
+  </a>
+
+  <a class="entry" href="beach-waves.jpg">
+    <span class="icon">&#x1F5BC;</span>
+    <span class="col-name">beach-waves.jpg</span>
+    <span class="col-size">3.9 MB</span>
+    <span class="col-modified">
+      <span class="date">2026-02-06</span>
+      <span class="time">10:08:55</span>
+    </span>
+  </a>
+
+  <a class="entry" href="portrait.png">
+    <span class="icon">&#x1F5BC;</span>
+    <span class="col-name">portrait.png</span>
+    <span class="col-size">1.6 MB</span>
+    <span class="col-modified">
+      <span class="date">2025-11-14</span>
+      <span class="time">15:22:07</span>
+    </span>
+  </a>
+</div>
+
+<!-- Photo Grid -->
+<p class="photos-heading">Photos</p>
+<div class="photo-grid">
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/sunset/400/400" alt="sunset.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">sunset.jpg</span>
+      <span class="photo-info">3.4 MB &middot; 2026-01-10</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/mountain/400/400" alt="mountain.png" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">mountain.png</span>
+      <span class="photo-info">5.1 MB &middot; 2026-01-22</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/citysky/400/400" alt="city-skyline.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">city-skyline.jpg</span>
+      <span class="photo-info">2.8 MB &middot; 2026-02-02</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/forest/400/400" alt="forest-trail.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">forest-trail.jpg</span>
+      <span class="photo-info">4.2 MB &middot; 2026-01-30</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/beach/400/400" alt="beach-waves.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">beach-waves.jpg</span>
+      <span class="photo-info">3.9 MB &middot; 2026-02-06</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/portrait/400/400" alt="portrait.png" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">portrait.png</span>
+      <span class="photo-info">1.6 MB &middot; 2025-11-14</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/aurora/400/400" alt="aurora-borealis.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">aurora-borealis.jpg</span>
+      <span class="photo-info">4.8 MB &middot; 2026-01-05</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/canyon/400/400" alt="grand-canyon.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">grand-canyon.jpg</span>
+      <span class="photo-info">6.2 MB &middot; 2025-12-18</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/waterfall/400/400" alt="waterfall.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">waterfall.jpg</span>
+      <span class="photo-info">3.1 MB &middot; 2026-01-12</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/lighthouse/400/400" alt="lighthouse.png" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">lighthouse.png</span>
+      <span class="photo-info">2.4 MB &middot; 2025-11-30</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/tulips/400/400" alt="tulip-field.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">tulip-field.jpg</span>
+      <span class="photo-info">3.7 MB &middot; 2026-01-20</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/desert/400/400" alt="desert-dunes.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">desert-dunes.jpg</span>
+      <span class="photo-info">5.5 MB &middot; 2025-12-05</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/cabin/400/400" alt="winter-cabin.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">winter-cabin.jpg</span>
+      <span class="photo-info">2.9 MB &middot; 2026-01-02</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/cherry/400/400" alt="cherry-blossoms.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">cherry-blossoms.jpg</span>
+      <span class="photo-info">4.1 MB &middot; 2026-01-18</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/bridge/400/400" alt="golden-gate.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">golden-gate.jpg</span>
+      <span class="photo-info">3.3 MB &middot; 2025-12-22</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/volcano/400/400" alt="volcano-eruption.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">volcano-eruption.jpg</span>
+      <span class="photo-info">7.0 MB &middot; 2026-02-01</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/coral/400/400" alt="coral-reef.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">coral-reef.jpg</span>
+      <span class="photo-info">4.5 MB &middot; 2026-01-08</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/vineyard/400/400" alt="vineyard.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">vineyard.jpg</span>
+      <span class="photo-info">3.0 MB &middot; 2025-11-25</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/glacier/400/400" alt="glacier-lake.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">glacier-lake.jpg</span>
+      <span class="photo-info">5.8 MB &middot; 2026-01-14</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/bamboo/400/400" alt="bamboo-grove.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">bamboo-grove.jpg</span>
+      <span class="photo-info">2.6 MB &middot; 2026-01-25</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/stars/400/400" alt="starry-night.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">starry-night.jpg</span>
+      <span class="photo-info">6.4 MB &middot; 2025-12-31</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/meadow/400/400" alt="alpine-meadow.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">alpine-meadow.jpg</span>
+      <span class="photo-info">3.5 MB &middot; 2026-01-16</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/harbor/400/400" alt="fishing-harbor.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">fishing-harbor.jpg</span>
+      <span class="photo-info">2.2 MB &middot; 2025-12-10</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/lavender/400/400" alt="lavender-fields.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">lavender-fields.jpg</span>
+      <span class="photo-info">4.0 MB &middot; 2026-01-28</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/castle/400/400" alt="hilltop-castle.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">hilltop-castle.jpg</span>
+      <span class="photo-info">5.3 MB &middot; 2025-12-15</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/jellyfish/400/400" alt="jellyfish.png" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">jellyfish.png</span>
+      <span class="photo-info">1.8 MB &middot; 2026-02-03</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/autumn/400/400" alt="autumn-road.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">autumn-road.jpg</span>
+      <span class="photo-info">3.6 MB &middot; 2025-11-08</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/pagoda/400/400" alt="japanese-pagoda.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">japanese-pagoda.jpg</span>
+      <span class="photo-info">4.4 MB &middot; 2026-01-06</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/snowpeak/400/400" alt="snow-peak.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">snow-peak.jpg</span>
+      <span class="photo-info">5.9 MB &middot; 2026-01-31</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/market/400/400" alt="street-market.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">street-market.jpg</span>
+      <span class="photo-info">2.7 MB &middot; 2025-12-28</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/firepit/400/400" alt="campfire-night.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">campfire-night.jpg</span>
+      <span class="photo-info">3.2 MB &middot; 2026-02-04</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/parrot/400/400" alt="tropical-parrot.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">tropical-parrot.jpg</span>
+      <span class="photo-info">2.1 MB &middot; 2026-01-09</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/sailboat/400/400" alt="sailboat.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">sailboat.jpg</span>
+      <span class="photo-info">3.8 MB &middot; 2025-12-02</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/cactus/400/400" alt="cactus-garden.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">cactus-garden.jpg</span>
+      <span class="photo-info">1.9 MB &middot; 2026-01-21</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/foxes/400/400" alt="arctic-fox.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">arctic-fox.jpg</span>
+      <span class="photo-info">2.5 MB &middot; 2025-11-19</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/temple/400/400" alt="ancient-temple.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">ancient-temple.jpg</span>
+      <span class="photo-info">5.0 MB &middot; 2026-01-03</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/rainbow/400/400" alt="double-rainbow.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">double-rainbow.jpg</span>
+      <span class="photo-info">4.3 MB &middot; 2026-02-05</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/cliffs/400/400" alt="sea-cliffs.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">sea-cliffs.jpg</span>
+      <span class="photo-info">3.9 MB &middot; 2025-12-08</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/butterfly/400/400" alt="monarch-butterfly.png" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">monarch-butterfly.png</span>
+      <span class="photo-info">1.4 MB &middot; 2026-01-26</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/hotspring/400/400" alt="hot-spring.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">hot-spring.jpg</span>
+      <span class="photo-info">4.7 MB &middot; 2026-01-11</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/windmill/400/400" alt="dutch-windmill.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">dutch-windmill.jpg</span>
+      <span class="photo-info">2.3 MB &middot; 2025-12-25</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/rapids/400/400" alt="white-water-rapids.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">white-water-rapids.jpg</span>
+      <span class="photo-info">5.2 MB &middot; 2026-01-29</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/sunflower/400/400" alt="sunflower-field.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">sunflower-field.jpg</span>
+      <span class="photo-info">3.4 MB &middot; 2026-02-06</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/eagle/400/400" alt="bald-eagle.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">bald-eagle.jpg</span>
+      <span class="photo-info">2.8 MB &middot; 2025-11-22</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/mosque/400/400" alt="blue-mosque.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">blue-mosque.jpg</span>
+      <span class="photo-info">6.1 MB &middot; 2026-01-07</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/pond/400/400" alt="lily-pond.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">lily-pond.jpg</span>
+      <span class="photo-info">1.7 MB &middot; 2026-01-24</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/cave/400/400" alt="ice-cave.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">ice-cave.jpg</span>
+      <span class="photo-info">4.6 MB &middot; 2025-12-12</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/kitten/400/400" alt="sleeping-kitten.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">sleeping-kitten.jpg</span>
+      <span class="photo-info">1.5 MB &middot; 2026-02-07</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/redwood/400/400" alt="redwood-trees.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">redwood-trees.jpg</span>
+      <span class="photo-info">5.6 MB &middot; 2026-01-17</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/rickshaw/400/400" alt="tokyo-street.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">tokyo-street.jpg</span>
+      <span class="photo-info">3.0 MB &middot; 2025-12-20</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/horses/400/400" alt="wild-horses.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">wild-horses.jpg</span>
+      <span class="photo-info">4.2 MB &middot; 2026-01-13</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/fjord/400/400" alt="norwegian-fjord.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">norwegian-fjord.jpg</span>
+      <span class="photo-info">6.8 MB &middot; 2026-02-02</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/macaw/400/400" alt="scarlet-macaw.png" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">scarlet-macaw.png</span>
+      <span class="photo-info">2.0 MB &middot; 2025-11-28</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/rice/400/400" alt="rice-terraces.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">rice-terraces.jpg</span>
+      <span class="photo-info">3.7 MB &middot; 2026-01-19</span>
+    </div>
+  </div>
+
+  <div class="photo-card" tabindex="0">
+    <img src="https://picsum.photos/seed/comet/400/400" alt="comet-trail.jpg" loading="lazy" decoding="async">
+    <div class="photo-meta">
+      <span class="photo-name">comet-trail.jpg</span>
+      <span class="photo-info">7.2 MB &middot; 2025-12-30</span>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">Go Web Server</div>
+
+</body>
+</html>
