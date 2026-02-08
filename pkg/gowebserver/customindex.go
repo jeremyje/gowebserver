@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
+	"log"
+	"mime"
 	"net/http"
 	"path/filepath"
 	"sort"
@@ -80,13 +82,14 @@ type DirEntry struct {
 	ModTime   time.Time
 	IsDir     bool
 	IsArchive bool
+	IconClass string
 }
 
 func (d *DirEntry) String() string {
 	if d == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("%s - %t/%t", d.Name, d.IsDir, d.IsArchive)
+	return fmt.Sprintf("%s - %t/%t (%s)", d.Name, d.IsDir, d.IsArchive, d.IconClass)
 }
 
 type CustomIndexReport struct {
@@ -114,6 +117,67 @@ func canonicalizeSortBy(v string) string {
 		return key
 	}
 	return "name"
+}
+
+var (
+	mimeIconMap = map[string]string{
+		".":                         "folder",
+		"image":                     "image",
+		"application/pdf":           "pdf",
+		"audio":                     "audio",
+		"text":                      "text",
+		"video":                     "video",
+		".txt":                      "text",
+		".pdf":                      "pdf",
+		".doc":                      "doc",
+		".xls":                      "spreadsheet",
+		".ppt":                      "presentation",
+		".jpg":                      "image",
+		".mp4":                      "video",
+		".mp3":                      "audio",
+		".zip":                      "archive",
+		".cc":                       "code",
+		".sh":                       "terminal",
+		".rar":                      "archive",
+		".7z":                       "archive",
+		".xz":                       "archive",
+		".bz2":                      "archive",
+		".tar":                      "archive",
+		".gz":                       "archive",
+		".ps1":                      "terminal",
+		".psm1":                     "terminal",
+		".cmd":                      "terminal",
+		".bash":                     "terminal",
+		".download":                 "download",
+		"application/x-shellscript": "terminal",
+	}
+)
+
+func nameToIconClass(isDir bool, name string) string {
+	ext := filepath.Ext(strings.ToLower(name))
+	if isDir {
+		return "folder"
+	}
+
+	if val, ok := mimeIconMap[ext]; ok {
+		return val
+	}
+
+	mimeType := mime.TypeByExtension(ext)
+
+	if mimeType != "" {
+		if val, ok := mimeIconMap[mimeType]; ok {
+			return val
+		}
+		if parts := strings.Split(mimeType, "/"); len(parts) > 1 {
+			if val, ok := mimeIconMap[parts[0]]; ok {
+				return val
+			}
+		}
+	}
+
+	log.Printf("%s > %s", ext, mimeType)
+	return "unknown"
 }
 
 func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -199,13 +263,15 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					}
 
 					_, isArchive := actualArchiveDir[entry.Name()]
+					isDir := entry.IsDir() || isArchive
 					newEntry := &DirEntry{
 						FullPath:  filepath.Join(path, entry.Name()),
 						Name:      entry.Name(),
 						Size:      uint64(size),
 						ModTime:   t,
-						IsDir:     entry.IsDir() || isArchive,
+						IsDir:     isDir,
 						IsArchive: isArchive,
+						IconClass: nameToIconClass(isDir, entry.Name()),
 					}
 					files.add(newEntry)
 					statFileSpan.End()
