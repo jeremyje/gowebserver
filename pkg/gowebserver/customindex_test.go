@@ -6,9 +6,28 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/google/go-cmp/cmp"
 	gowsTesting "github.com/jeremyje/gowebserver/v2/internal/gowebserver/testing"
 )
+
+func TestDirEntryString(t *testing.T) {
+	entry := DirEntry{
+		Name:      "abc.txt",
+		FullPath:  "/abc.txt",
+		Size:      500,
+		ModTime:   time.Now(),
+		IsDir:     false,
+		IsArchive: true,
+		IconClass: "archive",
+	}
+	got := entry.String()
+	want := `abc.txt: dir= false, archive= true iconClass= "archive"`
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("nestedFS.Mode() mismatch (-want +got):\n%s", diff)
+	}
+}
 
 func TestNameToIconClass(t *testing.T) {
 	testCases := []struct {
@@ -24,12 +43,22 @@ func TestNameToIconClass(t *testing.T) {
 		{input: "abc.xls", isDir: false, want: "spreadsheet"},
 		{input: "abc.ppt", isDir: false, want: "presentation"},
 		{input: "abc.jpg", isDir: false, want: "image"},
+		{input: "abc.png", isDir: false, want: "image"},
+		{input: "abc.webp", isDir: false, want: "image"},
+		{input: "abc.tiff", isDir: false, want: "image"},
 		{input: "abc.mp4", isDir: false, want: "video"},
 		{input: "abc.m4v", isDir: false, want: "video"},
 		{input: "abc.m4a", isDir: false, want: "audio"},
 		{input: "abc.avi", isDir: false, want: "video"},
 		{input: "abc.wmv", isDir: false, want: "video"},
 		{input: "abc.flv", isDir: false, want: "video"},
+		{input: "abc.3gp", isDir: false, want: "video"},
+		{input: "abc.mpeg", isDir: false, want: "video"},
+		{input: "abc.mov", isDir: false, want: "video"},
+		{input: "abc.qt", isDir: false, want: "video"},
+		{input: "abc.webm", isDir: false, want: "video"},
+		{input: "abc.xvid", isDir: false, want: "video"},
+		{input: "abc.divx", isDir: false, want: "video"},
 		{input: "abc.mp3", isDir: false, want: "audio"},
 		{input: "abc.ogg", isDir: false, want: "audio"},
 		{input: "abc.m4a", isDir: false, want: "audio"},
@@ -48,6 +77,7 @@ func TestNameToIconClass(t *testing.T) {
 		{input: "abc.cmd", isDir: false, want: "terminal"},
 		{input: "abc.ps1", isDir: false, want: "terminal"},
 		{input: "abc.download", isDir: false, want: "download"},
+		{input: "abc.exe", isDir: false, want: "terminal"},
 	}
 
 	for _, tc := range testCases {

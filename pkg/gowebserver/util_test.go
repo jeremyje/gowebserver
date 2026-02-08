@@ -338,6 +338,7 @@ func TestIsImage(t *testing.T) {
 		isImage bool
 		isAudio bool
 		isVideo bool
+		isMedia bool
 	}{
 		{
 			name:    "testdata/hi-template.html",
@@ -346,26 +347,32 @@ func TestIsImage(t *testing.T) {
 		{
 			name:    "testdata/image.jpg",
 			isImage: true,
+			isMedia: true,
 		},
 		{
 			name:    "testdata/image.gif",
 			isImage: true,
+			isMedia: true,
 		},
 		{
 			name:    "testdata/image.jpeg",
 			isImage: true,
+			isMedia: true,
 		},
 		{
 			name:    "testdata/image.png",
 			isImage: true,
+			isMedia: true,
 		},
 		{
 			name:    "testdata/image.mp4",
 			isVideo: true,
+			isMedia: true,
 		},
 		{
 			name:    "testdata.png/image.mp4",
 			isVideo: true,
+			isMedia: true,
 		},
 		{
 			name:    "testdata/sound.mp3",
@@ -374,6 +381,9 @@ func TestIsImage(t *testing.T) {
 		{
 			name:    "testdata/sound.wav",
 			isAudio: true,
+		},
+		{
+			name: "testdata/doc.txt",
 		},
 	}
 
@@ -397,6 +407,13 @@ func TestIsImage(t *testing.T) {
 			t.Parallel()
 			if diff := cmp.Diff(tc.isVideo, isVideo(tc.name)); diff != "" {
 				t.Errorf("isVideo() mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+		t.Run(fmt.Sprintf("isMedia(%s)", tc.name), func(t *testing.T) {
+			t.Parallel()
+			if diff := cmp.Diff(tc.isMedia, isMedia(tc.name)); diff != "" {
+				t.Errorf("isMedia() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
