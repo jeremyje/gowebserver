@@ -39,6 +39,39 @@
       --icon-disc: #6366f1;
       --icon-config: #78716c;
       --icon-font: #0d9488;
+      --icon-download: #059669;
+      --hover-folder: #dbeafe;
+      --hover-text: #e5e7eb;
+      --hover-pdf: #fee2e2;
+      --hover-doc: #dbeafe;
+      --hover-spreadsheet: #dcfce7;
+      --hover-presentation: #ffedd5;
+      --hover-image: #ede9fe;
+      --hover-video: #fce7f3;
+      --hover-audio: #fef3c7;
+      --hover-archive: #fef9c3;
+      --hover-code: #cffafe;
+      --hover-terminal: #e2e8f0;
+      --hover-disc: #e0e7ff;
+      --hover-config: #e7e5e4;
+      --hover-font: #ccfbf1;
+      --hover-download: #d1fae5;
+      --icon-folder-hover: #1d4ed8;
+      --icon-text-hover: #4b5563;
+      --icon-pdf-hover: #b91c1c;
+      --icon-doc-hover: #1d4ed8;
+      --icon-spreadsheet-hover: #15803d;
+      --icon-presentation-hover: #c2410c;
+      --icon-image-hover: #6d28d9;
+      --icon-video-hover: #be185d;
+      --icon-audio-hover: #b45309;
+      --icon-archive-hover: #854d0e;
+      --icon-code-hover: #0e7490;
+      --icon-terminal-hover: #475569;
+      --icon-disc-hover: #4338ca;
+      --icon-config-hover: #57534e;
+      --icon-font-hover: #0f766e;
+      --icon-download-hover: #047857;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -67,6 +100,39 @@
         --icon-disc: #818cf8;
         --icon-config: #a8a29e;
         --icon-font: #2dd4bf;
+        --icon-download: #34d399;
+        --hover-folder: #1e3a5f;
+        --hover-text: #374151;
+        --hover-pdf: #4c1d1d;
+        --hover-doc: #1e3a5f;
+        --hover-spreadsheet: #14432a;
+        --hover-presentation: #4a2512;
+        --hover-image: #2e1a47;
+        --hover-video: #4a1942;
+        --hover-audio: #4a3012;
+        --hover-archive: #3d2e0a;
+        --hover-code: #0c3547;
+        --hover-terminal: #2d3748;
+        --hover-disc: #272462;
+        --hover-config: #3a3632;
+        --hover-font: #0d3d38;
+        --hover-download: #0d3b2e;
+        --icon-folder-hover: #93bbfd;
+        --icon-text-hover: #d1d5db;
+        --icon-pdf-hover: #fca5a5;
+        --icon-doc-hover: #93bbfd;
+        --icon-spreadsheet-hover: #86efac;
+        --icon-presentation-hover: #fdba74;
+        --icon-image-hover: #c4b5fd;
+        --icon-video-hover: #f9a8d4;
+        --icon-audio-hover: #fcd34d;
+        --icon-archive-hover: #fbbf24;
+        --icon-code-hover: #67e8f9;
+        --icon-terminal-hover: #cbd5e1;
+        --icon-disc-hover: #a5b4fc;
+        --icon-config-hover: #d6d3d1;
+        --icon-font-hover: #5eead4;
+        --icon-download-hover: #6ee7b7;
       }
     }
 
@@ -153,26 +219,41 @@
     .entry {
       display: flex;
       align-items: center;
-      padding: 10px 16px;
-      text-decoration: none;
-      color: var(--text);
-      transition: background-color 0.12s ease;
       -webkit-user-select: none;
       user-select: none;
-      cursor: pointer;
     }
 
     .entry:nth-child(odd) {
       background-color: var(--bg-secondary);
     }
 
-    .entry:hover,
-    .entry:focus {
+    .entry:hover {
       background-color: var(--hover-bg);
     }
 
-    .entry:active {
-      background-color: var(--hover-bg);
+    .entry .icon-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      align-self: stretch;
+      width: 48px;
+      flex-shrink: 0;
+      text-decoration: none;
+      color: inherit;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0.08);
+      transition: background-color 0.15s ease;
+    }
+
+    .entry .content-link {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      padding: 15px 16px 15px 6px;
+      text-decoration: none;
+      color: var(--text);
+      cursor: pointer;
     }
 
     .entry .col-name {
@@ -186,9 +267,8 @@
     }
 
     .entry .icon {
-      width: 20px;
-      height: 20px;
-      margin-right: 10px;
+      width: 22px;
+      height: 22px;
       flex-shrink: 0;
       display: flex;
       align-items: center;
@@ -197,13 +277,13 @@
       transition: transform 0.2s ease, color 0.2s ease;
     }
 
-    .entry:hover .icon {
-      transform: scale(1.2) translateY(-1px);
+    .entry .icon-link:hover .icon {
+      transform: scale(1.45);
     }
 
     .entry .icon svg {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       fill: none;
       stroke: currentColor;
       stroke-width: 1.5;
@@ -271,6 +351,138 @@
       color: var(--icon-font);
     }
 
+    .icon-download {
+      color: var(--icon-download);
+    }
+
+    .icon-link:hover .icon-folder {
+      color: var(--icon-folder-hover);
+    }
+
+    .icon-link:hover .icon-text {
+      color: var(--icon-text-hover);
+    }
+
+    .icon-link:hover .icon-pdf {
+      color: var(--icon-pdf-hover);
+    }
+
+    .icon-link:hover .icon-doc {
+      color: var(--icon-doc-hover);
+    }
+
+    .icon-link:hover .icon-spreadsheet {
+      color: var(--icon-spreadsheet-hover);
+    }
+
+    .icon-link:hover .icon-presentation {
+      color: var(--icon-presentation-hover);
+    }
+
+    .icon-link:hover .icon-image {
+      color: var(--icon-image-hover);
+    }
+
+    .icon-link:hover .icon-video {
+      color: var(--icon-video-hover);
+    }
+
+    .icon-link:hover .icon-audio {
+      color: var(--icon-audio-hover);
+    }
+
+    .icon-link:hover .icon-archive {
+      color: var(--icon-archive-hover);
+    }
+
+    .icon-link:hover .icon-code {
+      color: var(--icon-code-hover);
+    }
+
+    .icon-link:hover .icon-terminal {
+      color: var(--icon-terminal-hover);
+    }
+
+    .icon-link:hover .icon-disc {
+      color: var(--icon-disc-hover);
+    }
+
+    .icon-link:hover .icon-config {
+      color: var(--icon-config-hover);
+    }
+
+    .icon-link:hover .icon-font {
+      color: var(--icon-font-hover);
+    }
+
+    .icon-link:hover .icon-download {
+      color: var(--icon-download-hover);
+    }
+
+    .icon-link:hover:has(.icon-folder) {
+      background-color: var(--hover-folder);
+    }
+
+    .icon-link:hover:has(.icon-text) {
+      background-color: var(--hover-text);
+    }
+
+    .icon-link:hover:has(.icon-pdf) {
+      background-color: var(--hover-pdf);
+    }
+
+    .icon-link:hover:has(.icon-doc) {
+      background-color: var(--hover-doc);
+    }
+
+    .icon-link:hover:has(.icon-spreadsheet) {
+      background-color: var(--hover-spreadsheet);
+    }
+
+    .icon-link:hover:has(.icon-presentation) {
+      background-color: var(--hover-presentation);
+    }
+
+    .icon-link:hover:has(.icon-image) {
+      background-color: var(--hover-image);
+    }
+
+    .icon-link:hover:has(.icon-video) {
+      background-color: var(--hover-video);
+    }
+
+    .icon-link:hover:has(.icon-audio) {
+      background-color: var(--hover-audio);
+    }
+
+    .icon-link:hover:has(.icon-archive) {
+      background-color: var(--hover-archive);
+    }
+
+    .icon-link:hover:has(.icon-code) {
+      background-color: var(--hover-code);
+    }
+
+    .icon-link:hover:has(.icon-terminal) {
+      background-color: var(--hover-terminal);
+    }
+
+    .icon-link:hover:has(.icon-disc) {
+      background-color: var(--hover-disc);
+    }
+
+    .icon-link:hover:has(.icon-config) {
+      background-color: var(--hover-config);
+    }
+
+    .icon-link:hover:has(.icon-font) {
+      background-color: var(--hover-font);
+    }
+
+    .icon-link:hover:has(.icon-download) {
+      background-color: var(--hover-download);
+    }
+
     .entry .col-size {
       width: 80px;
       text-align: right;
@@ -320,8 +532,8 @@
         font-size: 0.65rem;
       }
 
-      .entry {
-        padding: 10px 12px;
+      .entry .content-link {
+        padding-right: 12px;
       }
     }
 
@@ -634,6 +846,11 @@
         <path d="M1 3h22v5H1z" />
         <path d="M10 12h4" />
       </symbol>
+      <symbol id="icon-download" viewBox="0 0 24 24">
+        <path d="M12 3v13" />
+        <polyline points="7 11 12 16 17 11" />
+        <line x1="4" y1="21" x2="20" y2="21" />
+      </symbol>
       <symbol id="icon-code" viewBox="0 0 24 24">
         <polyline points="16 18 22 12 16 6" />
         <polyline points="8 6 2 12 8 18" />
@@ -674,384 +891,923 @@
     </div>
 
     <!-- Parent directory -->
-    <a class="entry" href="../">
-      <span class="icon icon-folder"><svg viewBox="0 0 24 24"><use href="#icon-folder"/></svg></span>
-      <span class="col-name">..</span>
-      <span class="col-size">&mdash;</span>
-      <span class="col-modified"><span class="date">&mdash;</span><span class="time"></span></span>
-    </a>
+    <div class="entry">
+      <a class="icon-link" href="../.download"><span class="icon icon-folder"><svg viewBox="0 0 24 24">
+            <use href="#icon-folder" />
+          </svg></span></a>
+      <a class="content-link" href="../">
+        <span class="col-name">..</span>
+        <span class="col-size">&mdash;</span>
+        <span class="col-modified"><span class="date">&mdash;</span><span class="time"></span></span>
+      </a>
+    </div>
 
     <!-- Folders -->
-    <a class="entry" href="documents/">
-      <span class="icon icon-folder"><svg viewBox="0 0 24 24"><use href="#icon-folder"/></svg></span>
-      <span class="col-name">documents</span>
-      <span class="col-size">&mdash;</span>
-      <span class="col-modified"><span class="date">2026-01-15</span><span class="time">09:32:10</span></span>
-    </a>
-    <a class="entry" href="vacation/">
-      <span class="icon icon-folder"><svg viewBox="0 0 24 24"><use href="#icon-folder"/></svg></span>
-      <span class="col-name">vacation</span>
-      <span class="col-size">&mdash;</span>
-      <span class="col-modified"><span class="date">2026-02-01</span><span class="time">14:05:33</span></span>
-    </a>
-    <a class="entry" href="thumbnails/">
-      <span class="icon icon-folder"><svg viewBox="0 0 24 24"><use href="#icon-folder"/></svg></span>
-      <span class="col-name">thumbnails</span>
-      <span class="col-size">&mdash;</span>
-      <span class="col-modified"><span class="date">2026-02-04</span><span class="time">22:17:45</span></span>
-    </a>
+    <div class="entry">
+      <a class="icon-link" href="documents/.download"><span class="icon icon-folder"><svg viewBox="0 0 24 24">
+            <use href="#icon-folder" />
+          </svg></span></a>
+      <a class="content-link" href="documents/">
+        <span class="col-name">documents</span>
+        <span class="col-size">&mdash;</span>
+        <span class="col-modified"><span class="date">2026-01-15</span><span class="time">09:32:10</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="vacation/.download"><span class="icon icon-folder"><svg viewBox="0 0 24 24">
+            <use href="#icon-folder" />
+          </svg></span></a>
+      <a class="content-link" href="vacation/">
+        <span class="col-name">vacation</span>
+        <span class="col-size">&mdash;</span>
+        <span class="col-modified"><span class="date">2026-02-01</span><span class="time">14:05:33</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="thumbnails/.download"><span class="icon icon-folder"><svg viewBox="0 0 24 24">
+            <use href="#icon-folder" />
+          </svg></span></a>
+      <a class="content-link" href="thumbnails/">
+        <span class="col-name">thumbnails</span>
+        <span class="col-size">&mdash;</span>
+        <span class="col-modified"><span class="date">2026-02-04</span><span class="time">22:17:45</span></span>
+      </a>
+    </div>
 
     <!-- Text / Document files -->
-    <a class="entry" href="readme.txt">
-      <span class="icon icon-text"><svg viewBox="0 0 24 24"><use href="#icon-text"/></svg></span>
-      <span class="col-name">readme.txt</span>
-      <span class="col-size">1.2 KB</span>
-      <span class="col-modified"><span class="date">2025-12-20</span><span class="time">08:00:04</span></span>
-    </a>
-    <a class="entry" href="notes.md">
-      <span class="icon icon-text"><svg viewBox="0 0 24 24"><use href="#icon-text"/></svg></span>
-      <span class="col-name">notes.md</span>
-      <span class="col-size">4.7 KB</span>
-      <span class="col-modified"><span class="date">2026-01-28</span><span class="time">17:44:12</span></span>
-    </a>
-    <a class="entry" href="changelog.log">
-      <span class="icon icon-text"><svg viewBox="0 0 24 24"><use href="#icon-text"/></svg></span>
-      <span class="col-name">changelog.log</span>
-      <span class="col-size">18 KB</span>
-      <span class="col-modified"><span class="date">2026-02-07</span><span class="time">03:14:22</span></span>
-    </a>
-    <a class="entry" href="data-export.csv">
-      <span class="icon icon-text"><svg viewBox="0 0 24 24"><use href="#icon-text"/></svg></span>
-      <span class="col-name">data-export.csv</span>
-      <span class="col-size">340 KB</span>
-      <span class="col-modified"><span class="date">2026-01-20</span><span class="time">11:45:00</span></span>
-    </a>
-    <a class="entry" href="draft.rtf">
-      <span class="icon icon-text"><svg viewBox="0 0 24 24"><use href="#icon-text"/></svg></span>
-      <span class="col-name">draft.rtf</span>
-      <span class="col-size">28 KB</span>
-      <span class="col-modified"><span class="date">2025-11-05</span><span class="time">16:30:18</span></span>
-    </a>
+    <div class="entry">
+      <a class="icon-link" href="readme.txt.download"><span class="icon icon-text"><svg viewBox="0 0 24 24">
+            <use href="#icon-text" />
+          </svg></span></a>
+      <a class="content-link" href="readme.txt">
+        <span class="col-name">readme.txt</span>
+        <span class="col-size">1.2 KB</span>
+        <span class="col-modified"><span class="date">2025-12-20</span><span class="time">08:00:04</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="notes.md.download"><span class="icon icon-text"><svg viewBox="0 0 24 24">
+            <use href="#icon-text" />
+          </svg></span></a>
+      <a class="content-link" href="notes.md">
+        <span class="col-name">notes.md</span>
+        <span class="col-size">4.7 KB</span>
+        <span class="col-modified"><span class="date">2026-01-28</span><span class="time">17:44:12</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="changelog.log.download"><span class="icon icon-text"><svg viewBox="0 0 24 24">
+            <use href="#icon-text" />
+          </svg></span></a>
+      <a class="content-link" href="changelog.log">
+        <span class="col-name">changelog.log</span>
+        <span class="col-size">18 KB</span>
+        <span class="col-modified"><span class="date">2026-02-07</span><span class="time">03:14:22</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="data-export.csv.download"><span class="icon icon-text"><svg viewBox="0 0 24 24">
+            <use href="#icon-text" />
+          </svg></span></a>
+      <a class="content-link" href="data-export.csv">
+        <span class="col-name">data-export.csv</span>
+        <span class="col-size">340 KB</span>
+        <span class="col-modified"><span class="date">2026-01-20</span><span class="time">11:45:00</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="draft.rtf.download"><span class="icon icon-text"><svg viewBox="0 0 24 24">
+            <use href="#icon-text" />
+          </svg></span></a>
+      <a class="content-link" href="draft.rtf">
+        <span class="col-name">draft.rtf</span>
+        <span class="col-size">28 KB</span>
+        <span class="col-modified"><span class="date">2025-11-05</span><span class="time">16:30:18</span></span>
+      </a>
+    </div>
 
     <!-- PDF -->
-    <a class="entry" href="annual-report.pdf">
-      <span class="icon icon-pdf"><svg viewBox="0 0 24 24"><use href="#icon-pdf"/></svg></span>
-      <span class="col-name">annual-report.pdf</span>
-      <span class="col-size">2.4 MB</span>
-      <span class="col-modified"><span class="date">2026-01-10</span><span class="time">09:15:30</span></span>
-    </a>
+    <div class="entry">
+      <a class="icon-link" href="annual-report.pdf.download"><span class="icon icon-pdf"><svg viewBox="0 0 24 24">
+            <use href="#icon-pdf" />
+          </svg></span></a>
+      <a class="content-link" href="annual-report.pdf">
+        <span class="col-name">annual-report.pdf</span>
+        <span class="col-size">2.4 MB</span>
+        <span class="col-modified"><span class="date">2026-01-10</span><span class="time">09:15:30</span></span>
+      </a>
+    </div>
 
     <!-- Office documents -->
-    <a class="entry" href="proposal.doc">
-      <span class="icon icon-doc"><svg viewBox="0 0 24 24"><use href="#icon-doc"/></svg></span>
-      <span class="col-name">proposal.doc</span>
-      <span class="col-size">85 KB</span>
-      <span class="col-modified"><span class="date">2025-12-14</span><span class="time">10:22:05</span></span>
-    </a>
-    <a class="entry" href="meeting-notes.docx">
-      <span class="icon icon-doc"><svg viewBox="0 0 24 24"><use href="#icon-doc"/></svg></span>
-      <span class="col-name">meeting-notes.docx</span>
-      <span class="col-size">124 KB</span>
-      <span class="col-modified"><span class="date">2026-02-03</span><span class="time">14:08:44</span></span>
-    </a>
+    <div class="entry">
+      <a class="icon-link" href="proposal.doc.download"><span class="icon icon-doc"><svg viewBox="0 0 24 24">
+            <use href="#icon-doc" />
+          </svg></span></a>
+      <a class="content-link" href="proposal.doc">
+        <span class="col-name">proposal.doc</span>
+        <span class="col-size">85 KB</span>
+        <span class="col-modified"><span class="date">2025-12-14</span><span class="time">10:22:05</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="meeting-notes.docx.download"><span class="icon icon-doc"><svg viewBox="0 0 24 24">
+            <use href="#icon-doc" />
+          </svg></span></a>
+      <a class="content-link" href="meeting-notes.docx">
+        <span class="col-name">meeting-notes.docx</span>
+        <span class="col-size">124 KB</span>
+        <span class="col-modified"><span class="date">2026-02-03</span><span class="time">14:08:44</span></span>
+      </a>
+    </div>
 
     <!-- Spreadsheets -->
-    <a class="entry" href="budget.xls">
-      <span class="icon icon-spreadsheet"><svg viewBox="0 0 24 24"><use href="#icon-spreadsheet"/></svg></span>
-      <span class="col-name">budget.xls</span>
-      <span class="col-size">210 KB</span>
-      <span class="col-modified"><span class="date">2025-12-01</span><span class="time">08:55:12</span></span>
-    </a>
-    <a class="entry" href="inventory.xlsx">
-      <span class="icon icon-spreadsheet"><svg viewBox="0 0 24 24"><use href="#icon-spreadsheet"/></svg></span>
-      <span class="col-name">inventory.xlsx</span>
-      <span class="col-size">1.8 MB</span>
-      <span class="col-modified"><span class="date">2026-01-30</span><span class="time">17:20:33</span></span>
-    </a>
+    <div class="entry">
+      <a class="icon-link" href="budget.xls.download"><span class="icon icon-spreadsheet"><svg viewBox="0 0 24 24">
+            <use href="#icon-spreadsheet" />
+          </svg></span></a>
+      <a class="content-link" href="budget.xls">
+        <span class="col-name">budget.xls</span>
+        <span class="col-size">210 KB</span>
+        <span class="col-modified"><span class="date">2025-12-01</span><span class="time">08:55:12</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="inventory.xlsx.download"><span class="icon icon-spreadsheet"><svg viewBox="0 0 24 24">
+            <use href="#icon-spreadsheet" />
+          </svg></span></a>
+      <a class="content-link" href="inventory.xlsx">
+        <span class="col-name">inventory.xlsx</span>
+        <span class="col-size">1.8 MB</span>
+        <span class="col-modified"><span class="date">2026-01-30</span><span class="time">17:20:33</span></span>
+      </a>
+    </div>
 
     <!-- Presentations -->
-    <a class="entry" href="keynote.ppt">
-      <span class="icon icon-presentation"><svg viewBox="0 0 24 24"><use href="#icon-presentation"/></svg></span>
-      <span class="col-name">keynote.ppt</span>
-      <span class="col-size">5.6 MB</span>
-      <span class="col-modified"><span class="date">2025-11-18</span><span class="time">13:40:00</span></span>
-    </a>
-    <a class="entry" href="pitch-deck.pptx">
-      <span class="icon icon-presentation"><svg viewBox="0 0 24 24"><use href="#icon-presentation"/></svg></span>
-      <span class="col-name">pitch-deck.pptx</span>
-      <span class="col-size">12 MB</span>
-      <span class="col-modified"><span class="date">2026-02-05</span><span class="time">19:05:17</span></span>
-    </a>
-
-    <!-- Images -->
-    <a class="entry" href="sunset.jpg">
-      <span class="icon icon-image"><svg viewBox="0 0 24 24"><use href="#icon-image"/></svg></span>
-      <span class="col-name">sunset.jpg</span>
-      <span class="col-size">3.4 MB</span>
-      <span class="col-modified"><span class="date">2026-01-10</span><span class="time">18:45:02</span></span>
-    </a>
-    <a class="entry" href="mountain.png">
-      <span class="icon icon-image"><svg viewBox="0 0 24 24"><use href="#icon-image"/></svg></span>
-      <span class="col-name">mountain.png</span>
-      <span class="col-size">5.1 MB</span>
-      <span class="col-modified"><span class="date">2026-01-22</span><span class="time">07:12:30</span></span>
-    </a>
-    <a class="entry" href="animation.gif">
-      <span class="icon icon-image"><svg viewBox="0 0 24 24"><use href="#icon-image"/></svg></span>
-      <span class="col-name">animation.gif</span>
-      <span class="col-size">8.3 MB</span>
-      <span class="col-modified"><span class="date">2026-01-05</span><span class="time">22:10:48</span></span>
-    </a>
-    <a class="entry" href="texture.bmp">
-      <span class="icon icon-image"><svg viewBox="0 0 24 24"><use href="#icon-image"/></svg></span>
-      <span class="col-name">texture.bmp</span>
-      <span class="col-size">14 MB</span>
-      <span class="col-modified"><span class="date">2025-11-10</span><span class="time">06:30:00</span></span>
-    </a>
-    <a class="entry" href="logo.svg">
-      <span class="icon icon-image"><svg viewBox="0 0 24 24"><use href="#icon-image"/></svg></span>
-      <span class="col-name">logo.svg</span>
-      <span class="col-size">6.2 KB</span>
-      <span class="col-modified"><span class="date">2026-02-01</span><span class="time">15:00:22</span></span>
-    </a>
-    <a class="entry" href="banner.webp">
-      <span class="icon icon-image"><svg viewBox="0 0 24 24"><use href="#icon-image"/></svg></span>
-      <span class="col-name">banner.webp</span>
-      <span class="col-size">780 KB</span>
-      <span class="col-modified"><span class="date">2026-01-18</span><span class="time">12:44:10</span></span>
-    </a>
-    <a class="entry" href="scan.tiff">
-      <span class="icon icon-image"><svg viewBox="0 0 24 24"><use href="#icon-image"/></svg></span>
-      <span class="col-name">scan.tiff</span>
-      <span class="col-size">22 MB</span>
-      <span class="col-modified"><span class="date">2025-12-08</span><span class="time">09:18:55</span></span>
-    </a>
-    <a class="entry" href="favicon.ico">
-      <span class="icon icon-image"><svg viewBox="0 0 24 24"><use href="#icon-image"/></svg></span>
-      <span class="col-name">favicon.ico</span>
-      <span class="col-size">4.1 KB</span>
-      <span class="col-modified"><span class="date">2025-10-30</span><span class="time">20:00:00</span></span>
-    </a>
+    <div class="entry">
+      <a class="icon-link" href="keynote.ppt.download"><span class="icon icon-presentation"><svg viewBox="0 0 24 24">
+            <use href="#icon-presentation" />
+          </svg></span></a>
+      <a class="content-link" href="keynote.ppt">
+        <span class="col-name">keynote.ppt</span>
+        <span class="col-size">5.6 MB</span>
+        <span class="col-modified"><span class="date">2025-11-18</span><span class="time">13:40:00</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="pitch-deck.pptx.download"><span class="icon icon-presentation"><svg
+            viewBox="0 0 24 24">
+            <use href="#icon-presentation" />
+          </svg></span></a>
+      <a class="content-link" href="pitch-deck.pptx">
+        <span class="col-name">pitch-deck.pptx</span>
+        <span class="col-size">12 MB</span>
+        <span class="col-modified"><span class="date">2026-02-05</span><span class="time">19:05:17</span></span>
+      </a>
+    </div>
 
     <!-- Video -->
-    <a class="entry" href="demo.mp4">
-      <span class="icon icon-video"><svg viewBox="0 0 24 24"><use href="#icon-video"/></svg></span>
-      <span class="col-name">demo.mp4</span>
-      <span class="col-size">158 MB</span>
-      <span class="col-modified"><span class="date">2026-01-12</span><span class="time">20:30:00</span></span>
-    </a>
-    <a class="entry" href="interview.avi">
-      <span class="icon icon-video"><svg viewBox="0 0 24 24"><use href="#icon-video"/></svg></span>
-      <span class="col-name">interview.avi</span>
-      <span class="col-size">420 MB</span>
-      <span class="col-modified"><span class="date">2025-12-22</span><span class="time">14:15:30</span></span>
-    </a>
-    <a class="entry" href="movie.mkv">
-      <span class="icon icon-video"><svg viewBox="0 0 24 24"><use href="#icon-video"/></svg></span>
-      <span class="col-name">movie.mkv</span>
-      <span class="col-size">1.4 GB</span>
-      <span class="col-modified"><span class="date">2026-01-25</span><span class="time">23:50:10</span></span>
-    </a>
-    <a class="entry" href="clip.mov">
-      <span class="icon icon-video"><svg viewBox="0 0 24 24"><use href="#icon-video"/></svg></span>
-      <span class="col-name">clip.mov</span>
-      <span class="col-size">95 MB</span>
-      <span class="col-modified"><span class="date">2026-02-06</span><span class="time">10:08:55</span></span>
-    </a>
-    <a class="entry" href="presentation.wmv">
-      <span class="icon icon-video"><svg viewBox="0 0 24 24"><use href="#icon-video"/></svg></span>
-      <span class="col-name">presentation.wmv</span>
-      <span class="col-size">310 MB</span>
-      <span class="col-modified"><span class="date">2025-11-28</span><span class="time">16:40:22</span></span>
-    </a>
-    <a class="entry" href="legacy-clip.flv">
-      <span class="icon icon-video"><svg viewBox="0 0 24 24"><use href="#icon-video"/></svg></span>
-      <span class="col-name">legacy-clip.flv</span>
-      <span class="col-size">48 MB</span>
-      <span class="col-modified"><span class="date">2025-10-15</span><span class="time">07:22:18</span></span>
-    </a>
-    <a class="entry" href="screencast.webm">
-      <span class="icon icon-video"><svg viewBox="0 0 24 24"><use href="#icon-video"/></svg></span>
-      <span class="col-name">screencast.webm</span>
-      <span class="col-size">72 MB</span>
-      <span class="col-modified"><span class="date">2026-02-04</span><span class="time">18:55:33</span></span>
-    </a>
+    <div class="entry">
+      <a class="icon-link" href="demo.mp4.download"><span class="icon icon-video"><svg viewBox="0 0 24 24">
+            <use href="#icon-video" />
+          </svg></span></a>
+      <a class="content-link" href="demo.mp4">
+        <span class="col-name">demo.mp4</span>
+        <span class="col-size">158 MB</span>
+        <span class="col-modified"><span class="date">2026-01-12</span><span class="time">20:30:00</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="interview.avi.download"><span class="icon icon-video"><svg viewBox="0 0 24 24">
+            <use href="#icon-video" />
+          </svg></span></a>
+      <a class="content-link" href="interview.avi">
+        <span class="col-name">interview.avi</span>
+        <span class="col-size">420 MB</span>
+        <span class="col-modified"><span class="date">2025-12-22</span><span class="time">14:15:30</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="movie.mkv.download"><span class="icon icon-video"><svg viewBox="0 0 24 24">
+            <use href="#icon-video" />
+          </svg></span></a>
+      <a class="content-link" href="movie.mkv">
+        <span class="col-name">movie.mkv</span>
+        <span class="col-size">1.4 GB</span>
+        <span class="col-modified"><span class="date">2026-01-25</span><span class="time">23:50:10</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="clip.mov.download"><span class="icon icon-video"><svg viewBox="0 0 24 24">
+            <use href="#icon-video" />
+          </svg></span></a>
+      <a class="content-link" href="clip.mov">
+        <span class="col-name">clip.mov</span>
+        <span class="col-size">95 MB</span>
+        <span class="col-modified"><span class="date">2026-02-06</span><span class="time">10:08:55</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="presentation.wmv.download"><span class="icon icon-video"><svg viewBox="0 0 24 24">
+            <use href="#icon-video" />
+          </svg></span></a>
+      <a class="content-link" href="presentation.wmv">
+        <span class="col-name">presentation.wmv</span>
+        <span class="col-size">310 MB</span>
+        <span class="col-modified"><span class="date">2025-11-28</span><span class="time">16:40:22</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="legacy-clip.flv.download"><span class="icon icon-video"><svg viewBox="0 0 24 24">
+            <use href="#icon-video" />
+          </svg></span></a>
+      <a class="content-link" href="legacy-clip.flv">
+        <span class="col-name">legacy-clip.flv</span>
+        <span class="col-size">48 MB</span>
+        <span class="col-modified"><span class="date">2025-10-15</span><span class="time">07:22:18</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="screencast.webm.download"><span class="icon icon-video"><svg viewBox="0 0 24 24">
+            <use href="#icon-video" />
+          </svg></span></a>
+      <a class="content-link" href="screencast.webm">
+        <span class="col-name">screencast.webm</span>
+        <span class="col-size">72 MB</span>
+        <span class="col-modified"><span class="date">2026-02-04</span><span class="time">18:55:33</span></span>
+      </a>
+    </div>
+
+    <!-- Images -->
+    <div class="entry">
+      <a class="icon-link" href="sunset.jpg.download"><span class="icon icon-image"><svg viewBox="0 0 24 24">
+            <use href="#icon-image" />
+          </svg></span></a>
+      <a class="content-link" href="sunset.jpg">
+        <span class="col-name">sunset.jpg</span>
+        <span class="col-size">3.4 MB</span>
+        <span class="col-modified"><span class="date">2026-01-10</span><span class="time">18:45:02</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="mountain.png.download"><span class="icon icon-image"><svg viewBox="0 0 24 24">
+            <use href="#icon-image" />
+          </svg></span></a>
+      <a class="content-link" href="mountain.png">
+        <span class="col-name">mountain.png</span>
+        <span class="col-size">5.1 MB</span>
+        <span class="col-modified"><span class="date">2026-01-22</span><span class="time">07:12:30</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="animation.gif.download"><span class="icon icon-image"><svg viewBox="0 0 24 24">
+            <use href="#icon-image" />
+          </svg></span></a>
+      <a class="content-link" href="animation.gif">
+        <span class="col-name">animation.gif</span>
+        <span class="col-size">8.3 MB</span>
+        <span class="col-modified"><span class="date">2026-01-05</span><span class="time">22:10:48</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="texture.bmp.download"><span class="icon icon-image"><svg viewBox="0 0 24 24">
+            <use href="#icon-image" />
+          </svg></span></a>
+      <a class="content-link" href="texture.bmp">
+        <span class="col-name">texture.bmp</span>
+        <span class="col-size">14 MB</span>
+        <span class="col-modified"><span class="date">2025-11-10</span><span class="time">06:30:00</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="logo.svg.download"><span class="icon icon-image"><svg viewBox="0 0 24 24">
+            <use href="#icon-image" />
+          </svg></span></a>
+      <a class="content-link" href="logo.svg">
+        <span class="col-name">logo.svg</span>
+        <span class="col-size">6.2 KB</span>
+        <span class="col-modified"><span class="date">2026-02-01</span><span class="time">15:00:22</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="banner.webp.download"><span class="icon icon-image"><svg viewBox="0 0 24 24">
+            <use href="#icon-image" />
+          </svg></span></a>
+      <a class="content-link" href="banner.webp">
+        <span class="col-name">banner.webp</span>
+        <span class="col-size">780 KB</span>
+        <span class="col-modified"><span class="date">2026-01-18</span><span class="time">12:44:10</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="scan.tiff.download"><span class="icon icon-image"><svg viewBox="0 0 24 24">
+            <use href="#icon-image" />
+          </svg></span></a>
+      <a class="content-link" href="scan.tiff">
+        <span class="col-name">scan.tiff</span>
+        <span class="col-size">22 MB</span>
+        <span class="col-modified"><span class="date">2025-12-08</span><span class="time">09:18:55</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="favicon.ico.download"><span class="icon icon-image"><svg viewBox="0 0 24 24">
+            <use href="#icon-image" />
+          </svg></span></a>
+      <a class="content-link" href="favicon.ico">
+        <span class="col-name">favicon.ico</span>
+        <span class="col-size">4.1 KB</span>
+        <span class="col-modified"><span class="date">2025-10-30</span><span class="time">20:00:00</span></span>
+      </a>
+    </div>
 
     <!-- Audio -->
-    <a class="entry" href="podcast.mp3">
-      <span class="icon icon-audio"><svg viewBox="0 0 24 24"><use href="#icon-audio"/></svg></span>
-      <span class="col-name">podcast.mp3</span>
-      <span class="col-size">45 MB</span>
-      <span class="col-modified"><span class="date">2026-01-08</span><span class="time">11:30:00</span></span>
-    </a>
-    <a class="entry" href="recording.wav">
-      <span class="icon icon-audio"><svg viewBox="0 0 24 24"><use href="#icon-audio"/></svg></span>
-      <span class="col-name">recording.wav</span>
-      <span class="col-size">180 MB</span>
-      <span class="col-modified"><span class="date">2026-01-14</span><span class="time">09:00:45</span></span>
-    </a>
-    <a class="entry" href="ambient.ogg">
-      <span class="icon icon-audio"><svg viewBox="0 0 24 24"><use href="#icon-audio"/></svg></span>
-      <span class="col-name">ambient.ogg</span>
-      <span class="col-size">12 MB</span>
-      <span class="col-modified"><span class="date">2025-12-18</span><span class="time">21:15:10</span></span>
-    </a>
-    <a class="entry" href="album.flac">
-      <span class="icon icon-audio"><svg viewBox="0 0 24 24"><use href="#icon-audio"/></svg></span>
-      <span class="col-name">album.flac</span>
-      <span class="col-size">320 MB</span>
-      <span class="col-modified"><span class="date">2026-02-02</span><span class="time">15:42:08</span></span>
-    </a>
-    <a class="entry" href="ringtone.aac">
-      <span class="icon icon-audio"><svg viewBox="0 0 24 24"><use href="#icon-audio"/></svg></span>
-      <span class="col-name">ringtone.aac</span>
-      <span class="col-size">1.8 MB</span>
-      <span class="col-modified"><span class="date">2025-11-22</span><span class="time">18:05:30</span></span>
-    </a>
-    <a class="entry" href="audiobook.m4a">
-      <span class="icon icon-audio"><svg viewBox="0 0 24 24"><use href="#icon-audio"/></svg></span>
-      <span class="col-name">audiobook.m4a</span>
-      <span class="col-size">95 MB</span>
-      <span class="col-modified"><span class="date">2026-01-28</span><span class="time">07:30:00</span></span>
-    </a>
-    <a class="entry" href="lecture.wma">
-      <span class="icon icon-audio"><svg viewBox="0 0 24 24"><use href="#icon-audio"/></svg></span>
-      <span class="col-name">lecture.wma</span>
-      <span class="col-size">38 MB</span>
-      <span class="col-modified"><span class="date">2025-12-10</span><span class="time">13:25:44</span></span>
-    </a>
+    <div class="entry">
+      <a class="icon-link" href="podcast.mp3.download"><span class="icon icon-audio"><svg viewBox="0 0 24 24">
+            <use href="#icon-audio" />
+          </svg></span></a>
+      <a class="content-link" href="podcast.mp3">
+        <span class="col-name">podcast.mp3</span>
+        <span class="col-size">45 MB</span>
+        <span class="col-modified"><span class="date">2026-01-08</span><span class="time">11:30:00</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="recording.wav.download"><span class="icon icon-audio"><svg viewBox="0 0 24 24">
+            <use href="#icon-audio" />
+          </svg></span></a>
+      <a class="content-link" href="recording.wav">
+        <span class="col-name">recording.wav</span>
+        <span class="col-size">180 MB</span>
+        <span class="col-modified"><span class="date">2026-01-14</span><span class="time">09:00:45</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="ambient.ogg.download"><span class="icon icon-audio"><svg viewBox="0 0 24 24">
+            <use href="#icon-audio" />
+          </svg></span></a>
+      <a class="content-link" href="ambient.ogg">
+        <span class="col-name">ambient.ogg</span>
+        <span class="col-size">12 MB</span>
+        <span class="col-modified"><span class="date">2025-12-18</span><span class="time">21:15:10</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="album.flac.download"><span class="icon icon-audio"><svg viewBox="0 0 24 24">
+            <use href="#icon-audio" />
+          </svg></span></a>
+      <a class="content-link" href="album.flac">
+        <span class="col-name">album.flac</span>
+        <span class="col-size">320 MB</span>
+        <span class="col-modified"><span class="date">2026-02-02</span><span class="time">15:42:08</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="ringtone.aac.download"><span class="icon icon-audio"><svg viewBox="0 0 24 24">
+            <use href="#icon-audio" />
+          </svg></span></a>
+      <a class="content-link" href="ringtone.aac">
+        <span class="col-name">ringtone.aac</span>
+        <span class="col-size">1.8 MB</span>
+        <span class="col-modified"><span class="date">2025-11-22</span><span class="time">18:05:30</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="audiobook.m4a.download"><span class="icon icon-audio"><svg viewBox="0 0 24 24">
+            <use href="#icon-audio" />
+          </svg></span></a>
+      <a class="content-link" href="audiobook.m4a">
+        <span class="col-name">audiobook.m4a</span>
+        <span class="col-size">95 MB</span>
+        <span class="col-modified"><span class="date">2026-01-28</span><span class="time">07:30:00</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="lecture.wma.download"><span class="icon icon-audio"><svg viewBox="0 0 24 24">
+            <use href="#icon-audio" />
+          </svg></span></a>
+      <a class="content-link" href="lecture.wma">
+        <span class="col-name">lecture.wma</span>
+        <span class="col-size">38 MB</span>
+        <span class="col-modified"><span class="date">2025-12-10</span><span class="time">13:25:44</span></span>
+      </a>
+    </div>
 
     <!-- Archives -->
-    <a class="entry" href="backup.zip">
-      <span class="icon icon-archive"><svg viewBox="0 0 24 24"><use href="#icon-archive"/></svg></span>
-      <span class="col-name">backup.zip</span>
-      <span class="col-size">52 MB</span>
-      <span class="col-modified"><span class="date">2026-02-05</span><span class="time">11:23:59</span></span>
-    </a>
-    <a class="entry" href="source.tar">
-      <span class="icon icon-archive"><svg viewBox="0 0 24 24"><use href="#icon-archive"/></svg></span>
-      <span class="col-name">source.tar</span>
-      <span class="col-size">28 MB</span>
-      <span class="col-modified"><span class="date">2026-01-16</span><span class="time">04:10:00</span></span>
-    </a>
-    <a class="entry" href="logs.tar.gz">
-      <span class="icon icon-archive"><svg viewBox="0 0 24 24"><use href="#icon-archive"/></svg></span>
-      <span class="col-name">logs.tar.gz</span>
-      <span class="col-size">4.5 MB</span>
-      <span class="col-modified"><span class="date">2026-02-07</span><span class="time">00:05:00</span></span>
-    </a>
-    <a class="entry" href="photos.7z">
-      <span class="icon icon-archive"><svg viewBox="0 0 24 24"><use href="#icon-archive"/></svg></span>
-      <span class="col-name">photos.7z</span>
-      <span class="col-size">680 MB</span>
-      <span class="col-modified"><span class="date">2025-12-30</span><span class="time">22:18:05</span></span>
-    </a>
-    <a class="entry" href="legacy-data.rar">
-      <span class="icon icon-archive"><svg viewBox="0 0 24 24"><use href="#icon-archive"/></svg></span>
-      <span class="col-name">legacy-data.rar</span>
-      <span class="col-size">145 MB</span>
-      <span class="col-modified"><span class="date">2025-11-02</span><span class="time">19:50:30</span></span>
-    </a>
+    <div class="entry">
+      <a class="icon-link" href="backup.zip.download"><span class="icon icon-download"><svg viewBox="0 0 24 24">
+            <use href="#icon-download" />
+          </svg></span></a>
+      <a class="content-link" href="backup.zip">
+        <span class="col-name">backup.zip</span>
+        <span class="col-size">52 MB</span>
+        <span class="col-modified"><span class="date">2026-02-05</span><span class="time">11:23:59</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="source.tar.download"><span class="icon icon-archive"><svg viewBox="0 0 24 24">
+            <use href="#icon-archive" />
+          </svg></span></a>
+      <a class="content-link" href="source.tar">
+        <span class="col-name">source.tar</span>
+        <span class="col-size">28 MB</span>
+        <span class="col-modified"><span class="date">2026-01-16</span><span class="time">04:10:00</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="logs.tar.gz.download"><span class="icon icon-archive"><svg viewBox="0 0 24 24">
+            <use href="#icon-archive" />
+          </svg></span></a>
+      <a class="content-link" href="logs.tar.gz">
+        <span class="col-name">logs.tar.gz</span>
+        <span class="col-size">4.5 MB</span>
+        <span class="col-modified"><span class="date">2026-02-07</span><span class="time">00:05:00</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="photos.7z.download"><span class="icon icon-archive"><svg viewBox="0 0 24 24">
+            <use href="#icon-archive" />
+          </svg></span></a>
+      <a class="content-link" href="photos.7z">
+        <span class="col-name">photos.7z</span>
+        <span class="col-size">680 MB</span>
+        <span class="col-modified"><span class="date">2025-12-30</span><span class="time">22:18:05</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="legacy-data.rar.download"><span class="icon icon-archive"><svg viewBox="0 0 24 24">
+            <use href="#icon-archive" />
+          </svg></span></a>
+      <a class="content-link" href="legacy-data.rar">
+        <span class="col-name">legacy-data.rar</span>
+        <span class="col-size">145 MB</span>
+        <span class="col-modified"><span class="date">2025-11-02</span><span class="time">19:50:30</span></span>
+      </a>
+    </div>
 
     <!-- Code files -->
-    <a class="entry" href="index.html">
-      <span class="icon icon-code"><svg viewBox="0 0 24 24"><use href="#icon-code"/></svg></span>
-      <span class="col-name">index.html</span>
-      <span class="col-size">12 KB</span>
-      <span class="col-modified"><span class="date">2026-02-06</span><span class="time">20:30:18</span></span>
-    </a>
-    <a class="entry" href="styles.css">
-      <span class="icon icon-code"><svg viewBox="0 0 24 24"><use href="#icon-code"/></svg></span>
-      <span class="col-name">styles.css</span>
-      <span class="col-size">8.4 KB</span>
-      <span class="col-modified"><span class="date">2026-01-30</span><span class="time">13:55:44</span></span>
-    </a>
-    <a class="entry" href="app.js">
-      <span class="icon icon-code"><svg viewBox="0 0 24 24"><use href="#icon-code"/></svg></span>
-      <span class="col-name">app.js</span>
-      <span class="col-size">24 KB</span>
-      <span class="col-modified"><span class="date">2026-02-04</span><span class="time">16:12:38</span></span>
-    </a>
-    <a class="entry" href="config.json">
-      <span class="icon icon-code"><svg viewBox="0 0 24 24"><use href="#icon-code"/></svg></span>
-      <span class="col-name">config.json</span>
-      <span class="col-size">2.1 KB</span>
-      <span class="col-modified"><span class="date">2026-01-22</span><span class="time">08:40:15</span></span>
-    </a>
-    <a class="entry" href="sitemap.xml">
-      <span class="icon icon-code"><svg viewBox="0 0 24 24"><use href="#icon-code"/></svg></span>
-      <span class="col-name">sitemap.xml</span>
-      <span class="col-size">18 KB</span>
-      <span class="col-modified"><span class="date">2025-12-28</span><span class="time">05:00:00</span></span>
-    </a>
-    <a class="entry" href="server.py">
-      <span class="icon icon-code"><svg viewBox="0 0 24 24"><use href="#icon-code"/></svg></span>
-      <span class="col-name">server.py</span>
-      <span class="col-size">6.8 KB</span>
-      <span class="col-modified"><span class="date">2026-02-01</span><span class="time">11:22:00</span></span>
-    </a>
-    <a class="entry" href="main.go">
-      <span class="icon icon-code"><svg viewBox="0 0 24 24"><use href="#icon-code"/></svg></span>
-      <span class="col-name">main.go</span>
-      <span class="col-size">3.2 KB</span>
-      <span class="col-modified"><span class="date">2026-01-18</span><span class="time">14:55:20</span></span>
-    </a>
-    <a class="entry" href="App.java">
-      <span class="icon icon-code"><svg viewBox="0 0 24 24"><use href="#icon-code"/></svg></span>
-      <span class="col-name">App.java</span>
-      <span class="col-size">4.5 KB</span>
-      <span class="col-modified"><span class="date">2025-12-05</span><span class="time">19:30:10</span></span>
-    </a>
+    <div class="entry">
+      <a class="icon-link" href="index.html.download"><span class="icon icon-code"><svg viewBox="0 0 24 24">
+            <use href="#icon-code" />
+          </svg></span></a>
+      <a class="content-link" href="index.html">
+        <span class="col-name">index.html</span>
+        <span class="col-size">12 KB</span>
+        <span class="col-modified"><span class="date">2026-02-06</span><span class="time">20:30:18</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="styles.css.download"><span class="icon icon-code"><svg viewBox="0 0 24 24">
+            <use href="#icon-code" />
+          </svg></span></a>
+      <a class="content-link" href="styles.css">
+        <span class="col-name">styles.css</span>
+        <span class="col-size">8.4 KB</span>
+        <span class="col-modified"><span class="date">2026-01-30</span><span class="time">13:55:44</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="app.js.download"><span class="icon icon-code"><svg viewBox="0 0 24 24">
+            <use href="#icon-code" />
+          </svg></span></a>
+      <a class="content-link" href="app.js">
+        <span class="col-name">app.js</span>
+        <span class="col-size">24 KB</span>
+        <span class="col-modified"><span class="date">2026-02-04</span><span class="time">16:12:38</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="config.json.download"><span class="icon icon-code"><svg viewBox="0 0 24 24">
+            <use href="#icon-code" />
+          </svg></span></a>
+      <a class="content-link" href="config.json">
+        <span class="col-name">config.json</span>
+        <span class="col-size">2.1 KB</span>
+        <span class="col-modified"><span class="date">2026-01-22</span><span class="time">08:40:15</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="sitemap.xml.download"><span class="icon icon-code"><svg viewBox="0 0 24 24">
+            <use href="#icon-code" />
+          </svg></span></a>
+      <a class="content-link" href="sitemap.xml">
+        <span class="col-name">sitemap.xml</span>
+        <span class="col-size">18 KB</span>
+        <span class="col-modified"><span class="date">2025-12-28</span><span class="time">05:00:00</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="server.py.download"><span class="icon icon-code"><svg viewBox="0 0 24 24">
+            <use href="#icon-code" />
+          </svg></span></a>
+      <a class="content-link" href="server.py">
+        <span class="col-name">server.py</span>
+        <span class="col-size">6.8 KB</span>
+        <span class="col-modified"><span class="date">2026-02-01</span><span class="time">11:22:00</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="main.go.download"><span class="icon icon-code"><svg viewBox="0 0 24 24">
+            <use href="#icon-code" />
+          </svg></span></a>
+      <a class="content-link" href="main.go">
+        <span class="col-name">main.go</span>
+        <span class="col-size">3.2 KB</span>
+        <span class="col-modified"><span class="date">2026-01-18</span><span class="time">14:55:20</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="App.java.download"><span class="icon icon-code"><svg viewBox="0 0 24 24">
+            <use href="#icon-code" />
+          </svg></span></a>
+      <a class="content-link" href="App.java">
+        <span class="col-name">App.java</span>
+        <span class="col-size">4.5 KB</span>
+        <span class="col-modified"><span class="date">2025-12-05</span><span class="time">19:30:10</span></span>
+      </a>
+    </div>
 
     <!-- Executables / Scripts -->
-    <a class="entry" href="installer.exe">
-      <span class="icon icon-terminal"><svg viewBox="0 0 24 24"><use href="#icon-terminal"/></svg></span>
-      <span class="col-name">installer.exe</span>
-      <span class="col-size">68 MB</span>
-      <span class="col-modified"><span class="date">2026-01-06</span><span class="time">10:00:00</span></span>
-    </a>
-    <a class="entry" href="deploy.sh">
-      <span class="icon icon-terminal"><svg viewBox="0 0 24 24"><use href="#icon-terminal"/></svg></span>
-      <span class="col-name">deploy.sh</span>
-      <span class="col-size">2.4 KB</span>
-      <span class="col-modified"><span class="date">2026-02-03</span><span class="time">22:10:05</span></span>
-    </a>
+    <div class="entry">
+      <a class="icon-link" href="installer.exe.download"><span class="icon icon-terminal"><svg viewBox="0 0 24 24">
+            <use href="#icon-terminal" />
+          </svg></span></a>
+      <a class="content-link" href="installer.exe">
+        <span class="col-name">installer.exe</span>
+        <span class="col-size">68 MB</span>
+        <span class="col-modified"><span class="date">2026-01-06</span><span class="time">10:00:00</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="deploy.sh.download"><span class="icon icon-terminal"><svg viewBox="0 0 24 24">
+            <use href="#icon-terminal" />
+          </svg></span></a>
+      <a class="content-link" href="deploy.sh">
+        <span class="col-name">deploy.sh</span>
+        <span class="col-size">2.4 KB</span>
+        <span class="col-modified"><span class="date">2026-02-03</span><span class="time">22:10:05</span></span>
+      </a>
+    </div>
 
     <!-- Disk images -->
-    <a class="entry" href="ubuntu-24.04.iso">
-      <span class="icon icon-disc"><svg viewBox="0 0 24 24"><use href="#icon-disc"/></svg></span>
-      <span class="col-name">ubuntu-24.04.iso</span>
-      <span class="col-size">4.7 GB</span>
-      <span class="col-modified"><span class="date">2025-12-12</span><span class="time">02:30:00</span></span>
-    </a>
+    <div class="entry">
+      <a class="icon-link" href="ubuntu-24.04.iso.download"><span class="icon icon-disc"><svg viewBox="0 0 24 24">
+            <use href="#icon-disc" />
+          </svg></span></a>
+      <a class="content-link" href="ubuntu-24.04.iso">
+        <span class="col-name">ubuntu-24.04.iso</span>
+        <span class="col-size">4.7 GB</span>
+        <span class="col-modified"><span class="date">2025-12-12</span><span class="time">02:30:00</span></span>
+      </a>
+    </div>
 
     <!-- Config files -->
-    <a class="entry" href="settings.yaml">
-      <span class="icon icon-config"><svg viewBox="0 0 24 24"><use href="#icon-config"/></svg></span>
-      <span class="col-name">settings.yaml</span>
-      <span class="col-size">1.4 KB</span>
-      <span class="col-modified"><span class="date">2026-01-20</span><span class="time">06:15:30</span></span>
-    </a>
-    <a class="entry" href="database.ini">
-      <span class="icon icon-config"><svg viewBox="0 0 24 24"><use href="#icon-config"/></svg></span>
-      <span class="col-name">database.ini</span>
-      <span class="col-size">820 B</span>
-      <span class="col-modified"><span class="date">2025-11-15</span><span class="time">12:00:00</span></span>
-    </a>
+    <div class="entry">
+      <a class="icon-link" href="settings.yaml.download"><span class="icon icon-config"><svg viewBox="0 0 24 24">
+            <use href="#icon-config" />
+          </svg></span></a>
+      <a class="content-link" href="settings.yaml">
+        <span class="col-name">settings.yaml</span>
+        <span class="col-size">1.4 KB</span>
+        <span class="col-modified"><span class="date">2026-01-20</span><span class="time">06:15:30</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="database.ini.download"><span class="icon icon-config"><svg viewBox="0 0 24 24">
+            <use href="#icon-config" />
+          </svg></span></a>
+      <a class="content-link" href="database.ini">
+        <span class="col-name">database.ini</span>
+        <span class="col-size">820 B</span>
+        <span class="col-modified"><span class="date">2025-11-15</span><span class="time">12:00:00</span></span>
+      </a>
+    </div>
 
     <!-- Font files -->
-    <a class="entry" href="Inter-Regular.ttf">
-      <span class="icon icon-font"><svg viewBox="0 0 24 24"><use href="#icon-font"/></svg></span>
-      <span class="col-name">Inter-Regular.ttf</span>
-      <span class="col-size">310 KB</span>
-      <span class="col-modified"><span class="date">2025-12-20</span><span class="time">08:00:00</span></span>
-    </a>
-    <a class="entry" href="icons.woff2">
-      <span class="icon icon-font"><svg viewBox="0 0 24 24"><use href="#icon-font"/></svg></span>
-      <span class="col-name">icons.woff2</span>
-      <span class="col-size">48 KB</span>
-      <span class="col-modified"><span class="date">2026-01-04</span><span class="time">17:35:20</span></span>
-    </a>
+    <div class="entry">
+      <a class="icon-link" href="Inter-Regular.ttf.download"><span class="icon icon-font"><svg viewBox="0 0 24 24">
+            <use href="#icon-font" />
+          </svg></span></a>
+      <a class="content-link" href="Inter-Regular.ttf">
+        <span class="col-name">Inter-Regular.ttf</span>
+        <span class="col-size">310 KB</span>
+        <span class="col-modified"><span class="date">2025-12-20</span><span class="time">08:00:00</span></span>
+      </a>
+    </div>
+    <div class="entry">
+      <a class="icon-link" href="icons.woff2.download"><span class="icon icon-font"><svg viewBox="0 0 24 24">
+            <use href="#icon-font" />
+          </svg></span></a>
+      <a class="content-link" href="icons.woff2">
+        <span class="col-name">icons.woff2</span>
+        <span class="col-size">48 KB</span>
+        <span class="col-modified"><span class="date">2026-01-04</span><span class="time">17:35:20</span></span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Video Grid -->
+  <p class="photos-heading">Videos</p>
+  <div class="video-grid">
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">BigBuckBunny.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">158 MB &middot; 2026-01-10</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">ElephantsDream.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">169 MB &middot; 2026-01-12</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">ForBiggerBlazes.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">2.2 MB &middot; 2025-12-22</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">ForBiggerEscapes.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">2.0 MB &middot; 2026-01-18</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">ForBiggerFun.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">11 MB &middot; 2026-02-01</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">ForBiggerJoyrides.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">2.1 MB &middot; 2026-01-05</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">ForBiggerMeltdowns.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">2.3 MB &middot; 2025-11-30</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4" type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">Sintel.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">190 MB &middot; 2025-12-31</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source
+            src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">SubaruOutbackOnStreetAndDirt.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">2.4 MB &middot; 2026-02-03</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">TearsOfSteel.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">185 MB &middot; 2026-01-20</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">VolkswagenGTIReview.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">2.5 MB &middot; 2025-12-15</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">WeAreGoingOnBullrun.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">2.2 MB &middot; 2026-01-08</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">WhatCarCanYouGetForAGrand.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">2.0 MB &middot; 2026-01-25</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">blazes-clip-2.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">2.2 MB &middot; 2025-12-08</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">escapes-clip-2.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">2.0 MB &middot; 2026-01-30</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">fun-clip-2.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">11 MB &middot; 2026-02-05</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">joyrides-clip-2.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">2.1 MB &middot; 2026-02-07</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">meltdowns-clip-2.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">2.3 MB &middot; 2025-12-18</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">gti-review-clip-2.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">2.5 MB &middot; 2026-01-12</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="video-card" tabindex="0">
+      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4"
+            type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">bullrun-clip-2.mp4</span>
+          <span class="video-duration"></span>
+          <span class="video-info">2.2 MB &middot; 2026-01-22</span>
+        </div>
+      </a>
+    </div>
+
   </div>
 
   <!-- Photo Grid -->
@@ -1497,312 +2253,6 @@
         <span class="photo-name">comet-trail.jpg</span>
         <span class="photo-info">7.2 MB &middot; 2025-12-30</span>
       </div>
-    </div>
-
-  </div>
-
-  <!-- Video Grid -->
-  <p class="photos-heading">Videos</p>
-  <div class="video-grid">
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">BigBuckBunny.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">158 MB &middot; 2026-01-10</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">ElephantsDream.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">169 MB &middot; 2026-01-12</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">ForBiggerBlazes.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">2.2 MB &middot; 2025-12-22</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">ForBiggerEscapes.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">2.0 MB &middot; 2026-01-18</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">ForBiggerFun.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">11 MB &middot; 2026-02-01</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">ForBiggerJoyrides.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">2.1 MB &middot; 2026-01-05</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">ForBiggerMeltdowns.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">2.3 MB &middot; 2025-11-30</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4" type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">Sintel.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">190 MB &middot; 2025-12-31</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source
-            src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">SubaruOutbackOnStreetAndDirt.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">2.4 MB &middot; 2026-02-03</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">TearsOfSteel.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">185 MB &middot; 2026-01-20</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">VolkswagenGTIReview.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">2.5 MB &middot; 2025-12-15</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">WeAreGoingOnBullrun.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">2.2 MB &middot; 2026-01-08</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">WhatCarCanYouGetForAGrand.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">2.0 MB &middot; 2026-01-25</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">blazes-clip-2.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">2.2 MB &middot; 2025-12-08</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">escapes-clip-2.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">2.0 MB &middot; 2026-01-30</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">fun-clip-2.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">11 MB &middot; 2026-02-05</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">joyrides-clip-2.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">2.1 MB &middot; 2026-02-07</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">meltdowns-clip-2.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">2.3 MB &middot; 2025-12-18</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">gti-review-clip-2.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">2.5 MB &middot; 2026-01-12</span>
-        </div>
-      </a>
-    </div>
-
-    <div class="video-card" tabindex="0">
-      <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4">
-        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
-          <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4"
-            type="video/mp4">
-        </video>
-        <div class="play-icon"></div>
-        <div class="video-meta">
-          <span class="video-name">bullrun-clip-2.mp4</span>
-          <span class="video-duration"></span>
-          <span class="video-info">2.2 MB &middot; 2026-01-22</span>
-        </div>
-      </a>
     </div>
 
   </div>
