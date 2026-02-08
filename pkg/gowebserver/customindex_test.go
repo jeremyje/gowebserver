@@ -10,6 +10,57 @@ import (
 	gowsTesting "github.com/jeremyje/gowebserver/v2/internal/gowebserver/testing"
 )
 
+func TestNameToIconClass(t *testing.T) {
+	testCases := []struct {
+		input string
+		isDir bool
+		want  string
+	}{
+		{input: "abc", isDir: false, want: "unknown"},
+		{input: "abc", isDir: true, want: "folder"},
+		{input: "abc.txt", isDir: false, want: "text"},
+		{input: "abc.pdf", isDir: false, want: "pdf"},
+		{input: "abc.doc", isDir: false, want: "doc"},
+		{input: "abc.xls", isDir: false, want: "spreadsheet"},
+		{input: "abc.ppt", isDir: false, want: "presentation"},
+		{input: "abc.jpg", isDir: false, want: "image"},
+		{input: "abc.mp4", isDir: false, want: "video"},
+		{input: "abc.m4v", isDir: false, want: "video"},
+		{input: "abc.m4a", isDir: false, want: "audio"},
+		{input: "abc.avi", isDir: false, want: "video"},
+		{input: "abc.wmv", isDir: false, want: "video"},
+		{input: "abc.flv", isDir: false, want: "video"},
+		{input: "abc.mp3", isDir: false, want: "audio"},
+		{input: "abc.ogg", isDir: false, want: "audio"},
+		{input: "abc.m4a", isDir: false, want: "audio"},
+		{input: "abc.flac", isDir: false, want: "audio"},
+		{input: "abc.wav", isDir: false, want: "audio"},
+		{input: "abc.zip", isDir: false, want: "archive"},
+		{input: "abc.tar.gz", isDir: false, want: "archive"},
+		{input: "abc.tar", isDir: false, want: "archive"},
+		{input: "abc.tar.bz2", isDir: false, want: "archive"},
+		{input: "abc.tar.xz", isDir: false, want: "archive"},
+		{input: "abc.7z", isDir: false, want: "archive"},
+		{input: "abc.rar", isDir: false, want: "archive"},
+		{input: "abc.cc", isDir: false, want: "code"},
+		{input: "abc.sh", isDir: false, want: "terminal"},
+		{input: "abc.bash", isDir: false, want: "terminal"},
+		{input: "abc.cmd", isDir: false, want: "terminal"},
+		{input: "abc.ps1", isDir: false, want: "terminal"},
+		{input: "abc.download", isDir: false, want: "download"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.input, func(t *testing.T) {
+			t.Parallel()
+			got := nameToIconClass(tc.isDir, tc.input)
+			if got != tc.want {
+				t.Errorf("got: %q, want: %q", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestCustomIndex(t *testing.T) {
 	nestedZipPath := gowsTesting.MustNestedZipFilePath(t)
 
