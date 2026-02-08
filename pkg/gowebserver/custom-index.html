@@ -6,291 +6,988 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>{{.Root}}</title>
-
   <style>
-    body {
-      background-color: white;
-      font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
 
-    pre {
-      overflow-x: auto;
-      white-space: pre-wrap;
-      white-space: -moz-pre-wrap;
-      white-space: -pre-wrap;
-      white-space: -o-pre-wrap;
-      word-wrap: break-word;
+    :root {
+      --bg: #ffffff;
+      --bg-secondary: #f5f6f8;
+      --text: #1a1a1a;
+      --text-secondary: #555;
+      --border: #dde0e4;
+      --hover-bg: #e8eaee;
+      --link: #0366d6;
+      --overlay-bg: rgba(255, 255, 255, 0.85);
+      --shadow: rgba(0, 0, 0, 0.06);
+      --icon-folder: #3b82f6;
+      --icon-text: #6b7280;
+      --icon-pdf: #ef4444;
+      --icon-doc: #2563eb;
+      --icon-spreadsheet: #16a34a;
+      --icon-presentation: #f97316;
+      --icon-image: #8b5cf6;
+      --icon-video: #ec4899;
+      --icon-audio: #f59e0b;
+      --icon-archive: #a16207;
+      --icon-code: #06b6d4;
+      --icon-terminal: #64748b;
+      --icon-disc: #6366f1;
+      --icon-config: #78716c;
+      --icon-font: #0d9488;
+      --icon-download: #059669;
+      --hover-folder: #dbeafe;
+      --hover-text: #e5e7eb;
+      --hover-pdf: #fee2e2;
+      --hover-doc: #dbeafe;
+      --hover-spreadsheet: #dcfce7;
+      --hover-presentation: #ffedd5;
+      --hover-image: #ede9fe;
+      --hover-video: #fce7f3;
+      --hover-audio: #fef3c7;
+      --hover-archive: #fef9c3;
+      --hover-code: #cffafe;
+      --hover-terminal: #e2e8f0;
+      --hover-disc: #e0e7ff;
+      --hover-config: #e7e5e4;
+      --hover-font: #ccfbf1;
+      --hover-download: #d1fae5;
+      --icon-folder-hover: #1d4ed8;
+      --icon-text-hover: #4b5563;
+      --icon-pdf-hover: #b91c1c;
+      --icon-doc-hover: #1d4ed8;
+      --icon-spreadsheet-hover: #15803d;
+      --icon-presentation-hover: #c2410c;
+      --icon-image-hover: #6d28d9;
+      --icon-video-hover: #be185d;
+      --icon-audio-hover: #b45309;
+      --icon-archive-hover: #854d0e;
+      --icon-code-hover: #0e7490;
+      --icon-terminal-hover: #475569;
+      --icon-disc-hover: #4338ca;
+      --icon-config-hover: #57534e;
+      --icon-font-hover: #0f766e;
+      --icon-download-hover: #047857;
     }
 
-    .square-image {
-      object-fit: cover;
-      object-position: center;
-      width: 128px;
-      height: 128px;
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1b1e;
+        --bg-secondary: #232528;
+        --text: #e0e0e0;
+        --text-secondary: #999;
+        --border: #3a3d42;
+        --hover-bg: #35383e;
+        --link: #58a6ff;
+        --overlay-bg: rgba(30, 31, 34, 0.88);
+        --shadow: rgba(0, 0, 0, 0.2);
+        --icon-folder: #60a5fa;
+        --icon-text: #9ca3af;
+        --icon-pdf: #f87171;
+        --icon-doc: #60a5fa;
+        --icon-spreadsheet: #4ade80;
+        --icon-presentation: #fb923c;
+        --icon-image: #a78bfa;
+        --icon-video: #f472b6;
+        --icon-audio: #fbbf24;
+        --icon-archive: #d97706;
+        --icon-code: #22d3ee;
+        --icon-terminal: #94a3b8;
+        --icon-disc: #818cf8;
+        --icon-config: #a8a29e;
+        --icon-font: #2dd4bf;
+        --icon-download: #34d399;
+        --hover-folder: #1e3a5f;
+        --hover-text: #374151;
+        --hover-pdf: #4c1d1d;
+        --hover-doc: #1e3a5f;
+        --hover-spreadsheet: #14432a;
+        --hover-presentation: #4a2512;
+        --hover-image: #2e1a47;
+        --hover-video: #4a1942;
+        --hover-audio: #4a3012;
+        --hover-archive: #3d2e0a;
+        --hover-code: #0c3547;
+        --hover-terminal: #2d3748;
+        --hover-disc: #272462;
+        --hover-config: #3a3632;
+        --hover-font: #0d3d38;
+        --hover-download: #0d3b2e;
+        --icon-folder-hover: #93bbfd;
+        --icon-text-hover: #d1d5db;
+        --icon-pdf-hover: #fca5a5;
+        --icon-doc-hover: #93bbfd;
+        --icon-spreadsheet-hover: #86efac;
+        --icon-presentation-hover: #fdba74;
+        --icon-image-hover: #c4b5fd;
+        --icon-video-hover: #f9a8d4;
+        --icon-audio-hover: #fcd34d;
+        --icon-archive-hover: #fbbf24;
+        --icon-code-hover: #67e8f9;
+        --icon-terminal-hover: #cbd5e1;
+        --icon-disc-hover: #a5b4fc;
+        --icon-config-hover: #d6d3d1;
+        --icon-font-hover: #5eead4;
+        --icon-download-hover: #6ee7b7;
+      }
+    }
+
+    html {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--bg);
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
+      margin: 0;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+
+    /* Directory listing */
+    .listing {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+
+    .listing-header {
+      display: flex;
+      align-items: center;
+      padding: 8px 16px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .listing-header .col-name {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .listing-header .col-size {
+      width: 80px;
+      text-align: right;
+    }
+
+    .listing-header .col-modified {
+      width: 110px;
+      text-align: right;
+      padding-left: 12px;
+    }
+
+    .sort-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.12s ease;
+    }
+
+    .sort-link:hover {
+      color: var(--text);
+    }
+
+    .sort-arrow {
+      font-size: 0.6rem;
       line-height: 1;
     }
 
-    .container {
+    .entry {
       display: flex;
-      flex-wrap: wrap;
-      padding: 5px;
-      justify-content: flex-start;
+      align-items: center;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
-    .item {
-      margin: 0;
-      max-height: 1000px;
-      max-width: 1000px;
-      height: auto;
-      width: auto;
+    .entry:nth-child(odd) {
+      background-color: var(--bg-secondary);
     }
 
-    .file-container {
-      margin: 4px;
+    .entry:hover {
+      background-color: var(--hover-bg);
+    }
+
+    .entry .icon-link {
       display: flex;
-      padding: 4px;
-      width: 100%;
-    }
-
-    .full-width {
-      width: 100%;
-    }
-
-    .file-list {
-      list-style-type: none;
-      padding-left: 0;
-      font-size: 1.25em;
-    }
-
-    .file-list a {
-      color: black;
+      align-items: center;
+      justify-content: center;
+      align-self: stretch;
+      width: 48px;
+      flex-shrink: 0;
       text-decoration: none;
-      display: block;
-      padding: .5em;
+      color: inherit;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0.08);
+      transition: background-color 0.15s ease;
     }
 
-    .file-list a:nth-child(even) {
-      background-color: #EEEEEE;
-    }
-
-    .file-list li {
-      border-bottom: 1px solid #DDDDDD;
-    }
-
-    .file-list li:nth-child(even) {
-      background-color: #EEEEEE;
-    }
-
-    .file-list li:hover {
-      background-color: #CCCCCC;
-    }
-
-    .file-list li:last-child {
-      border: 0;
-    }
-
-    .left {
-      float: left;
-    }
-
-    .right {
-      float: right;
-    }
-
-    .file-table {
-      width: 100%;
-      table-layout: fixed;
-      overflow-wrap: break-word;
-      font-size: 1.25em;
-      border-collapse: collapse;
-    }
-
-    .file-table tr {
-      -moz-transition: all .1s ease-in;
-      -o-transition: all .1s ease-in;
-      -webkit-transition: all .1s ease-in;
-      transition: all .1s ease-in;
-      border-bottom: 1px solid #DDDDDD;
-    }
-
-    .file-table td {
-      padding-right: .5em;
-      padding-left: .5em;
-    }
-
-    .file-table td a {
-      display: block;
+    .entry .content-link {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      padding: 15px 16px 15px 6px;
       text-decoration: none;
-      color: black;
-      padding: .5em;
+      color: var(--text);
+      cursor: pointer;
     }
 
-    .file-table td a:hover {
-      color: black;
+    .entry .col-name {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--link);
+      font-weight: 500;
     }
 
-    .file-table tr:nth-child(even) {
-      background-color: #EEEEEE;
+    .entry .icon {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: transform 0.2s ease, color 0.2s ease;
     }
 
-    .file-table td:nth-child(2) {
-      font-size: 0.75em;
-      width: 6.5em;
+    .entry .icon-link:hover .icon {
+      transform: scale(1.45);
+    }
+
+    .entry .icon svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .icon-folder {
+      color: var(--icon-folder);
+    }
+
+    .icon-text {
+      color: var(--icon-text);
+    }
+
+    .icon-pdf {
+      color: var(--icon-pdf);
+    }
+
+    .icon-doc {
+      color: var(--icon-doc);
+    }
+
+    .icon-spreadsheet {
+      color: var(--icon-spreadsheet);
+    }
+
+    .icon-presentation {
+      color: var(--icon-presentation);
+    }
+
+    .icon-image {
+      color: var(--icon-image);
+    }
+
+    .icon-video {
+      color: var(--icon-video);
+    }
+
+    .icon-audio {
+      color: var(--icon-audio);
+    }
+
+    .icon-archive {
+      color: var(--icon-archive);
+    }
+
+    .icon-code {
+      color: var(--icon-code);
+    }
+
+    .icon-terminal {
+      color: var(--icon-terminal);
+    }
+
+    .icon-disc {
+      color: var(--icon-disc);
+    }
+
+    .icon-config {
+      color: var(--icon-config);
+    }
+
+    .icon-font {
+      color: var(--icon-font);
+    }
+
+    .icon-download {
+      color: var(--icon-download);
+    }
+
+    .icon-link:hover .icon-folder {
+      color: var(--icon-folder-hover);
+    }
+
+    .icon-link:hover .icon-text {
+      color: var(--icon-text-hover);
+    }
+
+    .icon-link:hover .icon-pdf {
+      color: var(--icon-pdf-hover);
+    }
+
+    .icon-link:hover .icon-doc {
+      color: var(--icon-doc-hover);
+    }
+
+    .icon-link:hover .icon-spreadsheet {
+      color: var(--icon-spreadsheet-hover);
+    }
+
+    .icon-link:hover .icon-presentation {
+      color: var(--icon-presentation-hover);
+    }
+
+    .icon-link:hover .icon-image {
+      color: var(--icon-image-hover);
+    }
+
+    .icon-link:hover .icon-video {
+      color: var(--icon-video-hover);
+    }
+
+    .icon-link:hover .icon-audio {
+      color: var(--icon-audio-hover);
+    }
+
+    .icon-link:hover .icon-archive {
+      color: var(--icon-archive-hover);
+    }
+
+    .icon-link:hover .icon-code {
+      color: var(--icon-code-hover);
+    }
+
+    .icon-link:hover .icon-terminal {
+      color: var(--icon-terminal-hover);
+    }
+
+    .icon-link:hover .icon-disc {
+      color: var(--icon-disc-hover);
+    }
+
+    .icon-link:hover .icon-config {
+      color: var(--icon-config-hover);
+    }
+
+    .icon-link:hover .icon-font {
+      color: var(--icon-font-hover);
+    }
+
+    .icon-link:hover .icon-download {
+      color: var(--icon-download-hover);
+    }
+
+    .icon-link:hover:has(.icon-folder) {
+      background-color: var(--hover-folder);
+    }
+
+    .icon-link:hover:has(.icon-text) {
+      background-color: var(--hover-text);
+    }
+
+    .icon-link:hover:has(.icon-pdf) {
+      background-color: var(--hover-pdf);
+    }
+
+    .icon-link:hover:has(.icon-doc) {
+      background-color: var(--hover-doc);
+    }
+
+    .icon-link:hover:has(.icon-spreadsheet) {
+      background-color: var(--hover-spreadsheet);
+    }
+
+    .icon-link:hover:has(.icon-presentation) {
+      background-color: var(--hover-presentation);
+    }
+
+    .icon-link:hover:has(.icon-image) {
+      background-color: var(--hover-image);
+    }
+
+    .icon-link:hover:has(.icon-video) {
+      background-color: var(--hover-video);
+    }
+
+    .icon-link:hover:has(.icon-audio) {
+      background-color: var(--hover-audio);
+    }
+
+    .icon-link:hover:has(.icon-archive) {
+      background-color: var(--hover-archive);
+    }
+
+    .icon-link:hover:has(.icon-code) {
+      background-color: var(--hover-code);
+    }
+
+    .icon-link:hover:has(.icon-terminal) {
+      background-color: var(--hover-terminal);
+    }
+
+    .icon-link:hover:has(.icon-disc) {
+      background-color: var(--hover-disc);
+    }
+
+    .icon-link:hover:has(.icon-config) {
+      background-color: var(--hover-config);
+    }
+
+    .icon-link:hover:has(.icon-font) {
+      background-color: var(--hover-font);
+    }
+
+    .icon-link:hover:has(.icon-download) {
+      background-color: var(--hover-download);
+    }
+
+    .entry .col-size {
+      width: 80px;
+      text-align: right;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+      font-family: "SF Mono", "Cascadia Code", "Fira Code", Consolas, monospace;
+    }
+
+    .entry .col-modified {
+      width: 110px;
+      text-align: right;
+      flex-shrink: 0;
+      padding-left: 12px;
+    }
+
+    .entry .col-modified .date,
+    .entry .col-modified .time {
+      display: block;
+      font-size: 0.7rem;
+      line-height: 1.3;
+      color: var(--text-secondary);
+    }
+
+    /* Responsive: compact on small screens */
+    @media (max-width: 480px) {
+      body {
+        padding: 8px;
+      }
+
+      .listing-header .col-size,
+      .listing-header .col-modified {
+        display: none;
+      }
+
+      .entry .col-size {
+        width: 60px;
+        font-size: 0.7rem;
+      }
+
+      .entry .col-modified {
+        width: 90px;
+      }
+
+      .entry .col-modified .date,
+      .entry .col-modified .time {
+        font-size: 0.65rem;
+      }
+
+      .entry .content-link {
+        padding-right: 12px;
+      }
+    }
+
+    /* Photo grid section */
+    .photos-heading {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 480px) {
+      .photo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 8px;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .photo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 14px;
+      }
+    }
+
+    .photo-card {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--bg-secondary);
+      cursor: pointer;
+      transition: transform 0.25s ease, filter 0.25s ease;
+      z-index: 0;
+    }
+
+    @media (min-width: 600px) {
+
+      .photo-card:hover,
+      .photo-card:focus-within {
+        transform: scale(2.2);
+        z-index: 1;
+        filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.5)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+      }
+    }
+
+    .photo-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .photo-card .photo-meta {
+      position: absolute;
+      bottom: -1px;
+      left: -1px;
+      right: -1px;
+      padding: 28px 11px 9px;
+      background: linear-gradient(to top, var(--overlay-bg) 60%, transparent);
+      transform: translateY(100%);
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      opacity: 0;
+    }
+
+    .photo-card:hover .photo-meta,
+    .photo-card:focus-within .photo-meta {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .photo-meta .photo-name {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .photo-meta .photo-info {
+      display: block;
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Touch: show meta on tap via focus */
+    .photo-card:focus .photo-meta {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    @media (min-width: 600px) {
+      .photo-card:focus {
+        transform: scale(2.2);
+        z-index: 1;
+        filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.5)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+      }
+    }
+
+    /* Video grid */
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 480px) {
+      .video-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 8px;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .video-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 14px;
+      }
+    }
+
+    .video-card {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--bg-secondary);
+      transition: transform 0.25s ease, filter 0.25s ease;
+      z-index: 0;
+    }
+
+    .video-card a {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .video-card video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    @media (min-width: 780px) {
+
+      .video-card:hover,
+      .video-card:focus-within {
+        transform: scale(2.2);
+        z-index: 1;
+        filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.5)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+      }
+    }
+
+    .video-card .play-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 48px;
+      height: 48px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      pointer-events: none;
+      transition: opacity 0.2s ease, background-color 0.2s ease;
+    }
+
+    .video-card .play-icon::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 54%;
+      transform: translate(-50%, -50%);
+      border-style: solid;
+      border-width: 8px 0 8px 14px;
+      border-color: transparent transparent transparent #fff;
+    }
+
+    .video-card:hover .play-icon {
+      opacity: 0;
+    }
+
+    .video-card .video-meta {
+      position: absolute;
+      bottom: -1px;
+      left: -1px;
+      right: -1px;
+      padding: 24px 11px 9px;
+      background: linear-gradient(to top, var(--overlay-bg) 60%, transparent);
+      pointer-events: none;
+    }
+
+    @media (min-width: 780px) {
+      .video-card:focus {
+        transform: scale(2.2);
+        z-index: 1;
+        filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.5)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+      }
+    }
+
+    .video-meta .video-name {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .video-meta .video-info {
+      display: block;
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .video-meta .video-duration {
+      position: absolute;
+      bottom: 9px;
+      right: 11px;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Footer */
+    .footer {
       text-align: center;
-    }
-
-    .file-table tr:hover {
-      background-color: #CCCCCC;
-    }
-
-    .file-table tr .different-link {
-      border: 4px;
-      border-color: #333333;
-      background-color: #CCCCCC;
-      border-radius: .5em;
-    }
-
-    .file-table tr:nth-child(even) .different-link {
-      background-color: #BBBBBB;
-    }
-
-    h4 {
-      display: flex;
-      padding: .75em;
-      background-color: #333333;
-      color: #CCCCCC;
-      border-bottom-right-radius: .5em;
-      border-bottom-left-radius: .5em;
-      justify-content: space-between;
-      margin-top: 0;
-    }
-
-    h4 .fill {
-      flex-basis: auto;
-    }
-
-    h4 a {
-      text-decoration: none;
-      background-color: #444444;
-      padding-left: 1em;
-      padding-right: 1em;
-      color: #EEEEEE;
-      flex-basis: 1;
-      border-radius: .25em;
-    }
-
-    h4 a:hover {
-      background-color: #888888;
-      color: #222222;
-    }
-
-    #previews {
-      /* Prevent vertical gaps */
-      line-height: 0;
-
-      -webkit-column-count: 5;
-      -webkit-column-gap: 0px;
-      -moz-column-count: 5;
-      -moz-column-gap: 0px;
-      column-count: 5;
-      column-gap: 0px;
-    }
-
-    #previews img {
-      /* Just in case there are inline attributes */
-      width: 100% !important;
-      height: auto !important;
-    }
-
-    @media (max-width: 1200px) {
-      #previews {
-        -moz-column-count: 4;
-        -webkit-column-count: 4;
-        column-count: 4;
-      }
-    }
-
-    @media (max-width: 1000px) {
-      #previews {
-        -moz-column-count: 3;
-        -webkit-column-count: 3;
-        column-count: 3;
-      }
-    }
-
-    @media (max-width: 800px) {
-      #previews {
-        -moz-column-count: 2;
-        -webkit-column-count: 2;
-        column-count: 2;
-      }
-    }
-
-    @media (max-width: 400px) {
-      #previews {
-        -moz-column-count: 1;
-        -webkit-column-count: 1;
-        column-count: 1;
-      }
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      padding: 12px 0;
+      border-top: 1px solid var(--border);
     }
   </style>
 </head>
 
 <body>
-  <main>
-    <h4><span class="left">{{.RootName}}</span><span class="options">
-        {{if eq .SortBy "name"}}<a href="?sort=name-desc">Name ↓</a>{{else}}<a href="?sort=name">Name ↑</a>{{end}}
-        &nbsp; {{if eq .SortBy "date"}}<a href="?sort=date-desc">Date ↓</a>{{else}}<a href="?sort=date">Date
-          ↑</a>{{end}}
-        &nbsp; {{if eq .SortBy "size"}}<a href="?sort=size-desc">Size ↓</a>{{else}}<a href="?sort=size">Size
-          ↑</a>{{end}}</span>
-    </h4>
-    <table class="file-table">
-      <tbody>
-        {{range $index, $element := $.DirEntries}}{{if $element.IsArchive}}
-        <tr title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}">
-          <td><a href="{{urlEncode $element.Name}}-dir/">{{$element.Name}}/</a></td>
-          <td><a href="{{urlEncode $element.Name}}" class="different-link">↓ {{humanizeBytes
-              $element.Size}}<br /><small>{{if $.UseTimestamp}}{{humanizeTimestamp
-                $element.ModTime}}{{else}}{{humanizeDate $element.ModTime}}{{end}}</small></a></td>
-        </tr>
-        {{else if $element.IsDir}}
-        <tr title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}">
-          <td><a href="{{urlEncode $element.Name}}">{{$element.Name}}/</a></td>
-          <td><a href="{{urlEncode $element.Name}}">Directory <small>{{if $.UseTimestamp}}{{humanizeTimestamp
-                $element.ModTime}}{{else}}{{humanizeDate $element.ModTime}}{{end}}</small></a></td>
-        </tr>
-        {{end}}
-        {{end}}
-      </tbody>
-    </table>
-    <br />
-    <table class="file-table">
-      <tbody>
-        {{range $index, $element := $.DirEntries}}{{if and (not $element.IsArchive) (and (not $element.IsDir) (not
-        (isImage $element.Name)))}}
-        <tr title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}">
-          <td><a href="{{urlEncode $element.Name}}">{{$element.Name}}</a></td>
-          <td><a href="{{urlEncode $element.Name}}">{{humanizeBytes $element.Size}}<br /><small>{{if
-                $.UseTimestamp}}{{humanizeTimestamp $element.ModTime}}{{else}}{{humanizeDate
-                $element.ModTime}}{{end}}</small></a></td>
-        </tr>
-        {{end}}{{end}}
-      </tbody>
-    </table>
 
-    <section id="previews">
-      {{range $index, $element := $.DirEntries}}{{if isImage $element.Name}}
-      <a href="{{$element.Name}}"><img src="{{urlEncode $element.Name}}" class="square-image item" loading="lazy"
-          title="{{$element.Name}} - {{humanizeBytes $element.Size}}- {{$element.ModTime}}" /></a>
-      {{end}}{{end}}
-    </section>
-  </main>
+  <!-- SVG Icon Definitions -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <defs>
+      <symbol id="icon-folder" viewBox="0 0 24 24">
+        <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+      </symbol>
+      <symbol id="icon-text" viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="8" y1="13" x2="16" y2="13" />
+        <line x1="8" y1="17" x2="16" y2="17" />
+      </symbol>
+      <symbol id="icon-pdf" viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <path d="M9 15v-4h1.5a1.5 1.5 0 010 3H9" />
+      </symbol>
+      <symbol id="icon-doc" viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="8" y1="13" x2="16" y2="13" />
+        <line x1="8" y1="17" x2="16" y2="17" />
+        <line x1="8" y1="9" x2="12" y2="9" />
+      </symbol>
+      <symbol id="icon-spreadsheet" viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="8" y1="13" x2="16" y2="13" />
+        <line x1="8" y1="17" x2="16" y2="17" />
+        <line x1="12" y1="11" x2="12" y2="19" />
+      </symbol>
+      <symbol id="icon-presentation" viewBox="0 0 24 24">
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <line x1="12" y1="17" x2="12" y2="21" />
+        <line x1="8" y1="21" x2="16" y2="21" />
+      </symbol>
+      <symbol id="icon-image" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <path d="M21 15l-5-5L5 21" />
+      </symbol>
+      <symbol id="icon-video" viewBox="0 0 24 24">
+        <polygon points="23 7 16 12 23 17 23 7" />
+        <rect x="1" y="5" width="15" height="14" rx="2" />
+      </symbol>
+      <symbol id="icon-audio" viewBox="0 0 24 24">
+        <path d="M9 18V5l12-2v13" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="18" cy="16" r="3" />
+      </symbol>
+      <symbol id="icon-archive" viewBox="0 0 24 24">
+        <path d="M21 8v13H3V8" />
+        <path d="M1 3h22v5H1z" />
+        <path d="M10 12h4" />
+      </symbol>
+      <symbol id="icon-download" viewBox="0 0 24 24">
+        <path d="M12 3v13" />
+        <polyline points="7 11 12 16 17 11" />
+        <line x1="4" y1="21" x2="20" y2="21" />
+      </symbol>
+      <symbol id="icon-code" viewBox="0 0 24 24">
+        <polyline points="16 18 22 12 16 6" />
+        <polyline points="8 6 2 12 8 18" />
+      </symbol>
+      <symbol id="icon-terminal" viewBox="0 0 24 24">
+        <rect x="2" y="3" width="20" height="18" rx="2" />
+        <polyline points="7 9 10 12 7 15" />
+        <line x1="13" y1="15" x2="17" y2="15" />
+      </symbol>
+      <symbol id="icon-disc" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <circle cx="12" cy="12" r="3" />
+      </symbol>
+      <symbol id="icon-config" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3" />
+        <path
+          d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-2.82 1.18V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1.08-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1.08H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1.08 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.26.604.852.997 1.51 1.08H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1.08z" />
+      </symbol>
+      <symbol id="icon-font" viewBox="0 0 24 24">
+        <polyline points="4 7 4 4 20 4 20 7" />
+        <line x1="9" y1="20" x2="15" y2="20" />
+        <line x1="12" y1="4" x2="12" y2="20" />
+      </symbol>
+    </defs>
+  </svg>
+
+  <h1>{{.RootName}}</h1>
+
+  <!-- Directory Listing -->
+  {{if $.HasNonMediaEntry}}
+  <div class="listing">
+    <div class="listing-header">
+      <span class="col-name">{{if eq .SortBy "name"}}<a class="sort-link" href="?sort=name-desc">Name <span
+            class="sort-arrow">&#x25B2;</span></a>{{else}}<a class="sort-link" href="?sort=name">Name <span
+            class="sort-arrow">&#x25BC;</span></a>{{end}}</span>
+      <span class="col-size">{{if eq .SortBy "size"}}<a class="sort-link" href="?sort=size-desc">Size <span
+            class="sort-arrow">&#x25B2;</span></a>{{else}}<a class="sort-link" href="?sort=date">Size <span
+            class="sort-arrow">&#x25BC;</span></a>{{end}}</span>
+      <span class="col-modified">{{if eq .SortBy "date"}}<a class="sort-link" href="?sort=date-desc">Modified <span
+            class="sort-arrow">&#x25B2;</span></a>{{else}}<a class="sort-link" href="?sort=date">Modified <span
+            class="sort-arrow">&#x25BC;</span></a>{{end}}</span>
+    </div>
+
+    <!-- List Directories including mounted archives -->
+    {{range $index, $element := $.DirEntries}}
+    {{if eq (isMedia $element.Name) false}}
+    <div class="entry">
+      <a class="icon-link" href="{{urlEncode $element.Name}}"><span class="icon icon-{{$element.IconClass}}"><svg
+            viewBox="0 0 24 24">
+            <use href="#icon-{{$element.IconClass}}" />
+          </svg></span></a>
+      <a class="content-link"
+        href="{{if $element.IsArchive}}{{urlEncode $element.Name}}-dir/{{else}}{{urlEncode $element.Name}}/{{end}}"
+        title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}">
+        <span class="col-name">{{$element.Name}}{{if $element.IsDir}}/{{end}}</span>
+        <span class="col-size">{{if $element.IsArchive}}{{humanizeBytes $element.Size}}{{else}}&mdash;{{end}}</span>
+        <span class="col-modified"><span class="date">{{if $.UseTimestamp}}{{humanizeTimestamp
+            $element.ModTime}}{{else}}{{humanizeDate $element.ModTime}}{{end}}</span><span class="time"></span></span>
+      </a>
+    </div>
+    {{end}}{{end}}
+  </div>
+
+  {{end}}
+
+  <!-- Video Grid -->
+  <p class="photos-heading">Videos</p>
+  <div class="video-grid">
+
+    {{range $index, $element := $.DirEntries}}{{if isVideo $element.Name}}
+    <div class="video-card" tabindex="0">
+      <a href="{{urlEncode $element.Name}}">
+        <video preload="none" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+          <source src="{{urlEncode $element.Name}}" type="video/mp4">
+        </video>
+        <div class="play-icon"></div>
+        <div class="video-meta">
+          <span class="video-name">{{$element.Name}}</span>
+          <span class="video-duration"></span>
+          <span class="video-info">{{humanizeBytes $element.Size}} &middot; {{$element.ModTime}}</span>
+        </div>
+      </a>
+    </div>
+    {{end}}{{end}}
+  </div>
+
+  <!-- Photo Grid -->
+  <p class="photos-heading">Photos</p>
+  <div class="photo-grid">
+    {{range $index, $element := $.DirEntries}}{{if isImage $element.Name}}
+    <div class="photo-card" tabindex="0">
+      <img src="{{urlEncode $element.Name}}" alt="{{$element.Name}}" loading="lazy" decoding="async">
+      <div class="photo-meta">
+        <span class="photo-name">{{$element.Name}}</span>
+        <span class="photo-info">{{humanizeBytes $element.Size}} &middot; {{$element.ModTime}}</span>
+      </div>
+    </div>
+    {{end}}{{end}}
+  </div>
+
+  <div class="footer">Go Web Server</div>
+
+  <script>
+    (function () {
+      function formatDuration(seconds) {
+        var total = Math.floor(seconds);
+        var h = Math.floor(total / 3600);
+        var m = Math.floor((total % 3600) / 60);
+        var s = total % 60;
+        return h > 0
+          ? h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0')
+          : m + ':' + String(s).padStart(2, '0');
+      }
+
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          var card = entry.target;
+          observer.unobserve(card);
+          var video = card.querySelector('video');
+          if (!video) return;
+          video.addEventListener('loadedmetadata', function () {
+            var span = card.querySelector('.video-duration');
+            if (span) span.textContent = formatDuration(video.duration);
+          });
+          video.preload = 'metadata';
+        });
+      }, { rootMargin: '200px' });
+
+      document.querySelectorAll('.video-card').forEach(function (card) {
+        observer.observe(card);
+      });
+
+    })();
+  </script>
+
 </body>
 
 </html>
