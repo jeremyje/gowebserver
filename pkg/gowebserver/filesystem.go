@@ -16,6 +16,7 @@ package gowebserver
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -26,12 +27,12 @@ import (
 	"time"
 
 	"github.com/bodgit/sevenzip"
-	archiver "github.com/mholt/archiver/v4"
+	"github.com/mholt/archives"
 	"go.opentelemetry.io/otel/trace"
 )
 
 var (
-	archives = []string{".tar", ".tar.gz", ".tar.bz2", ".tar.xz", ".tar.lz4", ".tar.br", ".tar.zst", ".rar", ".zip"}
+	archiveExtList = []string{".tar", ".tar.gz", ".tar.bz2", ".tar.xz", ".tar.lz4", ".tar.br", ".tar.zst", ".rar", ".zip"}
 )
 
 func splitNestedFSPath(path string) []string {
@@ -95,7 +96,7 @@ func newRawFSFromURI(path string) (FileSystem, error) {
 }
 
 func isSupportedArchive(filePath string) bool {
-	for _, suffix := range archives {
+	for _, suffix := range archiveExtList {
 		if strings.HasSuffix(strings.ToLower(filePath), suffix) {
 			return true
 		}
@@ -207,16 +208,19 @@ func archiverFileSystemFromArchive(file fs.File) (fs.FS, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	format, _, err := archiver.Identify(stat.Name(), file)
-	if err != nil && !errors.Is(err, archiver.ErrNoMatch) {
+	ctx := context.Background()
+	format, _, err := archives.Identify(ctx, stat.Name(), file)
+	if err != nil && !errors.Is(err, archives.NoMatch) {
 		return nil, err
 	}
 	if format != nil {
 		// TODO: we only really need Extractor and Decompressor here, not the combined interfaces...
-		if af, ok := format.(archiver.Archival); ok {
+		if af, ok := format.(archives.Archival); ok {
 			r := io.NewSectionReader(readerAt, 0, stat.Size())
-			return archiver.ArchiveFS{Stream: r, Format: af}, nil
+			return archives.ArchiveFS{
+				Stream: r,
+				Format: af,
+			}, nil
 		}
 	}
 	return nil, fmt.Errorf("archive not recognized")
