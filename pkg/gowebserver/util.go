@@ -200,6 +200,7 @@ func createTemplate(tmplText []byte) (*template.Template, error) {
 		"isImage":           isImage,
 		"isAudio":           isAudio,
 		"isVideo":           isVideo,
+		"isMedia":           isMedia,
 		"isOdd":             isOdd,
 		"isEven":            isEven,
 		"humanizeDate":      humanizeDate,
@@ -242,6 +243,10 @@ func isAudio(name string) bool {
 
 func isVideo(name string) bool {
 	return strings.HasPrefix(mime.TypeByExtension(filepath.Ext(name)), "video")
+}
+
+func isMedia(name string) bool {
+	return isVideo(name) || isImage(name)
 }
 
 func isOdd(v int) bool {

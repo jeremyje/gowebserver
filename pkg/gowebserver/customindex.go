@@ -89,16 +89,16 @@ func (d *DirEntry) String() string {
 	if d == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("%s - %t/%t (%s)", d.Name, d.IsDir, d.IsArchive, d.IconClass)
+	return fmt.Sprintf("%s: dir= %t, archive= %t iconClass= %q", d.Name, d.IsDir, d.IsArchive, d.IconClass)
 }
 
 type CustomIndexReport struct {
-	Root         string
-	RootName     string
-	DirEntries   []*DirEntry
-	Images       []*DirEntry
-	SortBy       string
-	UseTimestamp bool
+	Root             string
+	RootName         string
+	DirEntries       []*DirEntry
+	SortBy           string
+	UseTimestamp     bool
+	HasNonMediaEntry bool
 }
 
 type customIndexHandler struct {
@@ -121,35 +121,38 @@ func canonicalizeSortBy(v string) string {
 
 var (
 	mimeIconMap = map[string]string{
-		".":                         "folder",
-		"image":                     "image",
-		"application/pdf":           "pdf",
-		"audio":                     "audio",
-		"text":                      "text",
-		"video":                     "video",
-		".txt":                      "text",
-		".pdf":                      "pdf",
-		".doc":                      "doc",
-		".xls":                      "spreadsheet",
-		".ppt":                      "presentation",
-		".jpg":                      "image",
-		".mp4":                      "video",
-		".mp3":                      "audio",
-		".zip":                      "archive",
-		".cc":                       "code",
-		".sh":                       "terminal",
-		".rar":                      "archive",
-		".7z":                       "archive",
-		".xz":                       "archive",
-		".bz2":                      "archive",
-		".tar":                      "archive",
-		".gz":                       "archive",
-		".ps1":                      "terminal",
-		".psm1":                     "terminal",
-		".cmd":                      "terminal",
-		".bash":                     "terminal",
-		".download":                 "download",
-		"application/x-shellscript": "terminal",
+		".":                               "folder",
+		"image":                           "image",
+		"application/pdf":                 "pdf",
+		"audio":                           "audio",
+		"text":                            "text",
+		"video":                           "video",
+		".txt":                            "text",
+		".pdf":                            "pdf",
+		".doc":                            "doc",
+		".xls":                            "spreadsheet",
+		".ppt":                            "presentation",
+		".jpg":                            "image",
+		".mp4":                            "video",
+		".xvid":                           "video",
+		".mp3":                            "audio",
+		".zip":                            "archive",
+		".cc":                             "code",
+		".sh":                             "terminal",
+		".rar":                            "archive",
+		".7z":                             "archive",
+		".xz":                             "archive",
+		".bz2":                            "archive",
+		".tar":                            "archive",
+		".gz":                             "archive",
+		".ps1":                            "terminal",
+		".psm1":                           "terminal",
+		".cmd":                            "terminal",
+		".bash":                           "terminal",
+		".download":                       "download",
+		"application/x-shellscript":       "terminal",
+		"application/x-ms-dos-executable": "terminal",
+		"application/x-msdownload":        "terminal",
 	}
 )
 
@@ -169,6 +172,7 @@ func nameToIconClass(isDir bool, name string) string {
 		if val, ok := mimeIconMap[mimeType]; ok {
 			return val
 		}
+
 		if parts := strings.Split(mimeType, "/"); len(parts) > 1 {
 			if val, ok := mimeIconMap[parts[0]]; ok {
 				return val
@@ -285,10 +289,15 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				_, generateSpan := rootTrace.Start(readDirCtx, "applyTemplate")
 				generateSpan.SetAttributes(attribute.Int("num_files", files.Len()))
 				defer generateSpan.End()
+				hasNonMediaEntry := false
 				for _, name := range files.EntryOrder {
 					entry := files.Entries[name]
 					params.DirEntries = append(params.DirEntries, entry)
+					if !isMedia(entry.Name) {
+						hasNonMediaEntry = true
+					}
 				}
+				params.HasNonMediaEntry = hasNonMediaEntry
 
 				if err := c.tmpl.Execute(w, params); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
