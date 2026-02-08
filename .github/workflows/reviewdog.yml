@@ -29,6 +29,11 @@ jobs:
           github_token: ${{ secrets.github_token }}
           locale: "US"
           ignore: "KeyPair"
+          exclude: |
+            ./go.sum
+            ./go.mod
+            ./.git/*
+            ./.cache/*
 
   # https://github.com/marketplace/actions/run-hadolint-with-reviewdog
   hadolint:
