@@ -921,7 +921,7 @@
       animation: bracket-l-slide 0.5s ease;
     }
 
-    /* Terminal: cursor blinks */
+    /* Terminal: cursor blinks on hover */
     @keyframes cursor-blink {
       0%, 100% { opacity: 1; }
       50% { opacity: 0; }
@@ -1546,7 +1546,7 @@
       <symbol id="icon-terminal" viewBox="0 0 24 24">
         <rect x="2" y="3" width="20" height="18" rx="2" />
         <polyline points="7 9 10 12 7 15" />
-        <line class="cursor" x1="13" y1="15" x2="17" y2="15" />
+        <line x1="13" y1="15" x2="17" y2="15" />
       </symbol>
       <!-- Disc images -->
       <symbol id="icon-disc" viewBox="0 0 24 24">
@@ -1826,9 +1826,13 @@
       </a>
     </div>
 
-    <!-- terminal -->
+    <!-- terminal (inlined so CSS can target .cursor for blink animation) -->
     <div class="entry">
-      <a class="icon-link" href="#"><span class="icon icon-terminal"><svg viewBox="0 0 24 24"><use href="#icon-terminal" /></svg></span></a>
+      <a class="icon-link" href="#"><span class="icon icon-terminal"><svg viewBox="0 0 24 24">
+        <rect x="2" y="3" width="20" height="18" rx="2" />
+        <polyline points="7 9 10 12 7 15" />
+        <line class="cursor" x1="13" y1="15" x2="17" y2="15" />
+      </svg></span></a>
       <a class="content-link" href="#" title="deploy.sh — 2.4 KB">
         <span class="col-name">deploy.sh</span>
         <span class="col-size">2.4 KB</span>
