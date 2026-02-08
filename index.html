@@ -281,6 +281,139 @@
     transform: scale(1.06);
   }
 
+  /* Video grid */
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 480px) {
+    .video-grid {
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 8px;
+    }
+  }
+
+  @media (min-width: 900px) {
+    .video-grid {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+  }
+
+  .video-card {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+  }
+
+  .video-card a {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .video-card video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.2s ease;
+  }
+
+  .video-card:hover video,
+  .video-card:focus-within video {
+    transform: scale(1.06);
+  }
+
+  .video-card .play-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 48px;
+    height: 48px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+  }
+
+  .video-card .play-icon::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 54%;
+    transform: translate(-50%, -50%);
+    border-style: solid;
+    border-width: 8px 0 8px 14px;
+    border-color: transparent transparent transparent #fff;
+  }
+
+  .video-card:hover .play-icon {
+    opacity: 0;
+  }
+
+  .video-card .video-meta {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 24px 10px 8px;
+    background: linear-gradient(to top, var(--overlay-bg) 60%, transparent);
+    transform: translateY(100%);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .video-card:hover .video-meta,
+  .video-card:focus-within .video-meta {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .video-card:focus .video-meta {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .video-card:focus video {
+    transform: scale(1.06);
+  }
+
+  .video-meta .video-name {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .video-meta .video-info {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .video-meta .video-duration {
+    position: absolute;
+    top: -28px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
   /* Footer */
   .footer {
     text-align: center;
@@ -876,6 +1009,292 @@
       <span class="photo-name">comet-trail.jpg</span>
       <span class="photo-info">7.2 MB &middot; 2025-12-30</span>
     </div>
+  </div>
+
+</div>
+
+<!-- Video Grid -->
+<p class="photos-heading">Videos</p>
+<div class="video-grid">
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">9:56</span>
+        <span class="video-name">BigBuckBunny.mp4</span>
+        <span class="video-info">158 MB &middot; 2026-01-10</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">10:53</span>
+        <span class="video-name">ElephantsDream.mp4</span>
+        <span class="video-info">169 MB &middot; 2026-01-12</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">0:15</span>
+        <span class="video-name">ForBiggerBlazes.mp4</span>
+        <span class="video-info">2.2 MB &middot; 2025-12-22</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">0:15</span>
+        <span class="video-name">ForBiggerEscapes.mp4</span>
+        <span class="video-info">2.0 MB &middot; 2026-01-18</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">1:00</span>
+        <span class="video-name">ForBiggerFun.mp4</span>
+        <span class="video-info">11 MB &middot; 2026-02-01</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">0:15</span>
+        <span class="video-name">ForBiggerJoyrides.mp4</span>
+        <span class="video-info">2.1 MB &middot; 2026-01-05</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">0:15</span>
+        <span class="video-name">ForBiggerMeltdowns.mp4</span>
+        <span class="video-info">2.3 MB &middot; 2025-11-30</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">14:48</span>
+        <span class="video-name">Sintel.mp4</span>
+        <span class="video-info">190 MB &middot; 2025-12-31</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">0:15</span>
+        <span class="video-name">SubaruOutbackOnStreetAndDirt.mp4</span>
+        <span class="video-info">2.4 MB &middot; 2026-02-03</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">12:14</span>
+        <span class="video-name">TearsOfSteel.mp4</span>
+        <span class="video-info">185 MB &middot; 2026-01-20</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">0:15</span>
+        <span class="video-name">VolkswagenGTIReview.mp4</span>
+        <span class="video-info">2.5 MB &middot; 2025-12-15</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">0:15</span>
+        <span class="video-name">WeAreGoingOnBullrun.mp4</span>
+        <span class="video-info">2.2 MB &middot; 2026-01-08</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">0:15</span>
+        <span class="video-name">WhatCarCanYouGetForAGrand.mp4</span>
+        <span class="video-info">2.0 MB &middot; 2026-01-25</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">0:15</span>
+        <span class="video-name">blazes-clip-2.mp4</span>
+        <span class="video-info">2.2 MB &middot; 2025-12-08</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">0:15</span>
+        <span class="video-name">escapes-clip-2.mp4</span>
+        <span class="video-info">2.0 MB &middot; 2026-01-30</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">1:00</span>
+        <span class="video-name">fun-clip-2.mp4</span>
+        <span class="video-info">11 MB &middot; 2026-02-05</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">0:15</span>
+        <span class="video-name">joyrides-clip-2.mp4</span>
+        <span class="video-info">2.1 MB &middot; 2026-02-07</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">0:15</span>
+        <span class="video-name">meltdowns-clip-2.mp4</span>
+        <span class="video-info">2.3 MB &middot; 2025-12-18</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">0:15</span>
+        <span class="video-name">gti-review-clip-2.mp4</span>
+        <span class="video-info">2.5 MB &middot; 2026-01-12</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="video-card" tabindex="0">
+    <a href="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4">
+      <video preload="metadata" muted loop onmouseenter="this.play()" onmouseleave="this.pause()">
+        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4" type="video/mp4">
+      </video>
+      <div class="play-icon"></div>
+      <div class="video-meta">
+        <span class="video-duration">0:15</span>
+        <span class="video-name">bullrun-clip-2.mp4</span>
+        <span class="video-info">2.2 MB &middot; 2026-01-22</span>
+      </div>
+    </a>
   </div>
 
 </div>
