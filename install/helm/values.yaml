@@ -18,7 +18,7 @@ gowebserver:
   image:
     registry: "docker.io"
     repository: "jeremyje/gowebserver"
-    tag: "v2.7.1"
+    tag: "v3.0.0"
     pullPolicy: "Always"
   replicas: 3
   portType: ClusterIP
