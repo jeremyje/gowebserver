@@ -295,7 +295,7 @@ benchmark: $(ASSETS)
 test-all: test test-10 benchmark coverage
 
 run: clean $(ASSETS) lint
-	$(GO) run cmd/gowebserver/gowebserver.go -http.port 8181 -path=git@github.com:jeremyje/gowebserver.git -verbose -debug
+	$(GO) run cmd/gowebserver/gowebserver.go -http.port 8181 -path=. -verbose -debug -enhancedindex=true
 
 multirun: clean $(ASSETS) lint
 	$(GO) run cmd/gowebserver/gowebserver.go -path=./cmd/,./pkg/,. -verbose=true -servepath=mains,code,root -http.port 8181 -enhancedindex=true -debug
