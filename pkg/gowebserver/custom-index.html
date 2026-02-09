@@ -428,6 +428,21 @@
 
     .icon-terminal {
       color: var(--icon-terminal);
+      position: relative;
+    }
+
+    .icon-terminal::after {
+      content: '';
+      position: absolute;
+      left: 11.83px;
+      top: 12.88px;
+      width: 3.33px;
+      height: 1.25px;
+      background: currentColor;
+    }
+
+    .icon-link:hover .icon-terminal::after {
+      animation: cursor-blink 0.8s step-end infinite;
     }
 
     .icon-disc {
@@ -1100,18 +1115,15 @@
       }
     }
 
-    .icon-link:hover .icon-terminal .cursor {
-      animation: cursor-blink 0.8s step-end infinite;
-    }
 
-    /* Disc: spins */
+    /* Disc: spins + grows */
     @keyframes disc-spin {
       0% {
-        transform: rotate(0deg);
+        transform: scale(1.45) rotate(0deg);
       }
 
       100% {
-        transform: rotate(360deg);
+        transform: scale(1.45) rotate(360deg);
       }
     }
 
@@ -1121,10 +1133,30 @@
       animation: disc-spin 1.5s linear infinite;
     }
 
-    /* Config: gear rotates */
+    /* Config: gear grows then rotates */
+    @keyframes gear-grow {
+      0% {
+        transform: scale(1) rotate(0deg);
+      }
+
+      100% {
+        transform: scale(1.45) rotate(0deg);
+      }
+    }
+
+    @keyframes gear-spin {
+      0% {
+        transform: scale(1.45) rotate(0deg);
+      }
+
+      100% {
+        transform: scale(1.45) rotate(360deg);
+      }
+    }
+
     .icon-link:hover .icon-config {
       transform-origin: center;
-      animation: disc-spin 2s linear infinite;
+      animation: gear-grow 0.2s ease forwards, gear-spin 2s 0.2s linear infinite;
     }
 
     /* Font: letter bounces */
@@ -1922,7 +1954,6 @@
       <symbol id="icon-terminal" viewBox="0 0 24 24">
         <rect x="2" y="3" width="20" height="18" rx="2" />
         <polyline points="7 9 10 12 7 15" />
-        <line x1="13" y1="15" x2="17" y2="15" />
       </symbol>
       <!-- Disc images -->
       <symbol id="icon-disc" viewBox="0 0 24 24">
