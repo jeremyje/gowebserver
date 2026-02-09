@@ -235,7 +235,7 @@ install/wasm/wasm_exec.html:
 	sed -i 's/..\/..\/lib\/wasm\///g' $@
 
 internal/gowebserver/testing/nodir-testassets.zip: $(TEST_ARCHIVES) internal/gowebserver/testing/single-testassets.zip internal/gowebserver/testing/nested-testassets.zip
-	cd internal/gowebserver/testing/testassets; $(ZIP) -qr9 ../../nodir-testassets.zip index.html assets/1.txt assets/2.txt site.js "weird #1.txt" weird#.txt weird$$.txt assets/more/3.txt assets/four/4.txt assets/fivesix/5.txt assets/fivesix/6.txt
+	cd internal/gowebserver/testing/testassets; $(ZIP) -qr9 ../../nodir-testassets.zip index.html assets/1.txt assets/2.txt bytype/archive.rar bytype/text.txt site.js "weird #1.txt" weird#.txt weird$$.txt assets/more/3.txt assets/four/4.txt assets/fivesix/5.txt assets/fivesix/6.txt
 	mv internal/gowebserver/nodir-testassets.zip internal/gowebserver/testing/nodir-testassets.zip
 
 internal/gowebserver/testing/single-testassets.zip: $(TEST_ARCHIVES)
