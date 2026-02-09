@@ -99,6 +99,8 @@ type CustomIndexReport struct {
 	SortBy           string
 	UseTimestamp     bool
 	HasNonMediaEntry bool
+	HasImage         bool
+	HasVideo         bool
 }
 
 type customIndexHandler struct {
@@ -197,6 +199,10 @@ var (
 		".cfg":                            "config",
 		".yaml":                           "config",
 		".yml":                            "config",
+		"application/x-cd-image":          "disc",
+		".docx":                           "doc",
+		".xlsx":                           "spreadsheet",
+		".pptx":                           "presentation",
 	}
 )
 
@@ -334,14 +340,24 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				generateSpan.SetAttributes(attribute.Int("num_files", files.Len()))
 				defer generateSpan.End()
 				hasNonMediaEntry := false
+				hasImage := false
+				hasVideo := false
 				for _, name := range files.EntryOrder {
 					entry := files.Entries[name]
 					params.DirEntries = append(params.DirEntries, entry)
 					if !isMedia(entry.Name) {
 						hasNonMediaEntry = true
 					}
+					if isImage(entry.Name) {
+						hasImage = true
+					}
+					if isVideo(entry.Name) {
+						hasVideo = true
+					}
 				}
 				params.HasNonMediaEntry = hasNonMediaEntry
+				params.HasImage = hasImage
+				params.HasVideo = hasVideo
 
 				if err := c.tmpl.Execute(w, params); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
