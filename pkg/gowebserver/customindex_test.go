@@ -72,6 +72,8 @@ func TestNameToIconClass(t *testing.T) {
 		{input: "abc.7z", isDir: false, want: "archive"},
 		{input: "abc.rar", isDir: false, want: "archive"},
 		{input: "abc.cc", isDir: false, want: "code"},
+		{input: "abc.cs", isDir: false, want: "code"},
+		{input: "abc.java", isDir: false, want: "code"},
 		{input: "abc.sh", isDir: false, want: "terminal"},
 		{input: "abc.bash", isDir: false, want: "terminal"},
 		{input: "abc.cmd", isDir: false, want: "terminal"},
