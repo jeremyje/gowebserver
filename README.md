@@ -69,7 +69,7 @@ docker pull docker.io/jeremyje/httpprobe
 
 ## Build
 
-![example workflow](https://github.com/jeremyje/gowebserver/actions/workflows/deploy.yml/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/jeremyje/gowebserver)](https://goreportcard.com/report/github.com/jeremyje/gowebserver) [![Go Reference](https://pkg.go.dev/badge/github.com/jeremyje/gowebserver.svg)](https://pkg.go.dev/github.com/jeremyje/gowebserver) [![codecov](https://codecov.io/gh/jeremyje/gowebserver/branch/main/graph/badge.svg)](https://codecov.io/gh/jeremyje/gowebserver) [![Total alerts](https://img.shields.io/lgtm/alerts/g/jeremyje/gowebserver.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jeremyje/gowebserver/alerts/)
+![example workflow](https://github.com/jeremyje/gowebserver/actions/workflows/deploy.yml/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/jeremyje/gowebserver)](https://goreportcard.com/report/github.com/jeremyje/gowebserver) [![Go Reference](https://pkg.go.dev/badge/github.com/jeremyje/gowebserver.svg)](https://pkg.go.dev/github.com/jeremyje/gowebserver) [![codecov](https://codecov.io/gh/jeremyje/gowebserver/branch/main/graph/badge.svg)](https://codecov.io/gh/jeremyje/gowebserver)
 
 Install [Go 1.24 or newer](https://golang.org/dl/).
 
