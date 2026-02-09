@@ -2139,11 +2139,13 @@
   <div class="photo-grid">
     {{range $index, $element := $.DirEntries}}{{if isImage $element.Name}}
     <div class="photo-card" tabindex="0">
-      <img src="{{urlEncode $element.Name}}" alt="{{$element.Name}}" loading="lazy" decoding="async">
-      <div class="photo-meta">
-        <span class="photo-name">{{$element.Name}}</span>
-        <span class="photo-info">{{humanizeBytes $element.Size}} &middot; {{$element.ModTime}}</span>
-      </div>
+      <a href="{{urlEncode $element.Name}}">
+        <img src="{{urlEncode $element.Name}}" alt="{{$element.Name}}" loading="lazy" decoding="async">
+        <div class="photo-meta">
+          <span class="photo-name">{{$element.Name}}</span>
+          <span class="photo-info">{{humanizeBytes $element.Size}} &middot; {{$element.ModTime}}</span>
+        </div>
+      </a>
     </div>
     {{end}}{{end}}
   </div>
