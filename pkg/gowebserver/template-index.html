@@ -1,4 +1,4 @@
 <pre>
-{{range $index, $value := .ServePaths -}}
-<a href="{{$value}}">{{$value}}</a>
+{{range $index, $value := .DirEntries -}}
+<a href="{{$value.Name}}">{{$value.Name}}</a>
 {{end}}</pre>

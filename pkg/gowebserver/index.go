@@ -16,7 +16,10 @@ package gowebserver
 
 import (
 	"bytes"
+	"log"
 	"net/http"
+	"strings"
+	"time"
 
 	_ "embed"
 )
@@ -24,8 +27,6 @@ import (
 var (
 	//go:embed template-index.html
 	templateIndexHTML []byte
-	//go:embed template-modernindex.html
-	templateModernIndexHTML []byte
 )
 
 type indexHTTPHandler struct {
@@ -35,12 +36,30 @@ type indexHTTPHandler struct {
 func newIndexHTTPHandler(servePaths []string, modern bool) (*indexHTTPHandler, error) {
 	templateHTML := templateIndexHTML
 	if modern {
-		templateHTML = templateModernIndexHTML
+		templateHTML = customIndexHTML
 	}
 	w := &bytes.Buffer{}
-	var params = struct {
-		ServePaths []string
-	}{servePaths}
+
+	entries := []*DirEntry{}
+	for _, servePath := range servePaths {
+		entries = append(entries, &DirEntry{
+			Name:      strings.Trim(servePath, "/"),
+			IsDir:     true,
+			IsArchive: false,
+			IconClass: "folder",
+			ModTime:   time.Time{},
+		})
+	}
+	params := &CustomIndexReport{
+		Root:             "/",
+		RootName:         "/",
+		DirEntries:       entries,
+		SortBy:           "name",
+		UseTimestamp:     false,
+		HasNonMediaEntry: true,
+	}
+
+	log.Printf("ROOT: %+v", params)
 	if err := executeTemplate(templateHTML, params, w); err != nil {
 		return nil, err
 	}

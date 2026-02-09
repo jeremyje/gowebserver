@@ -2076,14 +2076,13 @@
   <h1>{{.RootName}}</h1>
 
   <!-- Directory Listing -->
-  {{if $.HasNonMediaEntry}}
   <div class="listing">
     <div class="listing-header">
       <span class="col-name">{{if eq .SortBy "name"}}<a class="sort-link" href="?sort=name-desc">Name <span
             class="sort-arrow">&#x25B2;</span></a>{{else}}<a class="sort-link" href="?sort=name">Name <span
             class="sort-arrow">&#x25BC;</span></a>{{end}}</span>
       <span class="col-size">{{if eq .SortBy "size"}}<a class="sort-link" href="?sort=size-desc">Size <span
-            class="sort-arrow">&#x25B2;</span></a>{{else}}<a class="sort-link" href="?sort=date">Size <span
+            class="sort-arrow">&#x25B2;</span></a>{{else}}<a class="sort-link" href="?sort=size">Size <span
             class="sort-arrow">&#x25BC;</span></a>{{end}}</span>
       <span class="col-modified">{{if eq .SortBy "date"}}<a class="sort-link" href="?sort=date-desc">Modified <span
             class="sort-arrow">&#x25B2;</span></a>{{else}}<a class="sort-link" href="?sort=date">Modified <span
@@ -2102,7 +2101,7 @@
         href="{{if $element.IsArchive}}{{urlEncode $element.Name}}-dir/{{else}}{{urlEncode $element.Name}}{{if $element.IsDir}}/{{end}}{{end}}"
         title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}">
         <span class="col-name">{{$element.Name}}</span>
-        <span class="col-size">{{if and $element.IsDir $element.IsArchive }}&mdash;{{else}}{{humanizeBytes
+        <span class="col-size">{{if and $element.IsDir (not $element.IsArchive) }}&mdash;{{else}}{{humanizeBytes
           $element.Size}}{{end}}</span>
         <span class="col-modified"><span class="date">{{if $.UseTimestamp}}{{humanizeTimestamp
             $element.ModTime}}{{else}}{{humanizeDate $element.ModTime}}{{end}}</span><span class="time"></span></span>
@@ -2110,8 +2109,6 @@
     </div>
     {{end}}{{end}}
   </div>
-
-  {{end}}
 
   <!-- Video Grid -->
   {{if $.HasVideo }}
