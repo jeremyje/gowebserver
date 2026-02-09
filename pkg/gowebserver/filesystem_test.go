@@ -172,7 +172,7 @@ func TestNestedFileSystem(t *testing.T) {
 
 			baseDir := tc.baseDir
 			t.Run("verifyFileSystem", func(t *testing.T) {
-				verifyFileSystem(t, vFS, nFS, baseDir)
+				verifyFileSystem(t, nFS, baseDir)
 			})
 
 			if !tc.isNested {
@@ -192,7 +192,7 @@ func TestNestedFileSystem(t *testing.T) {
 	}
 }
 
-func verifyFileSystem(tb testing.TB, vFS FileSystem, nFS *nestedFS, baseDir string) {
+func verifyFileSystem(tb testing.TB, nFS *nestedFS, baseDir string) {
 	indexFilePath := filepath.Join(baseDir, "index.html")
 	fp, err := nFS.Open(indexFilePath)
 	if err != nil {
@@ -337,7 +337,7 @@ func verifyLocalFileFromDefaultAsset(tb testing.TB, vFS fs.FS, baseDir string) {
 		if baseDir != "" {
 			name = filepath.Join(baseDir, name)
 		}
-		if err := verifyLocalFile(tb, vFS, baseDir, name); err != nil {
+		if err := verifyLocalFile(vFS, baseDir, name); err != nil {
 			tb.Error(err)
 		}
 	}
@@ -346,7 +346,7 @@ func verifyLocalFileFromDefaultAsset(tb testing.TB, vFS fs.FS, baseDir string) {
 	verifyFileMissing(tb, vFS, "does-not-exist")
 }
 
-func verifyLocalFile(tb testing.TB, vFS fs.FS, baseDir string, assetPath string) error {
+func verifyLocalFile(vFS fs.FS, baseDir string, assetPath string) error {
 	f, err := vFS.Open(assetPath)
 	if err != nil {
 		return fmt.Errorf("%s does not exist when it's expected to, %s", assetPath, err)
