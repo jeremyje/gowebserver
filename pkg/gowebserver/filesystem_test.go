@@ -29,7 +29,7 @@ import (
 
 var (
 	zeroTime               = time.Time{}
-	commonFSRootDirList    = []string{"assets", "index.html", "site.js", "weird #1.txt", "weird#.txt", "weird$.txt"}
+	commonFSRootDirList    = []string{"assets", "bytype", "index.html", "site.js", "weird #1.txt", "weird#.txt", "weird$.txt"}
 	nestedZipFSRootDirList = []string{"single-testassets.zip", "single-testassets.zip-dir", "testassets", "testassets.7z", "testassets.rar", "testassets.rar-dir", "testassets.tar", "testassets.tar-dir", "testassets.tar.bz2", "testassets.tar.bz2-dir", "testassets.tar.gz", "testassets.tar.gz-dir", "testassets.tar.lz4", "testassets.tar.lz4-dir", "testassets.tar.xz", "testassets.tar.xz-dir", "testassets.zip", "testassets.zip-dir", "testing.go", "testing_test.go"}
 )
 
