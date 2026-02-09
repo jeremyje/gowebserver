@@ -159,7 +159,7 @@ jobs:
 
       - name: Publish Application
         # https://github.com/actions/upload-artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: startsWith(github.ref, 'refs/tags/')
         with:
           name: release.tar.gz
