@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	_ "embed"
@@ -71,7 +72,25 @@ func TestIndexHTTPHandlerServeHTTP(t *testing.T) {
 				t.Errorf("index mismatch (-want +got):\n%s", diff)
 
 				t.Errorf("Wanted:\n%s", string(tc.want))
+				t.Errorf("Got:\n%s", string(data))
+				writeTestFile(t, data)
 			}
 		})
+	}
+}
+
+func writeTestFile(tb testing.TB, data []byte) {
+	f, err := os.CreateTemp("", "test-output")
+	if err != nil {
+		tb.Fatal(err)
+	}
+	tb.Logf("writing content to %q", f.Name())
+	if n, err := f.Write(data); err != nil {
+		tb.Fatal(err)
+	} else if n != len(data) {
+		tb.Errorf("cannot write contents of data with len:%d got:%d", len(data), n)
+	}
+	if err := f.Close(); err != nil {
+		tb.Errorf("cannot close temp file, %v", err)
 	}
 }

@@ -1,119 +1,2167 @@
 <!DOCTYPE html>
 <html lang="en">
 
-
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Directories</title>
+  <title>/</title>
   <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #ffffff;
+      --bg-secondary: #f5f6f8;
+      --text: #1a1a1a;
+      --text-secondary: #555;
+      --border: #dde0e4;
+      --hover-bg: #e8eaee;
+      --link: #0366d6;
+      --overlay-bg: rgba(255, 255, 255, 0.85);
+      --shadow: rgba(0, 0, 0, 0.06);
+      --icon-folder: #3b82f6;
+      --icon-text: #6b7280;
+      --icon-pdf: #ef4444;
+      --icon-doc: #2563eb;
+      --icon-spreadsheet: #16a34a;
+      --icon-presentation: #f97316;
+      --icon-image: #8b5cf6;
+      --icon-video: #ec4899;
+      --icon-audio: #f59e0b;
+      --icon-archive: #a16207;
+      --icon-code: #06b6d4;
+      --icon-terminal: #64748b;
+      --icon-disc: #6366f1;
+      --icon-config: #78716c;
+      --icon-font: #0d9488;
+      --icon-download: #059669;
+      --icon-database: #7c3aed;
+      --icon-ebook: #b45309;
+      --icon-cad: #0891b2;
+      --icon-vector: #c026d3;
+      --icon-photoshop: #2563eb;
+      --icon-markup: #e11d48;
+      --icon-stylesheet: #7c3aed;
+      --icon-script: #eab308;
+      --icon-data: #0d9488;
+      --icon-certificate: #16a34a;
+      --icon-key: #d97706;
+      --icon-log: #64748b;
+      --icon-backup: #9333ea;
+      --icon-binary: #475569;
+      --icon-package: #059669;
+      --hover-folder: #dbeafe;
+      --hover-text: #e5e7eb;
+      --hover-pdf: #fee2e2;
+      --hover-doc: #dbeafe;
+      --hover-spreadsheet: #dcfce7;
+      --hover-presentation: #ffedd5;
+      --hover-image: #ede9fe;
+      --hover-video: #fce7f3;
+      --hover-audio: #fef3c7;
+      --hover-archive: #fef9c3;
+      --hover-code: #cffafe;
+      --hover-terminal: #e2e8f0;
+      --hover-disc: #e0e7ff;
+      --hover-config: #e7e5e4;
+      --hover-font: #ccfbf1;
+      --hover-download: #d1fae5;
+      --hover-database: #ede9fe;
+      --hover-ebook: #fef3c7;
+      --hover-cad: #cffafe;
+      --hover-vector: #fae8ff;
+      --hover-photoshop: #dbeafe;
+      --hover-markup: #ffe4e6;
+      --hover-stylesheet: #ede9fe;
+      --hover-script: #fef9c3;
+      --hover-data: #ccfbf1;
+      --hover-certificate: #dcfce7;
+      --hover-key: #ffedd5;
+      --hover-log: #e2e8f0;
+      --hover-backup: #f3e8ff;
+      --hover-binary: #e2e8f0;
+      --hover-package: #d1fae5;
+      --icon-folder-hover: #1d4ed8;
+      --icon-text-hover: #4b5563;
+      --icon-pdf-hover: #b91c1c;
+      --icon-doc-hover: #1d4ed8;
+      --icon-spreadsheet-hover: #15803d;
+      --icon-presentation-hover: #c2410c;
+      --icon-image-hover: #6d28d9;
+      --icon-video-hover: #be185d;
+      --icon-audio-hover: #b45309;
+      --icon-archive-hover: #854d0e;
+      --icon-code-hover: #0e7490;
+      --icon-terminal-hover: #475569;
+      --icon-disc-hover: #4338ca;
+      --icon-config-hover: #57534e;
+      --icon-font-hover: #0f766e;
+      --icon-download-hover: #047857;
+      --icon-database-hover: #6d28d9;
+      --icon-ebook-hover: #92400e;
+      --icon-cad-hover: #0e7490;
+      --icon-vector-hover: #a21caf;
+      --icon-photoshop-hover: #1d4ed8;
+      --icon-markup-hover: #be123c;
+      --icon-stylesheet-hover: #6d28d9;
+      --icon-script-hover: #ca8a04;
+      --icon-data-hover: #0f766e;
+      --icon-certificate-hover: #15803d;
+      --icon-key-hover: #b45309;
+      --icon-log-hover: #475569;
+      --icon-backup-hover: #7e22ce;
+      --icon-binary-hover: #334155;
+      --icon-package-hover: #047857;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1b1e;
+        --bg-secondary: #232528;
+        --text: #e0e0e0;
+        --text-secondary: #999;
+        --border: #3a3d42;
+        --hover-bg: #35383e;
+        --link: #58a6ff;
+        --overlay-bg: rgba(30, 31, 34, 0.88);
+        --shadow: rgba(0, 0, 0, 0.2);
+        --icon-folder: #60a5fa;
+        --icon-text: #9ca3af;
+        --icon-pdf: #f87171;
+        --icon-doc: #60a5fa;
+        --icon-spreadsheet: #4ade80;
+        --icon-presentation: #fb923c;
+        --icon-image: #a78bfa;
+        --icon-video: #f472b6;
+        --icon-audio: #fbbf24;
+        --icon-archive: #d97706;
+        --icon-code: #22d3ee;
+        --icon-terminal: #94a3b8;
+        --icon-disc: #818cf8;
+        --icon-config: #a8a29e;
+        --icon-font: #2dd4bf;
+        --icon-download: #34d399;
+        --icon-database: #a78bfa;
+        --icon-ebook: #fbbf24;
+        --icon-cad: #22d3ee;
+        --icon-vector: #e879f9;
+        --icon-photoshop: #60a5fa;
+        --icon-markup: #fb7185;
+        --icon-stylesheet: #a78bfa;
+        --icon-script: #facc15;
+        --icon-data: #2dd4bf;
+        --icon-certificate: #4ade80;
+        --icon-key: #fbbf24;
+        --icon-log: #94a3b8;
+        --icon-backup: #c084fc;
+        --icon-binary: #94a3b8;
+        --icon-package: #34d399;
+        --hover-folder: #1e3a5f;
+        --hover-text: #374151;
+        --hover-pdf: #4c1d1d;
+        --hover-doc: #1e3a5f;
+        --hover-spreadsheet: #14432a;
+        --hover-presentation: #4a2512;
+        --hover-image: #2e1a47;
+        --hover-video: #4a1942;
+        --hover-audio: #4a3012;
+        --hover-archive: #3d2e0a;
+        --hover-code: #0c3547;
+        --hover-terminal: #2d3748;
+        --hover-disc: #272462;
+        --hover-config: #3a3632;
+        --hover-font: #0d3d38;
+        --hover-download: #0d3b2e;
+        --hover-database: #2e1a47;
+        --hover-ebook: #4a3012;
+        --hover-cad: #0c3547;
+        --hover-vector: #3b0a45;
+        --hover-photoshop: #1e3a5f;
+        --hover-markup: #4c1d25;
+        --hover-stylesheet: #2e1a47;
+        --hover-script: #3d3012;
+        --hover-data: #0d3d38;
+        --hover-certificate: #14432a;
+        --hover-key: #4a3012;
+        --hover-log: #2d3748;
+        --hover-backup: #2e1a47;
+        --hover-binary: #2d3748;
+        --hover-package: #0d3b2e;
+        --icon-folder-hover: #93bbfd;
+        --icon-text-hover: #d1d5db;
+        --icon-pdf-hover: #fca5a5;
+        --icon-doc-hover: #93bbfd;
+        --icon-spreadsheet-hover: #86efac;
+        --icon-presentation-hover: #fdba74;
+        --icon-image-hover: #c4b5fd;
+        --icon-video-hover: #f9a8d4;
+        --icon-audio-hover: #fcd34d;
+        --icon-archive-hover: #fbbf24;
+        --icon-code-hover: #67e8f9;
+        --icon-terminal-hover: #cbd5e1;
+        --icon-disc-hover: #a5b4fc;
+        --icon-config-hover: #d6d3d1;
+        --icon-font-hover: #5eead4;
+        --icon-download-hover: #6ee7b7;
+        --icon-database-hover: #c4b5fd;
+        --icon-ebook-hover: #fcd34d;
+        --icon-cad-hover: #67e8f9;
+        --icon-vector-hover: #f0abfc;
+        --icon-photoshop-hover: #93bbfd;
+        --icon-markup-hover: #fda4af;
+        --icon-stylesheet-hover: #c4b5fd;
+        --icon-script-hover: #fde047;
+        --icon-data-hover: #5eead4;
+        --icon-certificate-hover: #86efac;
+        --icon-key-hover: #fcd34d;
+        --icon-log-hover: #cbd5e1;
+        --icon-backup-hover: #d8b4fe;
+        --icon-binary-hover: #cbd5e1;
+        --icon-package-hover: #6ee7b7;
+      }
+    }
+
+    html {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--bg);
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body {
-      background-color: white;
-      font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 16px;
+      overflow-x: hidden;
     }
 
-    pre {
-      overflow-x: auto;
-      white-space: pre-wrap;
-      white-space: -moz-pre-wrap;
-      white-space: -pre-wrap;
-      white-space: -o-pre-wrap;
-      word-wrap: break-word;
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+      word-break: break-all;
     }
 
-    .square-image {
-      object-fit: cover;
-      object-position: center;
-      width: 128px;
-      height: 128px;
+     
+    .listing {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 32px;
     }
 
-    body {
+    .listing-header {
+      display: flex;
+      align-items: center;
+      padding: 8px 16px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .listing-header .col-name {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .listing-header .col-size {
+      width: 80px;
+      text-align: right;
+    }
+
+    .listing-header .col-modified {
+      width: 110px;
+      text-align: right;
+      padding-left: 12px;
+    }
+
+    .sort-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.12s ease;
+    }
+
+    .sort-link:hover {
+      color: var(--text);
+    }
+
+    .sort-arrow {
+      font-size: 0.6rem;
       line-height: 1;
     }
 
-    .container {
+    .entry {
       display: flex;
-      flex-wrap: wrap;
-      padding: 5px;
-      justify-content: flex-start;
+      align-items: center;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
-    .item {
-      margin: 5px;
+    .entry:nth-child(odd) {
+      background-color: var(--bg-secondary);
     }
 
-    .file-container {
-      margin: 4px;
+    .entry:hover {
+      background-color: var(--hover-bg);
+    }
+
+    .entry .icon-link {
       display: flex;
-      padding: 4px;
-      width: 100%;
-    }
-
-    .full-width {
-      width: 100%;
-    }
-
-    .file-list {
-      list-style-type: none;
-      padding-left: 0;
-      font-size: 1.25em;
-    }
-
-    .file-list a {
-      color: black;
+      align-items: center;
+      justify-content: center;
+      align-self: stretch;
+      width: 48px;
+      flex-shrink: 0;
       text-decoration: none;
-      background-color: #FFFFFF;
+      color: inherit;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0.08);
+      transition: background-color 0.15s ease;
     }
 
-    .file-list a:nth-child(odd) {
-      background-color: #EEEEEE;
+    .entry .content-link {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      padding: 15px 16px 15px 6px;
+      text-decoration: none;
+      color: var(--text);
+      cursor: pointer;
     }
 
-    .file-list li {
-      border-bottom: 1px solid #DDDDDD;
-      padding: .5em;
+    .entry .col-name {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--link);
+      font-weight: 500;
     }
 
-    .file-list li:nth-child(odd) {
-      background-color: #EEEEEE;
+    .entry .icon {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: transform 0.2s ease, color 0.2s ease;
     }
 
-    .file-list li:hover {
-      background-color: #DDDDDD;
+    .entry .icon-link:hover .icon {
+      transform: scale(1.45);
     }
 
-    .file-list li:last-child {
-      border: 0;
+    .entry .icon svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
-    .left {
-      float: left;
+    .icon-folder {
+      color: var(--icon-folder);
     }
 
-    .right {
-      float: right;
+    .icon-text {
+      color: var(--icon-text);
+    }
+
+    .icon-pdf {
+      color: var(--icon-pdf);
+    }
+
+    .icon-doc {
+      color: var(--icon-doc);
+    }
+
+    .icon-spreadsheet {
+      color: var(--icon-spreadsheet);
+    }
+
+    .icon-presentation {
+      color: var(--icon-presentation);
+    }
+
+    .icon-image {
+      color: var(--icon-image);
+    }
+
+    .icon-video {
+      color: var(--icon-video);
+    }
+
+    .icon-audio {
+      color: var(--icon-audio);
+    }
+
+    .icon-archive {
+      color: var(--icon-archive);
+    }
+
+    .icon-code {
+      color: var(--icon-code);
+    }
+
+    .icon-terminal {
+      color: var(--icon-terminal);
+      position: relative;
+    }
+
+    .icon-terminal::after {
+      content: '';
+      position: absolute;
+      left: 11.83px;
+      top: 12.88px;
+      width: 3.33px;
+      height: 1.25px;
+      background: currentColor;
+    }
+
+    .icon-link:hover .icon-terminal::after {
+      animation: cursor-blink 0.8s step-end infinite;
+    }
+
+    .icon-disc {
+      color: var(--icon-disc);
+    }
+
+    .icon-config {
+      color: var(--icon-config);
+    }
+
+    .icon-font {
+      color: var(--icon-font);
+    }
+
+    .icon-download {
+      color: var(--icon-download);
+    }
+
+    .icon-database {
+      color: var(--icon-database);
+    }
+
+    .icon-ebook {
+      color: var(--icon-ebook);
+    }
+
+    .icon-cad {
+      color: var(--icon-cad);
+    }
+
+    .icon-vector {
+      color: var(--icon-vector);
+    }
+
+    .icon-photoshop {
+      color: var(--icon-photoshop);
+    }
+
+    .icon-markup {
+      color: var(--icon-markup);
+    }
+
+    .icon-stylesheet {
+      color: var(--icon-stylesheet);
+    }
+
+    .icon-script {
+      color: var(--icon-script);
+    }
+
+    .icon-data {
+      color: var(--icon-data);
+    }
+
+    .icon-certificate {
+      color: var(--icon-certificate);
+    }
+
+    .icon-key {
+      color: var(--icon-key);
+    }
+
+    .icon-log {
+      color: var(--icon-log);
+    }
+
+    .icon-backup {
+      color: var(--icon-backup);
+    }
+
+    .icon-binary {
+      color: var(--icon-binary);
+    }
+
+    .icon-package {
+      color: var(--icon-package);
+    }
+
+    .icon-link:hover .icon-folder {
+      color: var(--icon-folder-hover);
+    }
+
+    .icon-link:hover .icon-text {
+      color: var(--icon-text-hover);
+    }
+
+    .icon-link:hover .icon-pdf {
+      color: var(--icon-pdf-hover);
+    }
+
+    .icon-link:hover .icon-doc {
+      color: var(--icon-doc-hover);
+    }
+
+    .icon-link:hover .icon-spreadsheet {
+      color: var(--icon-spreadsheet-hover);
+    }
+
+    .icon-link:hover .icon-presentation {
+      color: var(--icon-presentation-hover);
+    }
+
+    .icon-link:hover .icon-image {
+      color: var(--icon-image-hover);
+    }
+
+    .icon-link:hover .icon-video {
+      color: var(--icon-video-hover);
+    }
+
+    .icon-link:hover .icon-audio {
+      color: var(--icon-audio-hover);
+    }
+
+    .icon-link:hover .icon-archive {
+      color: var(--icon-archive-hover);
+    }
+
+    .icon-link:hover .icon-code {
+      color: var(--icon-code-hover);
+    }
+
+    .icon-link:hover .icon-terminal {
+      color: var(--icon-terminal-hover);
+    }
+
+    .icon-link:hover .icon-disc {
+      color: var(--icon-disc-hover);
+    }
+
+    .icon-link:hover .icon-config {
+      color: var(--icon-config-hover);
+    }
+
+    .icon-link:hover .icon-font {
+      color: var(--icon-font-hover);
+    }
+
+    .icon-link:hover .icon-download {
+      color: var(--icon-download-hover);
+    }
+
+    .icon-link:hover .icon-database {
+      color: var(--icon-database-hover);
+    }
+
+    .icon-link:hover .icon-ebook {
+      color: var(--icon-ebook-hover);
+    }
+
+    .icon-link:hover .icon-cad {
+      color: var(--icon-cad-hover);
+    }
+
+    .icon-link:hover .icon-vector {
+      color: var(--icon-vector-hover);
+    }
+
+    .icon-link:hover .icon-photoshop {
+      color: var(--icon-photoshop-hover);
+    }
+
+    .icon-link:hover .icon-markup {
+      color: var(--icon-markup-hover);
+    }
+
+    .icon-link:hover .icon-stylesheet {
+      color: var(--icon-stylesheet-hover);
+    }
+
+    .icon-link:hover .icon-script {
+      color: var(--icon-script-hover);
+    }
+
+    .icon-link:hover .icon-data {
+      color: var(--icon-data-hover);
+    }
+
+    .icon-link:hover .icon-certificate {
+      color: var(--icon-certificate-hover);
+    }
+
+    .icon-link:hover .icon-key {
+      color: var(--icon-key-hover);
+    }
+
+    .icon-link:hover .icon-log {
+      color: var(--icon-log-hover);
+    }
+
+    .icon-link:hover .icon-backup {
+      color: var(--icon-backup-hover);
+    }
+
+    .icon-link:hover .icon-binary {
+      color: var(--icon-binary-hover);
+    }
+
+    .icon-link:hover .icon-package {
+      color: var(--icon-package-hover);
+    }
+
+    .icon-link:hover:has(.icon-folder) {
+      background-color: var(--hover-folder);
+    }
+
+    .icon-link:hover:has(.icon-text) {
+      background-color: var(--hover-text);
+    }
+
+    .icon-link:hover:has(.icon-pdf) {
+      background-color: var(--hover-pdf);
+    }
+
+    .icon-link:hover:has(.icon-doc) {
+      background-color: var(--hover-doc);
+    }
+
+    .icon-link:hover:has(.icon-spreadsheet) {
+      background-color: var(--hover-spreadsheet);
+    }
+
+    .icon-link:hover:has(.icon-presentation) {
+      background-color: var(--hover-presentation);
+    }
+
+    .icon-link:hover:has(.icon-image) {
+      background-color: var(--hover-image);
+    }
+
+    .icon-link:hover:has(.icon-video) {
+      background-color: var(--hover-video);
+    }
+
+    .icon-link:hover:has(.icon-audio) {
+      background-color: var(--hover-audio);
+    }
+
+    .icon-link:hover:has(.icon-archive) {
+      background-color: var(--hover-archive);
+    }
+
+    .icon-link:hover:has(.icon-code) {
+      background-color: var(--hover-code);
+    }
+
+    .icon-link:hover:has(.icon-terminal) {
+      background-color: var(--hover-terminal);
+    }
+
+    .icon-link:hover:has(.icon-disc) {
+      background-color: var(--hover-disc);
+    }
+
+    .icon-link:hover:has(.icon-config) {
+      background-color: var(--hover-config);
+    }
+
+    .icon-link:hover:has(.icon-font) {
+      background-color: var(--hover-font);
+    }
+
+    .icon-link:hover:has(.icon-download) {
+      background-color: var(--hover-download);
+    }
+
+    .icon-link:hover:has(.icon-database) {
+      background-color: var(--hover-database);
+    }
+
+    .icon-link:hover:has(.icon-ebook) {
+      background-color: var(--hover-ebook);
+    }
+
+    .icon-link:hover:has(.icon-cad) {
+      background-color: var(--hover-cad);
+    }
+
+    .icon-link:hover:has(.icon-vector) {
+      background-color: var(--hover-vector);
+    }
+
+    .icon-link:hover:has(.icon-photoshop) {
+      background-color: var(--hover-photoshop);
+    }
+
+    .icon-link:hover:has(.icon-markup) {
+      background-color: var(--hover-markup);
+    }
+
+    .icon-link:hover:has(.icon-stylesheet) {
+      background-color: var(--hover-stylesheet);
+    }
+
+    .icon-link:hover:has(.icon-script) {
+      background-color: var(--hover-script);
+    }
+
+    .icon-link:hover:has(.icon-data) {
+      background-color: var(--hover-data);
+    }
+
+    .icon-link:hover:has(.icon-certificate) {
+      background-color: var(--hover-certificate);
+    }
+
+    .icon-link:hover:has(.icon-key) {
+      background-color: var(--hover-key);
+    }
+
+    .icon-link:hover:has(.icon-log) {
+      background-color: var(--hover-log);
+    }
+
+    .icon-link:hover:has(.icon-backup) {
+      background-color: var(--hover-backup);
+    }
+
+    .icon-link:hover:has(.icon-binary) {
+      background-color: var(--hover-binary);
+    }
+
+    .icon-link:hover:has(.icon-package) {
+      background-color: var(--hover-package);
+    }
+
+     
+
+     
+    @keyframes folder-open {
+      0% {
+        transform: rotateX(0);
+      }
+
+      50% {
+        transform: rotateX(-30deg);
+      }
+
+      100% {
+        transform: rotateX(-15deg);
+      }
+    }
+
+    .icon-link:hover .icon-folder .folder-flap {
+      transform-origin: 3px 7px;
+      animation: folder-open 0.5s ease forwards;
+    }
+
+     
+    @keyframes dl-drop {
+      0% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(4px);
+      }
+
+      70% {
+        transform: translateY(2px);
+      }
+
+      100% {
+        transform: translateY(3px);
+      }
+    }
+
+    @keyframes dl-ground-bounce {
+      0% {
+        transform: translateY(0) scaleY(1);
+      }
+
+      40% {
+        transform: translateY(2px) scaleY(0.85);
+      }
+
+      60% {
+        transform: translateY(1px) scaleY(0.92);
+      }
+
+      100% {
+        transform: translateY(0) scaleY(1);
+      }
+    }
+
+    .icon-link:hover .icon-download .dl-arrow {
+      animation: dl-drop 0.5s ease forwards;
+    }
+
+    .icon-link:hover .icon-download .dl-ground {
+      transform-origin: 12px 21px;
+      animation: dl-ground-bounce 0.5s ease forwards;
+    }
+
+     
+    @keyframes line-shimmer {
+      0% {
+        opacity: 0.3;
+        stroke-dashoffset: 8;
+      }
+
+      100% {
+        opacity: 1;
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .icon-link:hover .icon-text .line1 {
+      stroke-dasharray: 8;
+      animation: line-shimmer 0.4s ease forwards;
+    }
+
+    .icon-link:hover .icon-text .line2 {
+      stroke-dasharray: 8;
+      animation: line-shimmer 0.4s 0.1s ease forwards;
+      opacity: 0.3;
+    }
+
+     
+    @keyframes stamp-press {
+      0% {
+        transform: scale(1);
+      }
+
+      40% {
+        transform: scale(0.9);
+      }
+
+      100% {
+        transform: scale(1.05);
+      }
+    }
+
+    .icon-link:hover .icon-pdf .pdf-page {
+      transform-origin: center;
+      animation: stamp-press 0.4s ease forwards;
+    }
+
+     
+    @keyframes page-curl {
+      0% {
+        transform: skewX(0);
+      }
+
+      50% {
+        transform: skewX(-3deg);
+      }
+
+      100% {
+        transform: skewX(0);
+      }
+    }
+
+    .icon-link:hover .icon-doc .doc-page {
+      transform-origin: left center;
+      animation: page-curl 0.5s ease;
+    }
+
+     
+    @keyframes grid-pulse {
+      0% {
+        opacity: 0.5;
+      }
+
+      50% {
+        opacity: 1;
+        stroke-width: 2.5;
+      }
+
+      100% {
+        opacity: 1;
+        stroke-width: 1.5;
+      }
+    }
+
+    .icon-link:hover .icon-spreadsheet .grid-h1 {
+      animation: grid-pulse 0.4s ease;
+    }
+
+    .icon-link:hover .icon-spreadsheet .grid-h2 {
+      animation: grid-pulse 0.4s 0.08s ease;
+    }
+
+    .icon-link:hover .icon-spreadsheet .grid-v {
+      animation: grid-pulse 0.4s 0.16s ease;
+    }
+
+     
+    @keyframes screen-flicker {
+      0% {
+        opacity: 0.6;
+      }
+
+      25% {
+        opacity: 1;
+      }
+
+      40% {
+        opacity: 0.7;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+    .icon-link:hover .icon-presentation .screen {
+      animation: screen-flicker 0.5s ease;
+    }
+
+     
+    @keyframes landscape-draw {
+      0% {
+        stroke-dashoffset: 30;
+      }
+
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .icon-link:hover .icon-image .landscape {
+      stroke-dasharray: 30;
+      animation: landscape-draw 0.6s ease forwards;
+    }
+
+    @keyframes sun-glow {
+      0% {
+        transform: scale(1);
+        opacity: 0.7;
+      }
+
+      50% {
+        transform: scale(1.4);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .icon-link:hover .icon-image .sun {
+      transform-origin: 8.5px 8.5px;
+      animation: sun-glow 0.5s ease;
+    }
+
+     
+    @keyframes play-pulse {
+      0% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+
+      50% {
+        transform: scale(1.2);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .icon-link:hover .icon-video .play-btn {
+      transform-origin: 19.5px 12px;
+      animation: play-pulse 0.5s ease;
+    }
+
+     
+    @keyframes note-bounce1 {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-3px);
+      }
+    }
+
+    @keyframes note-bounce2 {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-3px);
+      }
+    }
+
+    .icon-link:hover .icon-audio .note1 {
+      transform-origin: 6px 18px;
+      animation: note-bounce1 0.4s ease;
+    }
+
+    .icon-link:hover .icon-audio .note2 {
+      transform-origin: 18px 16px;
+      animation: note-bounce2 0.4s 0.15s ease;
+    }
+
+     
+    @keyframes lid-open {
+      0% {
+        transform: translateY(0) rotateX(0);
+      }
+
+      50% {
+        transform: translateY(-3px) rotateX(-20deg);
+      }
+
+      100% {
+        transform: translateY(-1px) rotateX(-10deg);
+      }
+    }
+
+    .icon-link:hover .icon-archive .box-lid {
+      transform-origin: center bottom;
+      animation: lid-open 0.5s ease forwards;
+    }
+
+     
+    @keyframes bracket-r-slide {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      50% {
+        transform: translateX(2px);
+      }
+    }
+
+    @keyframes bracket-l-slide {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      50% {
+        transform: translateX(-2px);
+      }
+    }
+
+    .icon-link:hover .icon-code .bracket-r {
+      animation: bracket-r-slide 0.5s ease;
+    }
+
+    .icon-link:hover .icon-code .bracket-l {
+      animation: bracket-l-slide 0.5s ease;
+    }
+
+     
+    @keyframes cursor-blink {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0;
+      }
+    }
+
+
+     
+    @keyframes disc-spin {
+      0% {
+        transform: scale(1.45) rotate(0deg);
+      }
+
+      100% {
+        transform: scale(1.45) rotate(360deg);
+      }
+    }
+
+    .icon-link:hover .icon-disc svg,
+    .icon-link:hover .icon-disc {
+      transform-origin: center;
+      animation: disc-spin 1.5s linear infinite;
+    }
+
+     
+    @keyframes gear-grow {
+      0% {
+        transform: scale(1) rotate(0deg);
+      }
+
+      100% {
+        transform: scale(1.45) rotate(0deg);
+      }
+    }
+
+    @keyframes gear-spin {
+      0% {
+        transform: scale(1.45) rotate(0deg);
+      }
+
+      100% {
+        transform: scale(1.45) rotate(360deg);
+      }
+    }
+
+    .icon-link:hover .icon-config {
+      transform-origin: center;
+      animation: gear-grow 0.2s ease forwards, gear-spin 2s 0.2s linear infinite;
+    }
+
+     
+    @keyframes font-bounce {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      40% {
+        transform: translateY(-3px);
+      }
+
+      60% {
+        transform: translateY(-1px);
+      }
+    }
+
+    .icon-link:hover .icon-font .font-stem {
+      animation: font-bounce 0.5s ease;
+    }
+
+     
+    @keyframes db-pulse {
+      0% {
+        stroke-width: 1.5;
+      }
+
+      50% {
+        stroke-width: 2.5;
+      }
+
+      100% {
+        stroke-width: 1.5;
+      }
+    }
+
+    .icon-link:hover .icon-database .db-base {
+      animation: db-pulse 0.6s ease;
+    }
+
+     
+    @keyframes book-fan {
+      0% {
+        transform: rotateY(0);
+      }
+
+      50% {
+        transform: rotateY(-15deg);
+      }
+
+      100% {
+        transform: rotateY(-5deg);
+      }
+    }
+
+    .icon-link:hover .icon-ebook .book-cover {
+      transform-origin: left center;
+      animation: book-fan 0.5s ease;
+    }
+
+     
+    @keyframes cad-shimmer {
+      0% {
+        opacity: 0.7;
+      }
+
+      50% {
+        opacity: 1;
+        stroke-width: 2;
+      }
+
+      100% {
+        opacity: 1;
+        stroke-width: 1.5;
+      }
+    }
+
+    .icon-link:hover .icon-cad .cad-cube {
+      animation: cad-shimmer 0.5s ease;
+    }
+
+     
+    @keyframes pen-draw {
+      0% {
+        stroke-dashoffset: 40;
+      }
+
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .icon-link:hover .icon-vector .pen-path {
+      stroke-dasharray: 40;
+      animation: pen-draw 0.6s ease forwards;
+    }
+
+     
+    @keyframes layer-shift1 {
+
+      0%,
+      100% {
+        transform: translate(0, 0);
+      }
+
+      50% {
+        transform: translate(-2px, 2px);
+      }
+    }
+
+    @keyframes layer-shift2 {
+
+      0%,
+      100% {
+        transform: translate(0, 0);
+      }
+
+      50% {
+        transform: translate(2px, -2px);
+      }
+    }
+
+    .icon-link:hover .icon-photoshop .layer1 {
+      animation: layer-shift1 0.5s ease;
+    }
+
+    .icon-link:hover .icon-photoshop .layer2 {
+      animation: layer-shift2 0.5s ease;
+    }
+
+     
+    @keyframes tag-open-slide {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      50% {
+        transform: translateX(-2px);
+      }
+    }
+
+    @keyframes tag-close-slide {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      50% {
+        transform: translateX(2px);
+      }
+    }
+
+    .icon-link:hover .icon-markup .tag-open {
+      animation: tag-open-slide 0.5s ease;
+    }
+
+    .icon-link:hover .icon-markup .tag-close {
+      animation: tag-close-slide 0.5s ease;
+    }
+
+    @keyframes slash-draw {
+      0% {
+        stroke-dashoffset: 20;
+      }
+
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .icon-link:hover .icon-markup .tag-slash {
+      stroke-dasharray: 20;
+      animation: slash-draw 0.4s ease forwards;
+    }
+
+     
+    @keyframes brush-draw {
+      0% {
+        stroke-dashoffset: 20;
+      }
+
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .icon-link:hover .icon-stylesheet .brush-stroke {
+      stroke-dasharray: 20;
+      animation: brush-draw 0.5s ease forwards;
+    }
+
+     
+    @keyframes brace-l-breathe {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      50% {
+        transform: translateX(-1.5px);
+      }
+    }
+
+    @keyframes brace-r-breathe {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      50% {
+        transform: translateX(1.5px);
+      }
+    }
+
+    .icon-link:hover .icon-script .brace-l {
+      animation: brace-l-breathe 0.5s ease;
+    }
+
+    .icon-link:hover .icon-script .brace-r {
+      animation: brace-r-breathe 0.5s ease;
+    }
+
+     
+    @keyframes dot-pulse {
+
+      0%,
+      100% {
+        r: 1;
+      }
+
+      50% {
+        r: 1.8;
+      }
+    }
+
+    .icon-link:hover .icon-data .dot1 {
+      animation: dot-pulse 0.4s ease;
+    }
+
+    .icon-link:hover .icon-data .dot2 {
+      animation: dot-pulse 0.4s 0.12s ease;
+    }
+
+     
+    @keyframes shield-pulse {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.08);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes check-draw {
+      0% {
+        stroke-dashoffset: 10;
+      }
+
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .icon-link:hover .icon-certificate .shield {
+      transform-origin: center;
+      animation: shield-pulse 0.5s ease;
+    }
+
+    .icon-link:hover .icon-certificate .check {
+      stroke-dasharray: 10;
+      animation: check-draw 0.4s 0.1s ease forwards;
+    }
+
+     
+    @keyframes key-turn {
+      0% {
+        transform: rotate(0);
+      }
+
+      30% {
+        transform: rotate(-20deg);
+      }
+
+      60% {
+        transform: rotate(10deg);
+      }
+
+      100% {
+        transform: rotate(0);
+      }
+    }
+
+    .icon-link:hover .icon-key .key-body {
+      transform-origin: 8px 16px;
+      animation: key-turn 0.6s ease;
+    }
+
+     
+    @keyframes log-cascade {
+      0% {
+        opacity: 0;
+        transform: translateX(-4px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .icon-link:hover .icon-log .log1 {
+      animation: log-cascade 0.3s ease forwards;
+    }
+
+    .icon-link:hover .icon-log .log2 {
+      opacity: 0;
+      animation: log-cascade 0.3s 0.1s ease forwards;
+    }
+
+    .icon-link:hover .icon-log .log3 {
+      opacity: 0;
+      animation: log-cascade 0.3s 0.2s ease forwards;
+    }
+
+     
+    @keyframes clock-tick {
+      0% {
+        transform: rotate(0);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .icon-link:hover .icon-backup .clock-hand {
+      transform-origin: 12px 12px;
+      animation: clock-tick 1.2s linear infinite;
+    }
+
+     
+    @keyframes bit-flicker {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      33% {
+        opacity: 0.3;
+      }
+
+      66% {
+        opacity: 0.8;
+      }
+    }
+
+    .icon-link:hover .icon-binary .bit1 {
+      animation: bit-flicker 0.6s ease infinite;
+    }
+
+    .icon-link:hover .icon-binary .bit2 {
+      animation: bit-flicker 0.6s 0.15s ease infinite;
+    }
+
+    .icon-link:hover .icon-binary .bit3 {
+      animation: bit-flicker 0.6s 0.3s ease infinite;
+    }
+
+    .icon-link:hover .icon-binary .bit4 {
+      animation: bit-flicker 0.6s 0.45s ease infinite;
+    }
+
+     
+    @keyframes ribbon-bounce {
+      0% {
+        stroke-width: 1.5;
+      }
+
+      40% {
+        stroke-width: 2.5;
+        transform: translateY(-1px);
+      }
+
+      100% {
+        stroke-width: 1.5;
+        transform: translateY(0);
+      }
+    }
+
+    .icon-link:hover .icon-package .pkg-ribbon {
+      animation: ribbon-bounce 0.5s ease;
+    }
+
+    .entry .col-size {
+      width: 80px;
+      text-align: right;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+      font-family: "SF Mono", "Cascadia Code", "Fira Code", Consolas, monospace;
+    }
+
+    .entry .col-modified {
+      width: 110px;
+      text-align: right;
+      flex-shrink: 0;
+      padding-left: 12px;
+    }
+
+    .entry .col-modified .date,
+    .entry .col-modified .time {
+      display: block;
+      font-size: 0.7rem;
+      line-height: 1.3;
+      color: var(--text-secondary);
+    }
+
+     
+    @media (max-width: 480px) {
+      body {
+        padding: 8px;
+      }
+
+      .listing-header .col-size,
+      .listing-header .col-modified {
+        display: none;
+      }
+
+      .entry .col-size {
+        width: 60px;
+        font-size: 0.7rem;
+      }
+
+      .entry .col-modified {
+        width: 90px;
+      }
+
+      .entry .col-modified .date,
+      .entry .col-modified .time {
+        font-size: 0.65rem;
+      }
+
+      .entry .content-link {
+        padding-right: 12px;
+      }
+    }
+
+     
+    .photos-heading {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 480px) {
+      .photo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 8px;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .photo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 14px;
+      }
+    }
+
+    .photo-card {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--bg-secondary);
+      cursor: pointer;
+      transition: transform 0.25s ease, filter 0.25s ease;
+      z-index: 0;
+    }
+
+    @media (min-width: 600px) {
+
+      .photo-card:hover,
+      .photo-card:focus-within {
+        transform: scale(2.2);
+        z-index: 1;
+        filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.5)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+      }
+    }
+
+    .photo-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .photo-card .photo-meta {
+      position: absolute;
+      bottom: -1px;
+      left: -1px;
+      right: -1px;
+      padding: 28px 11px 9px;
+      background: linear-gradient(to top, var(--overlay-bg) 60%, transparent);
+      transform: translateY(100%);
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      opacity: 0;
+    }
+
+    .photo-card:hover .photo-meta,
+    .photo-card:focus-within .photo-meta {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .photo-meta .photo-name {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .photo-meta .photo-info {
+      display: block;
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+     
+    .photo-card:focus .photo-meta {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    @media (min-width: 600px) {
+      .photo-card:focus {
+        transform: scale(2.2);
+        z-index: 1;
+        filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.5)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+      }
+    }
+
+     
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 480px) {
+      .video-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 8px;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .video-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 14px;
+      }
+    }
+
+    .video-card {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--bg-secondary);
+      transition: transform 0.25s ease, filter 0.25s ease;
+      z-index: 0;
+    }
+
+    .video-card a {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .video-card video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    @media (min-width: 780px) {
+
+      .video-card:hover,
+      .video-card:focus-within {
+        transform: scale(2.2);
+        z-index: 1;
+        filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.5)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+      }
+    }
+
+    .video-card .play-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 48px;
+      height: 48px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      pointer-events: none;
+      transition: opacity 0.2s ease, background-color 0.2s ease;
+    }
+
+    .video-card .play-icon::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 54%;
+      transform: translate(-50%, -50%);
+      border-style: solid;
+      border-width: 8px 0 8px 14px;
+      border-color: transparent transparent transparent #fff;
+    }
+
+    .video-card:hover .play-icon {
+      opacity: 0;
+    }
+
+    .video-card .video-meta {
+      position: absolute;
+      bottom: -1px;
+      left: -1px;
+      right: -1px;
+      padding: 24px 11px 9px;
+      background: linear-gradient(to top, var(--overlay-bg) 60%, transparent);
+      pointer-events: none;
+    }
+
+    @media (min-width: 780px) {
+      .video-card:focus {
+        transform: scale(2.2);
+        z-index: 1;
+        filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.5)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+      }
+    }
+
+    .video-meta .video-name {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .video-meta .video-info {
+      display: block;
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .video-meta .video-duration {
+      position: absolute;
+      bottom: 9px;
+      right: 11px;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+     
+    .footer {
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      padding: 12px 0;
+      border-top: 1px solid var(--border);
     }
   </style>
 </head>
 
 <body>
-  <main>
 
-    <ul class="file-list">
-      <a href="/ok" class="full-width">
-        <li>
-          /ok
-        </li>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <defs>
+      
+      <symbol id="icon-folder" viewBox="0 0 24 24">
+        <path class="folder-body" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+        <path class="folder-flap" d="M3 7l2-2h4l2 2" />
+      </symbol>
+      
+      <symbol id="icon-text" viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line class="line1" x1="8" y1="13" x2="16" y2="13" />
+        <line class="line2" x1="8" y1="17" x2="16" y2="17" />
+      </symbol>
+      
+      <symbol id="icon-pdf" viewBox="0 0 24 24">
+        <path class="pdf-page" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <path d="M9 15v-4h1.5a1.5 1.5 0 010 3H9" />
+      </symbol>
+      
+      <symbol id="icon-doc" viewBox="0 0 24 24">
+        <path class="doc-page" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="8" y1="13" x2="16" y2="13" />
+        <line x1="8" y1="17" x2="16" y2="17" />
+        <line x1="8" y1="9" x2="12" y2="9" />
+      </symbol>
+      
+      <symbol id="icon-spreadsheet" viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line class="grid-h1" x1="8" y1="13" x2="16" y2="13" />
+        <line class="grid-h2" x1="8" y1="17" x2="16" y2="17" />
+        <line class="grid-v" x1="12" y1="11" x2="12" y2="19" />
+      </symbol>
+      
+      <symbol id="icon-presentation" viewBox="0 0 24 24">
+        <rect class="screen" x="2" y="3" width="20" height="14" rx="2" />
+        <line x1="12" y1="17" x2="12" y2="21" />
+        <line x1="8" y1="21" x2="16" y2="21" />
+      </symbol>
+      
+      <symbol id="icon-image" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <circle class="sun" cx="8.5" cy="8.5" r="1.5" />
+        <path class="landscape" d="M21 15l-5-5L5 21" />
+      </symbol>
+      
+      <symbol id="icon-video" viewBox="0 0 24 24">
+        <polygon class="play-btn" points="23 7 16 12 23 17 23 7" />
+        <rect x="1" y="5" width="15" height="14" rx="2" />
+      </symbol>
+      
+      <symbol id="icon-audio" viewBox="0 0 24 24">
+        <path d="M9 18V5l12-2v13" />
+        <circle class="note1" cx="6" cy="18" r="3" />
+        <circle class="note2" cx="18" cy="16" r="3" />
+      </symbol>
+      
+      <symbol id="icon-archive" viewBox="0 0 24 24">
+        <path class="box-body" d="M21 8v13H3V8" />
+        <path class="box-lid" d="M1 3h22v5H1z" />
+        <path d="M10 12h4" />
+      </symbol>
+      
+      <symbol id="icon-download" viewBox="0 0 24 24">
+        <g class="dl-arrow">
+          <path d="M12 3v13" />
+          <polyline points="7 11 12 16 17 11" />
+        </g>
+        <line class="dl-ground" x1="4" y1="21" x2="20" y2="21" />
+      </symbol>
+      
+      <symbol id="icon-code" viewBox="0 0 24 24">
+        <polyline class="bracket-r" points="16 18 22 12 16 6" />
+        <polyline class="bracket-l" points="8 6 2 12 8 18" />
+      </symbol>
+      
+      <symbol id="icon-terminal" viewBox="0 0 24 24">
+        <rect x="2" y="3" width="20" height="18" rx="2" />
+        <polyline points="7 9 10 12 7 15" />
+      </symbol>
+      
+      <symbol id="icon-disc" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <circle cx="12" cy="12" r="3" />
+      </symbol>
+      
+      <symbol id="icon-config" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3" />
+        <path
+          d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-2.82 1.18V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1.08-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1.08H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1.08 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.26.604.852.997 1.51 1.08H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1.08z" />
+      </symbol>
+      
+      <symbol id="icon-font" viewBox="0 0 24 24">
+        <polyline points="4 7 4 4 20 4 20 7" />
+        <line x1="9" y1="20" x2="15" y2="20" />
+        <line class="font-stem" x1="12" y1="4" x2="12" y2="20" />
+      </symbol>
+      
+      <symbol id="icon-database" viewBox="0 0 24 24">
+        <ellipse cx="12" cy="5" rx="9" ry="3" />
+        <path d="M21 12c0 1.66-4.03 3-9 3s-9-1.34-9-3" />
+        <path class="db-base" d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5" />
+      </symbol>
+      
+      <symbol id="icon-ebook" viewBox="0 0 24 24">
+        <path class="book-cover" d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+        <path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5z" />
+        <line class="book-spine" x1="4" y1="2" x2="4" y2="22" />
+      </symbol>
+      
+      <symbol id="icon-cad" viewBox="0 0 24 24">
+        <path class="cad-cube" d="M12 2L2 7l10 5 10-5-10-5z" />
+        <path d="M2 7v10l10 5V12" />
+        <path d="M22 7v10l-10 5V12" />
+      </symbol>
+      
+      <symbol id="icon-vector" viewBox="0 0 24 24">
+        <path class="pen-path" d="M12 19l7-7 3 3-7 7-3-3z" />
+        <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+        <path d="M2 2l7.586 7.586" />
+        <circle cx="11" cy="11" r="2" />
+      </symbol>
+      
+      <symbol id="icon-photoshop" viewBox="0 0 24 24">
+        <rect class="layer1" x="2" y="7" width="16" height="12" rx="1" />
+        <rect class="layer2" x="6" y="3" width="16" height="12" rx="1" />
+      </symbol>
+      
+      <symbol id="icon-markup" viewBox="0 0 24 24">
+        <polyline class="tag-open" points="4 7 1 12 4 17" />
+        <polyline class="tag-close" points="20 7 23 12 20 17" />
+        <line class="tag-slash" x1="15" y1="4" x2="9" y2="20" />
+      </symbol>
+      
+      <symbol id="icon-stylesheet" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path class="brush-stroke" d="M7 8h4M7 12h10M7 16h7" />
+      </symbol>
+      
+      <symbol id="icon-script" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path class="brace-l" d="M8 7c-2 0-2 2-2 3s0 2-1.5 2c1.5 0 1.5 1 1.5 2s0 3 2 3" />
+        <path class="brace-r" d="M16 7c2 0 2 2 2 3s0 2 1.5 2c-1.5 0-1.5 1-1.5 2s0 3-2 3" />
+      </symbol>
+      
+      <symbol id="icon-data" viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <circle class="dot1" cx="8" cy="13" r="1" />
+        <line x1="11" y1="13" x2="16" y2="13" />
+        <circle class="dot2" cx="8" cy="17" r="1" />
+        <line x1="11" y1="17" x2="16" y2="17" />
+      </symbol>
+      
+      <symbol id="icon-certificate" viewBox="0 0 24 24">
+        <path class="shield" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path class="check" d="M9 12l2 2 4-4" />
+      </symbol>
+      
+      <symbol id="icon-key" viewBox="0 0 24 24">
+        <path class="key-body"
+          d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+      </symbol>
+      
+      <symbol id="icon-log" viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line class="log1" x1="8" y1="12" x2="12" y2="12" />
+        <line class="log2" x1="8" y1="15" x2="15" y2="15" />
+        <line class="log3" x1="8" y1="18" x2="13" y2="18" />
+      </symbol>
+      
+      <symbol id="icon-backup" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" class="clock-hand" />
+      </symbol>
+      
+      <symbol id="icon-binary" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <text class="bit1" x="6" y="11" font-size="6" font-family="monospace" fill="currentColor"
+          stroke="none">01</text>
+        <text class="bit2" x="14" y="11" font-size="6" font-family="monospace" fill="currentColor"
+          stroke="none">10</text>
+        <text class="bit3" x="6" y="18" font-size="6" font-family="monospace" fill="currentColor"
+          stroke="none">11</text>
+        <text class="bit4" x="14" y="18" font-size="6" font-family="monospace" fill="currentColor"
+          stroke="none">00</text>
+      </symbol>
+      
+      <symbol id="icon-package" viewBox="0 0 24 24">
+        <path
+          d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+        <polyline class="pkg-ribbon" points="3.27 6.96 12 12.01 20.73 6.96" />
+        <line x1="12" y1="22.08" x2="12" y2="12" />
+      </symbol>
+    </defs>
+  </svg>
+
+  <h1>/</h1>
+
+  
+  <div class="listing">
+    <div class="listing-header">
+      <span class="col-name"><a class="sort-link" href="?sort=name-desc">Name <span
+            class="sort-arrow">&#x25B2;</span></a></span>
+      <span class="col-size"><a class="sort-link" href="?sort=size">Size <span
+            class="sort-arrow">&#x25BC;</span></a></span>
+      <span class="col-modified"><a class="sort-link" href="?sort=date">Modified <span
+            class="sort-arrow">&#x25BC;</span></a></span>
+    </div>
+
+    
+    
+    
+    <div class="entry">
+      <a class="icon-link" href="ok"><span class="icon icon-folder"><svg
+            viewBox="0 0 24 24">
+            <use href="#icon-folder" />
+          </svg></span></a>
+      <a class="content-link"
+        href="ok/"
+        title="ok - 0 B - 0001-01-01 00:00:00 &#43;0000 UTC">
+        <span class="col-name">ok</span>
+        <span class="col-size">&mdash;</span>
+        <span class="col-modified"><span class="date">0001-01-01</span><span class="time"></span></span>
       </a>
-      <a href="/abc" class="full-width">
-        <li>
-          /abc
-        </li>
-      </a></ul>
+    </div>
+    
+    
+    <div class="entry">
+      <a class="icon-link" href="abc"><span class="icon icon-folder"><svg
+            viewBox="0 0 24 24">
+            <use href="#icon-folder" />
+          </svg></span></a>
+      <a class="content-link"
+        href="abc/"
+        title="abc - 0 B - 0001-01-01 00:00:00 &#43;0000 UTC">
+        <span class="col-name">abc</span>
+        <span class="col-size">&mdash;</span>
+        <span class="col-modified"><span class="date">0001-01-01</span><span class="time"></span></span>
+      </a>
+    </div>
+    
+  </div>
 
-  </main>
+  
+  
+
+  
+  
+
+  <div class="footer">Go Web Server</div>
+
+  <script>
+    (function () {
+      function formatDuration(seconds) {
+        var total = Math.floor(seconds);
+        var h = Math.floor(total / 3600);
+        var m = Math.floor((total % 3600) / 60);
+        var s = total % 60;
+        return h > 0
+          ? h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0')
+          : m + ':' + String(s).padStart(2, '0');
+      }
+
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          var card = entry.target;
+          observer.unobserve(card);
+          var video = card.querySelector('video');
+          if (!video) return;
+          video.addEventListener('loadedmetadata', function () {
+            var span = card.querySelector('.video-duration');
+            if (span) span.textContent = formatDuration(video.duration);
+          });
+          video.preload = 'metadata';
+        });
+      }, { rootMargin: '200px' });
+
+      document.querySelectorAll('.video-card').forEach(function (card) {
+        observer.observe(card);
+      });
+
+    })();
+  </script>
+
 </body>
+
 </html>
