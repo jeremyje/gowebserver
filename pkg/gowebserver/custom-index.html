@@ -2068,9 +2068,9 @@
             <use href="#icon-{{$element.IconClass}}" />
           </svg></span></a>
       <a class="content-link"
-        href="{{if $element.IsArchive}}{{urlEncode $element.Name}}-dir/{{else}}{{urlEncode $element.Name}}/{{end}}"
+        href="{{if $element.IsArchive}}{{urlEncode $element.Name}}-dir/{{else}}{{urlEncode $element.Name}}{{if $element.IsDir}}/{{end}}{{end}}"
         title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}">
-        <span class="col-name">{{$element.Name}}{{if $element.IsDir}}/{{end}}</span>
+        <span class="col-name">{{$element.Name}}</span>
         <span class="col-size">{{if and $element.IsDir $element.IsArchive }}&mdash;{{else}}{{humanizeBytes
           $element.Size}}{{end}}</span>
         <span class="col-modified"><span class="date">{{if $.UseTimestamp}}{{humanizeTimestamp

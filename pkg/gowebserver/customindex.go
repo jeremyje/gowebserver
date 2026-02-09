@@ -200,9 +200,13 @@ var (
 		".yaml":                           "config",
 		".yml":                            "config",
 		"application/x-cd-image":          "disc",
+		".iso":                            "disc",
 		".docx":                           "doc",
 		".xlsx":                           "spreadsheet",
 		".pptx":                           "presentation",
+		".md":                             "doc",
+		".ttf":                            "font",
+		".ai":                             "photoshop",
 	}
 )
 
