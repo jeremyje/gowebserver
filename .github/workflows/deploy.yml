@@ -76,7 +76,6 @@ jobs:
       - name: Release Package
         if: ${{ github.event_name != 'pull_request' }}
         run: make bin/release.tar.gz
-          make release-binaries
 
       - name: Create Release Binaries
         if: ${{ github.event_name != 'pull_request' }}
