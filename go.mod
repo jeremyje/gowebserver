@@ -4,7 +4,7 @@ require (
 	facette.io/natsort v0.0.0-20181210072756-2cd4dd1e2dcb
 	github.com/bodgit/sevenzip v1.6.1
 	github.com/dustin/go-humanize v1.0.1
-	github.com/go-git/go-git/v5 v5.16.4
+	github.com/go-git/go-git/v5 v5.16.5
 	github.com/google/go-cmp v0.7.0
 	github.com/jeremyje/gomain v0.10.0
 	github.com/mholt/archives v0.1.5
