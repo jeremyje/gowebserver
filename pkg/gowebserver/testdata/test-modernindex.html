@@ -792,49 +792,29 @@
     }
 
      
-    @keyframes dl-drop {
-      0% {
-        transform: translateY(0);
-      }
-
-      50% {
-        transform: translateY(4px);
-      }
-
-      70% {
-        transform: translateY(2px);
-      }
-
-      100% {
-        transform: translateY(3px);
-      }
+    @keyframes dl-cycle {
+      0%   { transform: translateY(0); }
+      58%  { transform: translateY(7px); }
+      59%  { transform: translateY(-14px); }
+      100% { transform: translateY(0); }
     }
 
-    @keyframes dl-ground-bounce {
-      0% {
-        transform: translateY(0) scaleY(1);
-      }
-
-      40% {
-        transform: translateY(2px) scaleY(0.85);
-      }
-
-      60% {
-        transform: translateY(1px) scaleY(0.92);
-      }
-
-      100% {
-        transform: translateY(0) scaleY(1);
-      }
+    @keyframes dl-floor-collapse {
+      0%   { transform: scaleX(1); opacity: 1; }
+      30%  { transform: scaleX(1); opacity: 1; }
+      48%  { transform: scaleX(0.55); opacity: 0.35; }
+      57%  { transform: scaleX(0.3); opacity: 0.1; }
+      59%  { transform: scaleX(1); opacity: 1; }
+      100% { transform: scaleX(1); opacity: 1; }
     }
 
     .icon-link:hover .icon-download .dl-arrow {
-      animation: dl-drop 0.5s ease forwards;
+      animation: dl-cycle 1.6s linear infinite;
     }
 
     .icon-link:hover .icon-download .dl-ground {
       transform-origin: 12px 21px;
-      animation: dl-ground-bounce 0.5s ease forwards;
+      animation: dl-floor-collapse 1.6s linear infinite;
     }
 
      
@@ -1127,7 +1107,6 @@
       }
     }
 
-    .icon-link:hover .icon-disc svg,
     .icon-link:hover .icon-disc {
       transform-origin: center;
       animation: disc-spin 1.5s linear infinite;
@@ -1661,7 +1640,7 @@
 
       .photo-card:hover,
       .photo-card:focus-within {
-        transform: scale(2.2);
+        transform: scale(1.5);
         z-index: 1;
         filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.5)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
       }
@@ -1720,7 +1699,7 @@
 
     @media (min-width: 600px) {
       .photo-card:focus {
-        transform: scale(2.2);
+        transform: scale(1.5);
         z-index: 1;
         filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.5)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
       }
@@ -1775,7 +1754,7 @@
 
       .video-card:hover,
       .video-card:focus-within {
-        transform: scale(2.2);
+        transform: scale(1.5);
         z-index: 1;
         filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.5)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
       }
@@ -1821,7 +1800,7 @@
 
     @media (min-width: 780px) {
       .video-card:focus {
-        transform: scale(2.2);
+        transform: scale(1.5);
         z-index: 1;
         filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.5)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
       }

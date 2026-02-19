@@ -215,7 +215,7 @@ func (ws *webServerImpl) Serve(wait func()) error {
 		zap.S().With("error", err).Error("cannot get port from HTTPS listener")
 	}
 
-	zap.S().With("HTTP", httpPort, "HTTPS", httpsPort).Info("Serving Ports")
+	zap.S().With("HTTP", fmt.Sprintf("http://localhost:%d/", httpPort), "HTTPS", fmt.Sprintf("https://localhost:%d/", httpsPort)).Info("Serving")
 
 	ws.setPorts(httpPort, httpsPort)
 
