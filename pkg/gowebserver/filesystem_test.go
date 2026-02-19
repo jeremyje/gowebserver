@@ -30,7 +30,7 @@ import (
 var (
 	zeroTime               = time.Time{}
 	commonFSRootDirList    = []string{"assets", "bytype", "index.html", "site.js", "weird #1.txt", "weird#.txt", "weird$.txt"}
-	nestedZipFSRootDirList = []string{"single-testassets.zip", "single-testassets.zip-dir", "testassets", "testassets.7z", "testassets.rar", "testassets.rar-dir", "testassets.tar", "testassets.tar-dir", "testassets.tar.bz2", "testassets.tar.bz2-dir", "testassets.tar.gz", "testassets.tar.gz-dir", "testassets.tar.lz4", "testassets.tar.lz4-dir", "testassets.tar.xz", "testassets.tar.xz-dir", "testassets.zip", "testassets.zip-dir", "testing.go", "testing_test.go"}
+	nestedZipFSRootDirList = []string{"single-testassets.zip", "single-testassets.zip-dir", "testassets", "testassets.7z", "testassets.7z-dir", "testassets.rar", "testassets.rar-dir", "testassets.tar", "testassets.tar-dir", "testassets.tar.bz2", "testassets.tar.bz2-dir", "testassets.tar.gz", "testassets.tar.gz-dir", "testassets.tar.lz4", "testassets.tar.lz4-dir", "testassets.tar.xz", "testassets.tar.xz-dir", "testassets.zip", "testassets.zip-dir", "testing.go", "testing_test.go"}
 )
 
 var (
@@ -298,14 +298,14 @@ func TestIsSupported(t *testing.T) {
 
 		{input: "ok.zip", isSupportedArchive: true, isSupportedZip: true},
 		{input: "ok.tar.lzma"},
-		{input: "ok.7z", isSupportedSevenZip: true},
-		{input: "ok.7Z", isSupportedSevenZip: true},
+		{input: "ok.7z", isSupportedArchive: true, isSupportedSevenZip: true},
+		{input: "ok.7Z", isSupportedArchive: true, isSupportedSevenZip: true},
 
 		{input: "git@github.com:jeremyje/gowebserver.git", isSupportedGit: true},
 		{input: "https://github.com/jeremyje/gowebserver.git", isSupportedHTTP: true, isSupportedGit: true},
 
 		{input: "http://www.google.com/", isSupportedHTTP: true},
-		{input: "http://www.google.com.7z", isSupportedHTTP: true, isSupportedSevenZip: true},
+		{input: "http://www.google.com.7z", isSupportedArchive: true, isSupportedHTTP: true, isSupportedSevenZip: true},
 
 		{input: ""},
 		{input: "/"},
