@@ -31,7 +31,7 @@ go test -race -v -run TestName ./pkg/gowebserver/
 
 ## Architecture
 
-```
+```bash
 cmd/                      # CLI entry points
 ├── gowebserver/          # Main web server binary
 ├── certtool/             # Certificate generation tool
@@ -54,6 +54,7 @@ internal/gowebserver/testing/  # Test utilities and embedded test archives
 - **index.go / customindex.go**: Directory listing templates (basic and Bootstrap UI)
 - **monitoring.go**: Prometheus metrics, OpenTelemetry tracing, pprof endpoints
 - **upload.go**: Multi-file upload with MD5 token validation
+- **custom-index.html**: Enhanced HTML template for file browsing. Includes advanced preview features for images and videos.
 
 ### Request Flow
 
@@ -71,6 +72,7 @@ Tests use Go's standard `testing` package with `testify` for assertions. Test ar
 ## CI/CD
 
 GitHub Actions runs on push to main, tags, and PRs:
+
 - Build: `make clean deps lint all`
 - Test: `make test-10 benchmark coverage.txt`
 - Code quality: misspell, hadolint, codespell, CodeQL
