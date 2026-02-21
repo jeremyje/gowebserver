@@ -73,7 +73,7 @@ TEST_ARCHIVES += internal/gowebserver/testing/testassets.7z
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.xz
 TEST_ARCHIVES += internal/gowebserver/testing/testassets.tar.lz4
 WASM_ASSETS = install/wasm/wasm_exec.js install/wasm/wasm_exec.html install/wasm/gowebserver.wasm
-ASSETS = $(TEST_ARCHIVES) internal/gowebserver/testing/nested-testassets.zip internal/gowebserver/testing/single-testassets.zip internal/gowebserver/testing/nodir-testassets.zip
+ASSETS = $(TEST_ARCHIVES) $(WASM_ASSETS) internal/gowebserver/testing/nested-testassets.zip internal/gowebserver/testing/single-testassets.zip internal/gowebserver/testing/nodir-testassets.zip
 ALL_APPS = gowebserver certtool httpprobe
 
 ALL_BINARIES = $(foreach app,$(ALL_APPS),$(foreach platform,$(ALL_PLATFORMS),bin/go/$(platform)/$(app)$(if $(findstring windows_,$(platform)),.exe,)))
