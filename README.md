@@ -5,7 +5,7 @@ It can host a local directory or contents of a zip file.
 
 ```bash
 # Download (linux amd64, see Downloads for other builds)
-curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.1.1/server-amd64; chmod +x gowebserver
+curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.2.0/server-amd64; chmod +x gowebserver
 
 # Host the current directory.
 ./gowebserver
@@ -14,7 +14,7 @@ curl -o gowebserver -O -L https://github.com/jeremyje/gowebserver/releases/downl
 ./gowebserver --path=${HOME}
 
 # Host a zip file from the internet.
-./gowebserver --path=https://github.com/jeremyje/gowebserver/archive/v3.1.1.zip
+./gowebserver --path=https://github.com/jeremyje/gowebserver/archive/v3.2.0.zip
 
 # Install in your Kubernetes Cluster.
 kubectl apply -f https://raw.githubusercontent.com/jeremyje/gowebserver/main/install/kubernetes.yaml
@@ -48,12 +48,12 @@ sc.exe start gowebserver
 
 |   OS   | Arch  | Link
 |--------|-------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-|Linux   | amd64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.1.1/server-amd64`
-|Linux   | arm   | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.1.1/server-arm`
-|Linux   | arm64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.1.1/server-arm64`
-|Windows | amd64 | `$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri "https://github.com/jeremyje/gowebserver/releases/download/v3.1.1/server-amd64.exe" -OutFile "server-amd64.exe" -UseBasicParsing`
-|macOS   | amd64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.1.1/server-amd64-darwin`
-|macOS   | arm64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.1.1/server-arm64-darwin`
+|Linux   | amd64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.2.0/server-amd64`
+|Linux   | arm   | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.2.0/server-arm`
+|Linux   | arm64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.2.0/server-arm64`
+|Windows | amd64 | `$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri "https://github.com/jeremyje/gowebserver/releases/download/v3.2.0/server-amd64.exe" -OutFile "server-amd64.exe" -UseBasicParsing`
+|macOS   | amd64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.2.0/server-amd64-darwin`
+|macOS   | arm64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.2.0/server-arm64-darwin`
 
 ## Docker Images
 
