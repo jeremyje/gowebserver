@@ -51,7 +51,7 @@ sc.exe start gowebserver
 |Linux   | amd64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.1.1/server-amd64`
 |Linux   | arm   | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.1.1/server-arm`
 |Linux   | arm64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.1.1/server-arm64`
-|Windows | amd64 | `(New-Object System.Net.WebClient).DownloadFile("https://github.com/jeremyje/gowebserver/releases/download/v3.1.1/server-amd64.exe", "server-amd64.exe")`
+|Windows | amd64 | `$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri "https://github.com/jeremyje/gowebserver/releases/download/v3.1.1/server-amd64.exe" -OutFile "server-amd64.exe" -UseBasicParsing`
 |macOS   | amd64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.1.1/server-amd64-darwin`
 |macOS   | arm64 | `curl -O -L https://github.com/jeremyje/gowebserver/releases/download/v3.1.1/server-arm64-darwin`
 
