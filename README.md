@@ -102,7 +102,7 @@ make test
 make bench
 ```
 
-## Sample
+## Example
 
 Sample code for embedding a HTTP/HTTPS server in your application.
 
