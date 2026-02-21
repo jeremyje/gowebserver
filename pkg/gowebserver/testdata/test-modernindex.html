@@ -1916,7 +1916,7 @@
       padding: 0 20px;
       box-sizing: border-box;
       opacity: 0;
-      transition: opacity 0.1s ease;
+      transition: opacity 0.25s ease;
     }
 
     .ss-item img {
@@ -2361,6 +2361,8 @@
       
       var ssLastPhotoIdx = 0;
       var ssLastVideoIdx = 0;
+      
+      var ssSettleTimer = null;
 
       
       
@@ -2379,10 +2381,34 @@
         return window.innerWidth * (1 - SS_ITEM_VW) / 2 - index * ssStridePx();
       }
 
+      
+      function ssInitOpacities() {
+        Array.from(ssTrack.children).forEach(function (item, i) {
+          item.style.transition = 'none';
+          item.style.opacity = i === ssIndex ? '1' : '0';
+        });
+      }
+
+      
       function ssUpdateOpacities() {
         Array.from(ssTrack.children).forEach(function (item, i) {
+          item.style.transition = 'opacity 0.25s ease';
+          item.style.opacity = i === ssIndex ? '1' : '0';
+        });
+      }
+
+      
+      function ssShowNeighbors() {
+        Array.from(ssTrack.children).forEach(function (item, i) {
+          item.style.transition = 'opacity 0.25s ease';
           item.style.opacity = Math.abs(i - ssIndex) <= 1 ? '1' : '0';
         });
+      }
+
+      
+      function ssScheduleSettle() {
+        if (ssSettleTimer) clearTimeout(ssSettleTimer);
+        ssSettleTimer = setTimeout(ssUpdateOpacities, 400);
       }
 
       
@@ -2482,12 +2508,13 @@
           if (v) v.pause();
         }
         ssIndex = Math.max(0, Math.min(idx, ssItems.length - 1));
+        ssShowNeighbors();
         ssSetPosition(animate !== false);
         ssUpdateUI();
-        ssUpdateOpacities();
+        ssScheduleSettle();
       }
 
-      function ssOpen(type, startIdx) {
+      function ssOpen(type, startIdx, originEl) {
         ssBuildItems(type);
         if (ssItems.length === 0) return;
         ssBuildTrack();
@@ -2495,8 +2522,40 @@
         ssIndex = Math.max(0, Math.min(startIdx || 0, ssItems.length - 1));
         ssSetPosition(false);
         ssUpdateUI();
-        ssUpdateOpacities();
-        ssEl.classList.add('ss-active');
+
+        var currentItem = ssTrack.children[ssIndex];
+
+        if (originEl && currentItem) {
+          var rect = originEl.getBoundingClientRect();
+          var vw = window.innerWidth;
+          var vh = window.innerHeight;
+          var dx = (rect.left + rect.width / 2) - vw / 2;
+          var dy = (rect.top + rect.height / 2) - vh / 2;
+          var scale = Math.min(rect.width / (vw * SS_ITEM_VW), rect.height / vh);
+
+          
+          ssInitOpacities();
+          currentItem.style.transform = 'translate(' + dx + 'px, ' + dy + 'px) scale(' + scale + ')';
+
+          ssEl.classList.add('ss-active');
+
+          
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              currentItem.style.transition = 'transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+              currentItem.style.transform = '';
+              currentItem.addEventListener('transitionend', function handler(e) {
+                if (e.propertyName !== 'transform') return;
+                currentItem.removeEventListener('transitionend', handler);
+                currentItem.style.transition = '';
+              });
+            });
+          });
+        } else {
+          ssInitOpacities();
+          ssEl.classList.add('ss-active');
+        }
+
         document.body.style.overflow = 'hidden';
         ssBtnClose.focus();
       }
@@ -2524,6 +2583,10 @@
           ssTrack.style.transition = 'none';
           e.preventDefault();
           return;
+        }
+        if (ssZoom <= 1) {
+          if (ssSettleTimer) { clearTimeout(ssSettleTimer); ssSettleTimer = null; }
+          ssShowNeighbors();
         }
         ssDragging = true;
         ssDragStartX = ssGetX(e);
@@ -2588,6 +2651,7 @@
           ssGoTo(ssIndex - 1, true);
         } else {
           ssSetPosition(true);
+          ssScheduleSettle();
         }
       }
 
@@ -2645,7 +2709,7 @@
         meta.addEventListener('click', function (e) {
           e.preventDefault();
           e.stopPropagation();
-          ssOpen('image', idx);
+          ssOpen('image', idx, card.querySelector('img'));
         });
       });
 
@@ -2655,7 +2719,7 @@
         meta.addEventListener('click', function (e) {
           e.preventDefault();
           e.stopPropagation();
-          ssOpen('video', idx);
+          ssOpen('video', idx, card.querySelector('video'));
         });
       });
 
