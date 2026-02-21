@@ -1967,6 +1967,36 @@
       background: rgba(255, 255, 255, 0.28);
     }
 
+    .ss-autoplay {
+      position: fixed;
+      top: 14px;
+      left: 18px;
+      z-index: 10001;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      transition: background 0.18s, border-color 0.18s;
+    }
+
+    .ss-autoplay:hover {
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    .ss-autoplay.ss-autoplay-active {
+      background: rgba(255, 255, 255, 0.22);
+      border-color: rgba(255, 255, 255, 0.7);
+    }
+
     .ss-nav {
       position: fixed;
       top: 50%;
@@ -2291,6 +2321,7 @@
       <div class="ss-track" id="ss-track"></div>
     </div>
     <button id="ss-close" class="ss-close" aria-label="Close slideshow">&#10005;</button>
+    <button id="ss-autoplay" class="ss-autoplay" aria-label="Toggle auto-play" aria-pressed="false">&#9654;</button>
     <button id="ss-prev" class="ss-nav ss-prev" aria-label="Previous">&#8249;</button>
     <button id="ss-next" class="ss-nav ss-next" aria-label="Next">&#8250;</button>
   </div>
@@ -2335,6 +2366,7 @@
       var ssEl = document.getElementById('ss-overlay');
       var ssTrack = document.getElementById('ss-track');
       var ssBtnClose = document.getElementById('ss-close');
+      var ssBtnAutoplay = document.getElementById('ss-autoplay');
       var ssBtnPrev = document.getElementById('ss-prev');
       var ssBtnNext = document.getElementById('ss-next');
       if (!ssEl) return;
@@ -2363,6 +2395,9 @@
       var ssLastVideoIdx = 0;
       
       var ssSettleTimer = null;
+      
+      var ssAutoplayTimer = null;
+      var SS_AUTOPLAY_INTERVAL = 3000;
 
       
       
@@ -2409,6 +2444,34 @@
       function ssScheduleSettle() {
         if (ssSettleTimer) clearTimeout(ssSettleTimer);
         ssSettleTimer = setTimeout(ssUpdateOpacities, 400);
+      }
+
+      
+
+      function ssAutoplayTick() {
+        ssGoTo(ssIndex >= ssItems.length - 1 ? 0 : ssIndex + 1, true);
+      }
+
+      function ssStartAutoplay() {
+        if (ssAutoplayTimer) clearInterval(ssAutoplayTimer);
+        ssAutoplayTimer = setInterval(ssAutoplayTick, SS_AUTOPLAY_INTERVAL);
+        ssBtnAutoplay.setAttribute('aria-pressed', 'true');
+        ssBtnAutoplay.classList.add('ss-autoplay-active');
+        ssBtnAutoplay.innerHTML = '&#9208;';
+      }
+
+      function ssStopAutoplay() {
+        if (ssAutoplayTimer) { clearInterval(ssAutoplayTimer); ssAutoplayTimer = null; }
+        ssBtnAutoplay.setAttribute('aria-pressed', 'false');
+        ssBtnAutoplay.classList.remove('ss-autoplay-active');
+        ssBtnAutoplay.innerHTML = '&#9654;';
+      }
+
+      function ssRestartAutoplay() {
+        if (ssAutoplayTimer) {
+          clearInterval(ssAutoplayTimer);
+          ssAutoplayTimer = setInterval(ssAutoplayTick, SS_AUTOPLAY_INTERVAL);
+        }
       }
 
       
@@ -2512,6 +2575,7 @@
         ssSetPosition(animate !== false);
         ssUpdateUI();
         ssScheduleSettle();
+        ssRestartAutoplay();
       }
 
       function ssOpen(type, startIdx, originEl) {
@@ -2565,6 +2629,7 @@
         document.body.style.overflow = '';
         ssResetZoom();
         ssTrack.querySelectorAll('video').forEach(function (v) { v.pause(); });
+        ssStopAutoplay();
       }
 
       
@@ -2681,6 +2746,9 @@
 
       
       ssBtnClose.addEventListener('click', ssClose);
+      ssBtnAutoplay.addEventListener('click', function () {
+        if (ssAutoplayTimer) ssStopAutoplay(); else ssStartAutoplay();
+      });
       ssBtnPrev.addEventListener('click', function () { ssGoTo(ssIndex - 1, true); });
       ssBtnNext.addEventListener('click', function () { ssGoTo(ssIndex + 1, true); });
 
