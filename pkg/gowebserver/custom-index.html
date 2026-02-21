@@ -1959,7 +1959,7 @@
       cursor: pointer;
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
-      transition: background 0.18s;
+      transition: background 0.18s, opacity 0.35s ease;
     }
 
     .ss-close:hover {
@@ -1969,8 +1969,7 @@
     .ss-autoplay {
       position: fixed;
       top: 14px;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 18px;
       z-index: 10001;
       width: 42px;
       height: 42px;
@@ -1984,7 +1983,7 @@
       cursor: pointer;
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
-      transition: background 0.18s, border-color 0.18s;
+      transition: background 0.18s, border-color 0.18s, opacity 0.35s ease;
     }
 
     .ss-autoplay:hover {
@@ -2013,7 +2012,7 @@
       cursor: pointer;
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
-      transition: background 0.18s, opacity 0.18s;
+      transition: background 0.18s, opacity 0.35s ease;
     }
 
     .ss-nav:hover {
@@ -2031,6 +2030,13 @@
 
     .ss-next {
       right: 14px;
+    }
+
+    .ss-overlay.ss-ui-hidden .ss-close,
+    .ss-overlay.ss-ui-hidden .ss-autoplay,
+    .ss-overlay.ss-ui-hidden .ss-nav {
+      opacity: 0;
+      pointer-events: none;
     }
 
     .ss-close svg,
@@ -2442,6 +2448,9 @@
       // Auto-play timer
       var ssAutoplayTimer = null;
       var SS_AUTOPLAY_INTERVAL = 3000;
+      // Idle timer: auto-hides controls after inactivity
+      var ssIdleTimer = null;
+      var SS_IDLE_DELAY = 3000;
 
       // ---- Carousel geometry ----
       // Items are 82vw wide with a 12px gap, so stride = 82vw + 12px.
@@ -2516,6 +2525,22 @@
           clearInterval(ssAutoplayTimer);
           ssAutoplayTimer = setInterval(ssAutoplayTick, SS_AUTOPLAY_INTERVAL);
         }
+      }
+
+      // ---- Idle / auto-hide controls ----
+
+      function ssShowUI() {
+        ssEl.classList.remove('ss-ui-hidden');
+        if (ssIdleTimer) clearTimeout(ssIdleTimer);
+        ssIdleTimer = setTimeout(function () {
+          ssIdleTimer = null;
+          ssEl.classList.add('ss-ui-hidden');
+        }, SS_IDLE_DELAY);
+      }
+
+      function ssStopIdle() {
+        if (ssIdleTimer) { clearTimeout(ssIdleTimer); ssIdleTimer = null; }
+        ssEl.classList.remove('ss-ui-hidden');
       }
 
       // ---- Zoom helpers ----
@@ -2666,6 +2691,7 @@
 
         document.body.style.overflow = 'hidden';
         ssBtnClose.focus();
+        ssShowUI();
       }
 
       function ssClose() {
@@ -2674,6 +2700,7 @@
         ssResetZoom();
         ssTrack.querySelectorAll('video').forEach(function (v) { v.pause(); });
         ssStopAutoplay();
+        ssStopIdle();
       }
 
       // ---- Pointer helpers ----
@@ -2796,9 +2823,14 @@
       ssBtnPrev.addEventListener('click', function () { ssGoTo(ssIndex - 1, true); });
       ssBtnNext.addEventListener('click', function () { ssGoTo(ssIndex + 1, true); });
 
+      // Show controls on any mouse/touch activity; hide after idle delay
+      ssEl.addEventListener('mousemove', ssShowUI);
+      ssEl.addEventListener('touchstart', ssShowUI, { passive: true });
+
       // Keyboard
       document.addEventListener('keydown', function (e) {
         if (!ssEl.classList.contains('ss-active')) return;
+        ssShowUI();
         if (e.key === 'ArrowRight') ssGoTo(ssIndex + 1, true);
         else if (e.key === 'ArrowLeft') ssGoTo(ssIndex - 1, true);
         else if (e.key === 'Escape') ssClose();
