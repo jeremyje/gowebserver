@@ -23,7 +23,8 @@ kubectl apply -f https://raw.githubusercontent.com/jeremyje/gowebserver/main/ins
 ## Windows Service
 
 ```powershell
-sc.exe create gowebserver start= delayed-auto binpath= "C:\apps\gowebserver.exe -configfile=C:\apps\gowebserver.yaml"
+sc.exe create gowebserver DisplayName= "Go Web Server" start= delayed-auto binpath= "C:\apps\gowebserver.exe -configfile=C:\apps\gowebserver.yaml"
+sc.exe description gowebserver "Web server for files on your hard drive with a rich browsing experience. Change settings in C:\apps\gowebserver.yaml"
 sc.exe failure gowebserver reset= 0 actions= restart/1000
 sc.exe start gowebserver
 ```

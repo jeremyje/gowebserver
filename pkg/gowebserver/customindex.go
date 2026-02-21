@@ -93,14 +93,15 @@ func (d *DirEntry) String() string {
 }
 
 type CustomIndexReport struct {
-	Root             string
-	RootName         string
-	DirEntries       []*DirEntry
-	SortBy           string
-	UseTimestamp     bool
-	HasNonMediaEntry bool
-	HasImage         bool
-	HasVideo         bool
+	Root               string
+	RootName           string
+	DirEntries         []*DirEntry
+	SortBy             string
+	UseTimestamp       bool
+	HasNonMediaEntry   bool
+	HasImage           bool
+	HasVideo           bool
+	ApplicationVersion string
 }
 
 type customIndexHandler struct {
@@ -280,11 +281,12 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 
 				params := &CustomIndexReport{
-					Root:         path,
-					RootName:     strings.TrimSuffix(filepath.Base(path), nestedDirSuffix),
-					DirEntries:   []*DirEntry{},
-					SortBy:       sortBy,
-					UseTimestamp: strings.Contains(sortBy, "date"),
+					Root:               path,
+					RootName:           strings.TrimSuffix(filepath.Base(path), nestedDirSuffix),
+					DirEntries:         []*DirEntry{},
+					SortBy:             sortBy,
+					UseTimestamp:       strings.Contains(sortBy, "date"),
+					ApplicationVersion: version,
 				}
 
 				allFiles := map[string]any{}
