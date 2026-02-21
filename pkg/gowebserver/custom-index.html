@@ -2077,7 +2077,7 @@
           </svg></span></a>
       <a class="content-link"
         href="{{if $element.IsArchive}}{{urlEncode $element.Name}}-dir/{{else}}{{urlEncode $element.Name}}{{if $element.IsDir}}/{{end}}{{end}}"
-        title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{$element.ModTime}}">
+        title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{humanizeTimestamp $element.ModTime}}">
         <span class="col-name">{{$element.Name}}</span>
         <span class="col-size">{{if and $element.IsDir (not $element.IsArchive) }}&mdash;{{else}}{{humanizeBytes
           $element.Size}}{{end}}</span>
@@ -2103,7 +2103,7 @@
         <div class="video-meta">
           <span class="video-name">{{$element.Name}}</span>
           <span class="video-duration"></span>
-          <span class="video-info">{{humanizeBytes $element.Size}} &middot; {{$element.ModTime}}</span>
+          <span class="video-info">{{humanizeBytes $element.Size}} &middot; {{humanizeTimestamp $element.ModTime}}</span>
         </div>
       </a>
     </div>
@@ -2121,7 +2121,7 @@
         <img src="{{urlEncode $element.Name}}" alt="{{$element.Name}}" loading="lazy" decoding="async">
         <div class="photo-meta">
           <span class="photo-name">{{$element.Name}}</span>
-          <span class="photo-info">{{humanizeBytes $element.Size}} &middot; {{$element.ModTime}}</span>
+          <span class="photo-info">{{humanizeBytes $element.Size}} &middot; {{humanizeTimestamp $element.ModTime}}</span>
         </div>
       </a>
     </div>
