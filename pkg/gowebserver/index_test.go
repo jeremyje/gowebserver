@@ -41,11 +41,12 @@ func TestTemplateIndexHTML(t *testing.T) {
 
 func TestIndexHTTPHandlerServeHTTP(t *testing.T) {
 	testCases := []struct {
-		modern bool
-		want   []byte
+		modern     bool
+		want       []byte
+		sourceFile string
 	}{
-		{modern: false, want: testIndexHTML},
-		{modern: true, want: testModernIndexHTML},
+		{modern: false, want: testIndexHTML, sourceFile: "pkg/gowebserver/testdata/test-index.html"},
+		{modern: true, want: testModernIndexHTML, sourceFile: "pkg/gowebserver/testdata/test-modernindex.html"},
 	}
 	for _, tc := range testCases {
 		tc := tc
@@ -73,18 +74,21 @@ func TestIndexHTTPHandlerServeHTTP(t *testing.T) {
 
 				t.Errorf("Wanted:\n%s", string(tc.want))
 				t.Errorf("Got:\n%s", string(data))
-				writeTestFile(t, data)
+				writeTestFile(t, data, tc.sourceFile)
 			}
 		})
 	}
 }
 
-func writeTestFile(tb testing.TB, data []byte) {
+func writeTestFile(tb testing.TB, data []byte, filename string) {
 	f, err := os.CreateTemp("", "test-output")
 	if err != nil {
 		tb.Fatal(err)
 	}
 	tb.Logf("writing content to %q", f.Name())
+	if filename != "" {
+		tb.Logf("Overwrite command: mv %s %s", f.Name(), filename)
+	}
 	if n, err := f.Write(data); err != nil {
 		tb.Fatal(err)
 	} else if n != len(data) {

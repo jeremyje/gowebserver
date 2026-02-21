@@ -1887,12 +1887,13 @@
     .ss-viewport {
       position: absolute;
       inset: 0;
-      overflow: hidden;
+      overflow: visible;
     }
 
     .ss-track {
       display: flex;
       height: 100%;
+      gap: 12px;
       will-change: transform;
       cursor: grab;
       touch-action: none;
@@ -1905,19 +1906,22 @@
     }
 
     .ss-item {
-      width: 100vw;
+      width: 82vw;
       height: 100%;
       flex-shrink: 0;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 60px 72px;
+      padding: 0 20px;
       box-sizing: border-box;
+      opacity: 0;
+      transition: opacity 0.1s ease;
     }
 
     .ss-item img {
-      max-width: 100%;
-      max-height: 100%;
+      width: 100%;
+      height: 100%;
       object-fit: contain;
       display: block;
       user-select: none;
@@ -1929,8 +1933,8 @@
     }
 
     .ss-item video {
-      max-width: 100%;
-      max-height: 100%;
+      width: 100%;
+      height: 100%;
       object-fit: contain;
       display: block;
       border-radius: 2px;
@@ -2002,41 +2006,10 @@
       right: 14px;
     }
 
-    .ss-footer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 10001;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      padding-bottom: 18px;
-      pointer-events: none;
-    }
-
-    .ss-caption {
-      color: rgba(255, 255, 255, 0.85);
-      font-size: 0.82rem;
-      max-width: 70vw;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-align: center;
-    }
-
-    .ss-counter {
-      color: rgba(255, 255, 255, 0.55);
-      font-size: 0.72rem;
-      background: rgba(0, 0, 0, 0.4);
-      padding: 3px 10px;
-      border-radius: 10px;
-    }
-
     @media (max-width: 600px) {
       .ss-item {
-        padding: 48px 16px;
+        width: 78vw;
+        padding: 0 8px;
       }
 
       .ss-nav {
@@ -2345,10 +2318,6 @@
     <button id="ss-close" class="ss-close" aria-label="Close slideshow">&#10005;</button>
     <button id="ss-prev" class="ss-nav ss-prev" aria-label="Previous">&#8249;</button>
     <button id="ss-next" class="ss-nav ss-next" aria-label="Next">&#8250;</button>
-    <div class="ss-footer">
-      <span class="ss-caption" id="ss-caption"></span>
-      <span class="ss-counter" id="ss-counter"></span>
-    </div>
   </div>
 
   <div class="footer">Go Web Server</div>
@@ -2393,8 +2362,6 @@
       var ssBtnClose = document.getElementById('ss-close');
       var ssBtnPrev = document.getElementById('ss-prev');
       var ssBtnNext = document.getElementById('ss-next');
-      var ssCaptionEl = document.getElementById('ss-caption');
-      var ssCounterEl = document.getElementById('ss-counter');
       if (!ssEl) return;
 
       // Slide state
@@ -2419,6 +2386,29 @@
       // Heading link memory
       var ssLastPhotoIdx = 0;
       var ssLastVideoIdx = 0;
+
+      // ---- Carousel geometry ----
+      // Items are 82vw wide with a 12px gap, so stride = 82vw + 12px.
+      // The first item is offset by 9vw so it's centered in the 100vw viewport,
+      // which also leaves 9vw on each side for adjacent-item peek.
+
+      var SS_ITEM_VW = 0.82;
+      var SS_GAP_PX = 12;
+
+      function ssStridePx() {
+        return window.innerWidth * SS_ITEM_VW + SS_GAP_PX;
+      }
+
+      function ssTrackX(index) {
+        // Offset that centers item[index] in the viewport
+        return window.innerWidth * (1 - SS_ITEM_VW) / 2 - index * ssStridePx();
+      }
+
+      function ssUpdateOpacities() {
+        Array.from(ssTrack.children).forEach(function (item, i) {
+          item.style.opacity = Math.abs(i - ssIndex) <= 1 ? '1' : '0';
+        });
+      }
 
       // ---- Zoom helpers ----
 
@@ -2501,12 +2491,10 @@
         ssTrack.style.transition = animate
           ? 'transform 0.33s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
           : 'none';
-        ssTrack.style.transform = 'translateX(calc(-' + ssIndex + ' * 100vw))';
+        ssTrack.style.transform = 'translateX(' + ssTrackX(ssIndex) + 'px)';
       }
 
       function ssUpdateUI() {
-        ssCounterEl.textContent = (ssIndex + 1) + ' / ' + ssItems.length;
-        ssCaptionEl.textContent = ssItems[ssIndex] ? ssItems[ssIndex].name : '';
         ssBtnPrev.disabled = ssIndex <= 0;
         ssBtnNext.disabled = ssIndex >= ssItems.length - 1;
       }
@@ -2521,6 +2509,7 @@
         ssIndex = Math.max(0, Math.min(idx, ssItems.length - 1));
         ssSetPosition(animate !== false);
         ssUpdateUI();
+        ssUpdateOpacities();
       }
 
       function ssOpen(type, startIdx) {
@@ -2531,6 +2520,7 @@
         ssIndex = Math.max(0, Math.min(startIdx || 0, ssItems.length - 1));
         ssSetPosition(false);
         ssUpdateUI();
+        ssUpdateOpacities();
         ssEl.classList.add('ss-active');
         document.body.style.overflow = 'hidden';
         ssBtnClose.focus();
@@ -2603,7 +2593,7 @@
         ssLastY = y;
         ssLastTime = now;
         ssDragX = x;
-        ssTrack.style.transform = 'translateX(' + (-ssIndex * window.innerWidth + (ssDragX - ssDragStartX)) + 'px)';
+        ssTrack.style.transform = 'translateX(' + (ssTrackX(ssIndex) + (ssDragX - ssDragStartX)) + 'px)';
         e.preventDefault();
       }
 
@@ -2615,7 +2605,7 @@
         // When zoomed we were panning, not sliding
         if (ssZoom > 1) return;
         var delta = ssDragX - ssDragStartX;
-        var threshold = window.innerWidth * 0.2;
+        var threshold = ssStridePx() * 0.2;
         var vt = 0.35;
         if ((delta < -threshold || ssVelocity < -vt) && ssIndex < ssItems.length - 1) {
           ssGoTo(ssIndex + 1, true);
