@@ -100,7 +100,7 @@ jobs:
 
       - name: Set up QEMU
         # https://github.com/docker/setup-qemu-action
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         if: ${{ github.event_name != 'pull_request' }}
 
       - name: Set up Docker Buildx
