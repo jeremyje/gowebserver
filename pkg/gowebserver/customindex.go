@@ -157,6 +157,7 @@ var (
 		".cmd":                            "terminal",
 		".bash":                           "terminal",
 		".download":                       "download",
+		".exe":                            "terminal",
 		"application/x-shellscript":       "terminal",
 		"application/x-ms-dos-executable": "terminal",
 		"application/x-msdownload":        "terminal",
@@ -208,6 +209,7 @@ var (
 		".md":                             "doc",
 		".ttf":                            "font",
 		".ai":                             "photoshop",
+		".webm":                           "video",
 	}
 )
 

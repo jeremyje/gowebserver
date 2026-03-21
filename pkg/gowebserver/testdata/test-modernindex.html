@@ -2832,16 +2832,6 @@
         });
       });
 
-      document.querySelectorAll('.video-card').forEach(function (card, idx) {
-        var meta = card.querySelector('.video-meta');
-        if (!meta) return;
-        meta.addEventListener('click', function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          ssOpen('video', idx, card.querySelector('video'));
-        });
-      });
-
       
       document.querySelectorAll('.slideshow-link').forEach(function (link) {
         link.addEventListener('click', function (e) {

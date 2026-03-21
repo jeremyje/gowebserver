@@ -35,6 +35,7 @@ func TestNameToIconClass(t *testing.T) {
 		isDir bool
 		want  string
 	}{
+		{input: "abc.webm", isDir: false, want: "video"},
 		{input: "abc", isDir: false, want: "unknown"},
 		{input: "abc", isDir: true, want: "folder"},
 		{input: "abc.txt", isDir: false, want: "text"},
@@ -56,7 +57,6 @@ func TestNameToIconClass(t *testing.T) {
 		{input: "abc.mpeg", isDir: false, want: "video"},
 		{input: "abc.mov", isDir: false, want: "video"},
 		{input: "abc.qt", isDir: false, want: "video"},
-		{input: "abc.webm", isDir: false, want: "video"},
 		{input: "abc.xvid", isDir: false, want: "video"},
 		{input: "abc.divx", isDir: false, want: "video"},
 		{input: "abc.mp3", isDir: false, want: "audio"},
