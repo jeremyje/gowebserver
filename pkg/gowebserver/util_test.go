@@ -499,3 +499,16 @@ func TestUrlEncode(t *testing.T) {
 		})
 	}
 }
+
+func createTempFile() (*os.File, error) {
+	return os.CreateTemp(os.TempDir(), "tempfile")
+}
+
+func writeTempFile(content string) (*os.File, error) {
+	fp, err := createTempFile()
+	if err != nil {
+		return fp, err
+	}
+	err = os.WriteFile(fp.Name(), []byte(content), os.FileMode(0644))
+	return fp, err
+}

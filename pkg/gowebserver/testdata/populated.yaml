@@ -26,3 +26,6 @@ monitoring:
 upload:
   source: /home/upload
   endpoint: /postage
+search:
+  index: search.db
+  ollamaSpec: localhost:11434;llava-llama3:8b
