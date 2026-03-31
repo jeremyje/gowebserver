@@ -51,7 +51,7 @@ internal/gowebserver/testing/  # Test utilities and embedded test archives
 - **httpserver.go**: `WebServer` interface, HTTP/HTTPS listener setup, handler registration
 - **filesystem.go**: `FileSystem` interface for content sources
 - **filesystem_*.go**: Implementations for local dirs, archives, git repos, nested archives
-- **index.go / customindex.go**: Directory listing templates (basic and Bootstrap UI)
+- **index.go / customindex.go**: Directory listing templates (basic and custom css UI)
 - **monitoring.go**: Prometheus metrics, OpenTelemetry tracing, pprof endpoints
 - **upload.go**: Multi-file upload with MD5 token validation
 - **custom-index.html**: Enhanced HTML template for file browsing. Includes advanced preview features for images and videos.
