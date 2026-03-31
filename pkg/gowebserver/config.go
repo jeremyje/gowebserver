@@ -62,6 +62,9 @@ var (
 	enhancedListFlag = flag.Bool("enhancedindex", false, "Enable enhanced index.")
 	debugFlag        = flag.Bool("debug", false, "Enable debug HTTP methods.")
 
+	searchIndexFlag           = flag.String("search.index", "", "If set, enables search indexing and stores the index at the path specified.")
+	searchIndexOllamaSpecFlag = flag.String("search.ollamaspec", "", "If set, configures the ollama HTTP spec for enhanced multi-modal search.")
+
 	version = "UNKNOWN"
 )
 
@@ -118,6 +121,7 @@ type Config struct {
 	HTTPS      HTTPS      `yaml:"https"`
 	Monitoring Monitoring `yaml:"monitoring"`
 	Upload     Serve      `yaml:"upload"`
+	Search     Search     `yaml:"search"`
 }
 
 // Serve maps the source to endpoint serving of content.
@@ -126,6 +130,14 @@ type Serve struct {
 	Source string `yaml:"source"`
 	// Endpoint on the HTTP server to serve the content.
 	Endpoint string `yaml:"endpoint"`
+}
+
+// Search configures the search index for the web server.
+type Search struct {
+	// Index is the path of the search index.
+	Index string `yaml:"index"`
+	// OllamaSpec configures the Ollama connection spec for multi-modal search indexing.
+	OllamaSpec string `yaml:"ollamaSpec"`
 }
 
 // String returns a string representation of the config.

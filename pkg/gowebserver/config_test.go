@@ -80,6 +80,10 @@ func TestPopulatedConfig(t *testing.T) {
 			Source:   "/home/upload",
 			Endpoint: "/postage",
 		},
+		Search: Search{
+			Index:      "search.db",
+			OllamaSpec: "localhost:11434;llava-llama3:8b",
+		},
 	}
 
 	if diff := cmp.Diff(populatedConfigYaml, conf.String()); diff != "" {
@@ -143,6 +147,10 @@ func TestNoDefaultConfig(t *testing.T) {
 			Source:   "dropsite",
 			Endpoint: "/upload.jspx",
 		},
+		Search: Search{
+			Index:      "search.db",
+			OllamaSpec: "localhost:11434;ministral-3:8b",
+		},
 	}
 
 	if diff := cmp.Diff(want, got); diff != "" {
@@ -205,24 +213,15 @@ func TestPopulatedYamlConfig(t *testing.T) {
 			Source:   "/home/upload",
 			Endpoint: "/postage",
 		},
+		Search: Search{
+			Index:      "search.db",
+			OllamaSpec: "localhost:11434;llava-llama3:8b",
+		},
 	}
 
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("config mismatch (-want +got):\n%s", diff)
 	}
-}
-
-func createTempFile() (*os.File, error) {
-	return os.CreateTemp(os.TempDir(), "tempfile")
-}
-
-func writeTempFile(content string) (*os.File, error) {
-	fp, err := createTempFile()
-	if err != nil {
-		return fp, err
-	}
-	err = os.WriteFile(fp.Name(), []byte(content), os.FileMode(0644))
-	return fp, err
 }
 
 func TestDefaultConfiguration(t *testing.T) {
@@ -273,6 +272,10 @@ func TestDefaultConfiguration(t *testing.T) {
 		Upload: Serve{
 			Source:   "uploaded-files",
 			Endpoint: "/upload.asp",
+		},
+		Search: Search{
+			Index:      "",
+			OllamaSpec: "",
 		},
 	}
 

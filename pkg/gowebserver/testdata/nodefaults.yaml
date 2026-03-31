@@ -28,3 +28,6 @@ monitoring:
 upload:
   source: "dropsite"
   endpoint: "/upload.jspx"
+search:
+  index: search.db
+  ollamaSpec: localhost:11434;ministral-3:8b
