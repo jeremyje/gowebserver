@@ -66,7 +66,7 @@ func joinNestedFSPath(paths []string) string {
 	return strings.Join(paths, "/")
 }
 
-func newHandlerFromFS(path string, tp trace.TracerProvider, enhancedList bool) (http.Handler, func() error, error) {
+func newHandlerFromFS(path string, tp trace.TracerProvider, enhancedList bool, searchArgs *searchParams) (http.Handler, func() error, error) {
 	if !isSupportedGit(path) && isSupportedHTTP(path) {
 		handler, err := newHTTPReverseProxy(path)
 		return handler, nilFuncWithError, err
@@ -75,13 +75,17 @@ func newHandlerFromFS(path string, tp trace.TracerProvider, enhancedList bool) (
 	if err != nil {
 		return nil, nilFuncWithError, err
 	}
+
 	nFS := newNestedFS(vFS)
 
-	ci, err := newCustomIndex(http.FileServer(http.FS(nFS)), nFS, tp, enhancedList)
+	ci, closer, err := newCustomIndex(http.FileServer(http.FS(nFS)), nFS, tp, enhancedList, searchArgs)
 	if err != nil {
 		return nil, nilFuncWithError, err
 	}
-	return ci, nFS.Close, nil
+	return ci, func() error {
+		closer()
+		return nFS.Close()
+	}, nil
 }
 
 func newRawFSFromURI(path string) (FileSystem, error) {

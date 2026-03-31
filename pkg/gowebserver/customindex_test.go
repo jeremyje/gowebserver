@@ -41,7 +41,7 @@ func TestCustomIndex(t *testing.T) {
 	defer nFS.Close()
 
 	mc := &monitoringContext{}
-	ci, err := newCustomIndex(http.FileServer(http.FS(nFS)), nFS, mc.getTraceProvider(), true)
+	ci, err := newCustomIndex(http.FileServer(http.FS(nFS)), nFS, mc.getTraceProvider(), true, &searchParams{})
 	if err != nil {
 		t.Fatal(err)
 	}

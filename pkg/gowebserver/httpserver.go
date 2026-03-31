@@ -51,6 +51,9 @@ type webServerImpl struct {
 	httpListenPort  int
 	httpsListenPort int
 
+	searchIndexPath  string
+	searchOllamaSpec string
+
 	sync.RWMutex
 }
 
@@ -140,7 +143,13 @@ func (ws *webServerImpl) Serve(wait func()) error {
 		zap.S().With("localPath", paths.localPath, "http", paths.httpPath).Info("Endpoint")
 		endpoints = append(endpoints, paths.httpPath)
 
-		fsHandler, cleanup, err := newHandlerFromFS(paths.localPath, ws.monitoringCtx.getTraceProvider(), ws.enhancedListMode)
+		searchParams := &searchParams{
+			servePath:  paths.httpPath,
+			indexPath:  ws.searchIndexPath,
+			ollamaSpec: ws.searchOllamaSpec,
+		}
+
+		fsHandler, cleanup, err := newHandlerFromFS(paths.localPath, ws.monitoringCtx.getTraceProvider(), ws.enhancedListMode, searchParams)
 		if err != nil {
 			return err
 		}
@@ -261,6 +270,7 @@ func New(conf *Config) (WebServer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot setup monitoring '%+v', %w", conf.Monitoring, err)
 	}
+
 	ws := &webServerImpl{
 		httpAddr:            toAddr(conf.HTTP.Port),
 		httpsAddr:           toAddr(conf.HTTPS.Port),
@@ -275,6 +285,9 @@ func New(conf *Config) (WebServer, error) {
 		uploadPath:          uploadPath,
 		uploadHTTPPath:      conf.Upload.Endpoint,
 		verbose:             conf.Verbose,
+
+		searchIndexPath:  conf.Search.Index,
+		searchOllamaSpec: conf.Search.OllamaSpec,
 	}
 
 	return ws, nil

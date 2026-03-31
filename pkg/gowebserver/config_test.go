@@ -80,6 +80,10 @@ func TestPopulatedConfig(t *testing.T) {
 			Source:   "/home/upload",
 			Endpoint: "/postage",
 		},
+		Search: Search{
+			Index:      "search.db",
+			OllamaSpec: "localhost:11434;ministral-3:8b",
+		},
 	}
 
 	if diff := cmp.Diff(populatedConfigYaml, conf.String()); diff != "" {
@@ -143,6 +147,10 @@ func TestNoDefaultConfig(t *testing.T) {
 			Source:   "dropsite",
 			Endpoint: "/upload.jspx",
 		},
+		Search: Search{
+			Index:      "search.db",
+			OllamaSpec: "localhost:11434;ministral-3:8b",
+		},
 	}
 
 	if diff := cmp.Diff(want, got); diff != "" {
@@ -204,6 +212,10 @@ func TestPopulatedYamlConfig(t *testing.T) {
 		Upload: Serve{
 			Source:   "/home/upload",
 			Endpoint: "/postage",
+		},
+		Search: Search{
+			Index:      "search.db",
+			OllamaSpec: "localhost:11434;llava-llama3:8b",
 		},
 	}
 
@@ -273,6 +285,10 @@ func TestDefaultConfiguration(t *testing.T) {
 		Upload: Serve{
 			Source:   "uploaded-files",
 			Endpoint: "/upload.asp",
+		},
+		Search: Search{
+			Index:      "",
+			OllamaSpec: "",
 		},
 	}
 
