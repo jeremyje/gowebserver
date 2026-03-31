@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Search Index
+*.db
+
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
 *.a
