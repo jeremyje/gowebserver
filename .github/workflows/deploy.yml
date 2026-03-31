@@ -16,9 +16,9 @@ name: CI
 on:
   push:
     tags: ["v*"]
-    branches: ["main"]
+    branches: ["main", "indexing"]
   pull_request:
-    branches: ["main"]
+    branches: ["main", "indexing"]
 jobs:
   # Set the job key. The key is displayed as the job name
   # when a job name is not provided
