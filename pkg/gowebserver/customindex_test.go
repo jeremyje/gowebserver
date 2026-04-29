@@ -15,7 +15,6 @@ import (
 func TestDirEntryString(t *testing.T) {
 	entry := DirEntry{
 		Name:      "abc.txt",
-		FullPath:  "/abc.txt",
 		Size:      500,
 		ModTime:   time.Now(),
 		IsDir:     false,

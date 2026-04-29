@@ -75,7 +75,6 @@ func newEntryList(sortBy string) *EntryList {
 
 type DirEntry struct {
 	Name      string
-	FullPath  string
 	Size      uint64
 	ModTime   time.Time
 	IsDir     bool
@@ -206,7 +205,6 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					_, isArchive := actualArchiveDir[entry.Name()]
 					isDir := entry.IsDir() || isArchive
 					newEntry := &DirEntry{
-						FullPath:  filepath.Join(path, entry.Name()),
 						Name:      entry.Name(),
 						Size:      uint64(size),
 						ModTime:   t,
