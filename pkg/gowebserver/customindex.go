@@ -95,6 +95,7 @@ type CustomIndexReport struct {
 	RootName           string
 	DirEntries         []*DirEntry
 	SortBy             string
+	SearchQuery        string
 	UseTimestamp       bool
 	HasNonMediaEntry   bool
 	HasImage           bool
@@ -122,6 +123,7 @@ func canonicalizeSortBy(v string) string {
 
 func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sortBy := canonicalizeSortBy(r.URL.Query().Get("sort"))
+	searchQuery := r.URL.Query().Get("q")
 	rootTrace := c.tp.Tracer("customIndex")
 	ctx, span := rootTrace.Start(r.Context(), r.URL.Path)
 	defer span.End()
@@ -166,6 +168,7 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					RootName:           strings.TrimSuffix(filepath.Base(path), nestedDirSuffix),
 					DirEntries:         []*DirEntry{},
 					SortBy:             sortBy,
+					SearchQuery:        searchQuery,
 					UseTimestamp:       strings.Contains(sortBy, "date"),
 					ApplicationVersion: version,
 				}
