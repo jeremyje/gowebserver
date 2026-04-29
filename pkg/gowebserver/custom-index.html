@@ -2081,6 +2081,81 @@
         right: 8px;
       }
     }
+
+    /* Search bar */
+    .search-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-secondary);
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--link);
+      box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.12);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .search-btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-secondary);
+      color: var(--text);
+      font-size: 0.9rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s ease;
+    }
+
+    .search-btn:hover {
+      background: var(--hover-bg);
+    }
+
+    .search-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .search-query-text {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .search-clear {
+      color: var(--link);
+      text-decoration: none;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+
+    .search-clear:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 
@@ -2289,17 +2364,30 @@
 
   <h1>{{.RootName}}</h1>
 
+  <form class="search-form" method="get" action="">
+    <input type="hidden" name="sort" value="{{.SortBy}}">
+    <input class="search-input" type="search" name="q" value="{{.SearchQuery}}" placeholder="Search files and subdirectories&hellip;">
+    <button class="search-btn" type="submit">Search</button>
+  </form>
+
+  {{if .SearchQuery}}
+  <div class="search-banner">
+    <span>Search results for <span class="search-query-text">&#34;{{.SearchQuery}}&#34;</span> in this directory and subdirectories</span>
+    <a class="search-clear" href="?sort={{.SortBy}}">Clear search</a>
+  </div>
+  {{end}}
+
   <!-- Directory Listing -->
   <div class="listing">
     <div class="listing-header">
-      <span class="col-name">{{if eq .SortBy "name"}}<a class="sort-link" href="?sort=name-desc">Name <span
-            class="sort-arrow">&#x25B2;</span></a>{{else}}<a class="sort-link" href="?sort=name">Name <span
+      <span class="col-name">{{if eq .SortBy "name"}}<a class="sort-link" href="?sort=name-desc{{if .SearchQuery}}&amp;q={{urlEncode .SearchQuery}}{{end}}">Name <span
+            class="sort-arrow">&#x25B2;</span></a>{{else}}<a class="sort-link" href="?sort=name{{if .SearchQuery}}&amp;q={{urlEncode .SearchQuery}}{{end}}">Name <span
             class="sort-arrow">&#x25BC;</span></a>{{end}}</span>
-      <span class="col-size">{{if eq .SortBy "size"}}<a class="sort-link" href="?sort=size-desc">Size <span
-            class="sort-arrow">&#x25B2;</span></a>{{else}}<a class="sort-link" href="?sort=size">Size <span
+      <span class="col-size">{{if eq .SortBy "size"}}<a class="sort-link" href="?sort=size-desc{{if .SearchQuery}}&amp;q={{urlEncode .SearchQuery}}{{end}}">Size <span
+            class="sort-arrow">&#x25B2;</span></a>{{else}}<a class="sort-link" href="?sort=size{{if .SearchQuery}}&amp;q={{urlEncode .SearchQuery}}{{end}}">Size <span
             class="sort-arrow">&#x25BC;</span></a>{{end}}</span>
-      <span class="col-modified">{{if eq .SortBy "date"}}<a class="sort-link" href="?sort=date-desc">Modified <span
-            class="sort-arrow">&#x25B2;</span></a>{{else}}<a class="sort-link" href="?sort=date">Modified <span
+      <span class="col-modified">{{if eq .SortBy "date"}}<a class="sort-link" href="?sort=date-desc{{if .SearchQuery}}&amp;q={{urlEncode .SearchQuery}}{{end}}">Modified <span
+            class="sort-arrow">&#x25B2;</span></a>{{else}}<a class="sort-link" href="?sort=date{{if .SearchQuery}}&amp;q={{urlEncode .SearchQuery}}{{end}}">Modified <span
             class="sort-arrow">&#x25BC;</span></a>{{end}}</span>
     </div>
 
