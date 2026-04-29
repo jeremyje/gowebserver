@@ -57,6 +57,7 @@ func TestCustomIndex(t *testing.T) {
 	verifyCustomIndex(t, ts.Client(), ts.URL+"/testassets.zip-dir/", []string{"index.html", "site.js", "assets/"})
 	verifyCustomIndex(t, ts.Client(), ts.URL+"/testassets/assets/images", []string{"ocean.jpg", "nature.jpg"})
 	verifyCustomIndex(t, ts.Client(), ts.URL+"/testassets/assets/images/", []string{"ocean.jpg", "nature.jpg"})
+	verifyCustomIndex(t, ts.Client(), ts.URL+"/testassets/assets/images/?q=ocean", []string{"ocean.jpg"})
 }
 
 func verifyCustomIndex(t *testing.T, hc *http.Client, u string, substrs []string) {
