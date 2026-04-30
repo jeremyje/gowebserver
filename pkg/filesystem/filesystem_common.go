@@ -1,0 +1,207 @@
+// Copyright 2022 Jeremy Edwards
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package filesystem
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"io/fs"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/bodgit/sevenzip"
+	"github.com/mholt/archives"
+)
+
+var (
+	archiveExtList = []string{".tar", ".tar.gz", ".tar.bz2", ".tar.xz", ".tar.lz4", ".tar.br", ".tar.zst", ".rar", ".zip", ".7z"}
+)
+
+func splitNestedFSPath(path string) []string {
+	parts := strings.Split(path, "/")
+	segments := []string{}
+	archiveDir := false
+
+	cur := []string{}
+	for _, part := range parts {
+		cur = append(cur, part)
+		if strings.HasSuffix(part, nestedDirSuffix) {
+			undelimitedPart := strings.TrimSuffix(part, nestedDirSuffix)
+			if isSupportedArchive(undelimitedPart) || isSupportedSevenZip(undelimitedPart) {
+				segments = append(segments, strings.Join(cur, "/"))
+				cur = []string{}
+				archiveDir = true
+			} else {
+				archiveDir = false
+			}
+		}
+	}
+	if len(cur) > 0 {
+		segments = append(segments, strings.Join(cur, "/"))
+	} else if archiveDir {
+		segments = append(segments, ".")
+	}
+	return segments
+}
+
+func joinNestedFSPath(paths []string) string {
+	return strings.Join(paths, "/")
+}
+
+func NewRawFSFromURI(path string) (FileSystem, error) {
+	if isSupportedSevenZip(path) {
+		return newSevenZipFS(path)
+	} else if isSupportedArchive(path) {
+		return newArchiveFSFromLocalPath(path)
+	} else if IsSupportedGit(path) {
+		return newGitFS(path)
+	}
+	return newLocalFS(path, func() error { return nil })
+}
+
+func isSupportedArchive(filePath string) bool {
+	for _, suffix := range archiveExtList {
+		if strings.HasSuffix(strings.ToLower(filePath), suffix) {
+			return true
+		}
+	}
+	return false
+}
+
+func isSupportedSevenZip(filePath string) bool {
+	return strings.HasSuffix(strings.ToLower(filePath), ".7z")
+}
+
+func writeFileFromArchiveEntry(f opener, filePath string) error {
+	zf, err := f.Open()
+	if err != nil {
+		return fmt.Errorf("cannot open input file: %w", err)
+	}
+	defer zf.Close()
+
+	return copyFile(zf, f.CreatedTime(), f.ModTime(), filePath)
+}
+
+type opener interface {
+	Open() (io.ReadCloser, error)
+	ModTime() time.Time
+	CreatedTime() time.Time
+}
+
+func newSevenZipFS(filePath string) (*localFS, error) {
+	tmpDir, localFilePath, cleanup, err := stageRemoteFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract archive
+	r, err := sevenzip.OpenReader(localFilePath)
+	if err != nil {
+		logError(cleanup())
+		return nil, err
+	}
+	defer r.Close()
+
+	// Iterate through the files in the archive,
+	// printing some of their contents.
+	for _, f := range r.File {
+		name := SanitizeFileName(f.Name)
+		filePath := filepath.Join(tmpDir, name)
+		if f.FileInfo().IsDir() {
+			err = createDirectory(filePath)
+			if err != nil {
+				logError(cleanup())
+				return nil, fmt.Errorf("cannot create directory: %s, %w", filePath, err)
+			}
+		} else {
+			dirPath := filepath.Dir(filePath)
+			err = createDirectory(dirPath)
+			if err != nil {
+				logError(cleanup())
+				return nil, fmt.Errorf("cannot create directory: %s, %w", dirPath, err)
+			}
+
+			err := writeFileFromArchiveEntry(&sevenZipOpener{f: f}, filePath)
+			if err != nil {
+				logError(cleanup())
+				return nil, fmt.Errorf("cannot write zip file entry: %s, %w", name, err)
+			}
+		}
+	}
+
+	return newLocalFS(tmpDir, cleanup)
+}
+
+type sevenZipOpener struct {
+	f *sevenzip.File
+}
+
+func (s *sevenZipOpener) Open() (io.ReadCloser, error) {
+	return s.f.Open()
+}
+
+func (s *sevenZipOpener) ModTime() time.Time {
+	return s.f.Modified
+}
+
+func (s *sevenZipOpener) CreatedTime() time.Time {
+	return s.f.Created
+}
+
+func coerceToReaderAt(file fs.File) (io.ReaderAt, error) {
+	readerAt, ok := file.(io.ReaderAt)
+	if ok {
+		return readerAt, nil
+	} else {
+		// TODO: This is very inefficient because it's reading a nested zip file into memory.
+		data, err := io.ReadAll(file)
+		if err != nil {
+			return nil, err
+		}
+		return bytes.NewReader(data), err
+	}
+}
+
+func archiverFileSystemFromArchive(file fs.File) (fs.FS, error) {
+	stat, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	readerAt, err := coerceToReaderAt(file)
+	if err != nil {
+		return nil, err
+	}
+	ctx := context.Background()
+	format, _, err := archives.Identify(ctx, stat.Name(), file)
+	if err != nil && !errors.Is(err, archives.NoMatch) {
+		return nil, err
+	}
+	if format != nil {
+		// TODO: we only really need Extractor and Decompressor here, not the combined interfaces...
+		if af, ok := format.(archives.Archival); ok {
+			r := io.NewSectionReader(readerAt, 0, stat.Size())
+			return archives.ArchiveFS{
+				Stream: r,
+				Format: af,
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("archive not recognized")
+}

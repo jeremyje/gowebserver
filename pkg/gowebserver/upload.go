@@ -29,6 +29,7 @@ import (
 
 	_ "embed"
 
+	"github.com/jeremyje/gowebserver/v2/pkg/filesystem"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
@@ -99,7 +100,7 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		m := r.MultipartForm
 		files := m.File[uploadFileFormName]
 		for i := range files {
-			fileName := sanitizeFileName(files[i].Filename)
+			fileName := filesystem.SanitizeFileName(files[i].Filename)
 
 			ctx, childSpan := uploadTracer.Start(ctx, fileName)
 			defer childSpan.End()

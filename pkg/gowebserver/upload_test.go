@@ -39,11 +39,7 @@ func TestUploadHTML(t *testing.T) {
 
 func TestUpload(t *testing.T) {
 	zipPath := gowsTesting.MustZipFilePath(t)
-	tmpDir, close, err := createTempDirectory()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer close()
+	tmpDir := mustTempDir(t)
 
 	cfg := &Config{
 		Serve: []Serve{

@@ -24,6 +24,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	gowsTesting "github.com/jeremyje/gowebserver/v2/internal/gowebserver/testing"
+	"github.com/jeremyje/gowebserver/v2/pkg/filesystem"
 )
 
 func TestDirEntryString(t *testing.T) {
@@ -45,12 +46,12 @@ func TestDirEntryString(t *testing.T) {
 func TestCustomIndex(t *testing.T) {
 	nestedZipPath := gowsTesting.MustNestedZipFilePath(t)
 
-	vFS, err := newRawFSFromURI(nestedZipPath)
+	vFS, err := filesystem.NewRawFSFromURI(nestedZipPath)
 	if err != nil {
 		t.Error(err)
 	}
 	defer vFS.Close()
-	nFS := newNestedFS(vFS)
+	nFS := filesystem.NewNestedFS(vFS)
 	defer nFS.Close()
 
 	mc := &monitoringContext{}

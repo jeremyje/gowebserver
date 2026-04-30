@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gowebserver
+package filesystem
 
 import (
 	"io/fs"
@@ -59,9 +59,9 @@ func newLocalFS(relPath string, cleanup func() error) (*localFS, error) {
 		return nil, err
 	}
 
-	fs := os.DirFS(cleanPath(dirPath(absPath)))
+	baseFS := os.DirFS(cleanPath(dirPath(absPath)))
 	return &localFS{
-		concreteFS: newConcreteFS(fs, cleanup),
+		concreteFS: newConcreteFS(baseFS, cleanup),
 		absPath:    absPath,
 		relPath:    relPath,
 		cleanup:    cleanup,

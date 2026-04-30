@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gowebserver
+package filesystem
 
 import (
 	"bytes"
@@ -22,8 +22,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 const (
@@ -37,6 +35,18 @@ type subFSGetter interface {
 type nestedFS struct {
 	mapped map[string]*nestedFS
 	baseFS FileSystem
+}
+
+// NewNestedFS wraps a FileSystem so that archives inside it are accessible as virtual subdirectories.
+func NewNestedFS(baseFS FileSystem) FileSystem {
+	return newNestedFSInternal(baseFS)
+}
+
+func newNestedFSInternal(baseFS FileSystem) *nestedFS {
+	return &nestedFS{
+		mapped: map[string]*nestedFS{},
+		baseFS: baseFS,
+	}
 }
 
 func (n *nestedFS) Close() error {
@@ -210,7 +220,7 @@ func (n *nestedFS) getFS(name string) (FileSystem, error) {
 		logError(err)
 		return nil, err
 	} else {
-		nestedSubFS := newNestedFS(subFS)
+		nestedSubFS := newNestedFSInternal(subFS)
 		n.mapped[name] = nestedSubFS
 		return nestedSubFS, nil
 	}
@@ -267,19 +277,6 @@ func (n *nestedFS) ReadDir(name string) ([]fs.DirEntry, error) {
 	r, err := subFS.ReadDir(joinNestedFSPath(paths[1:]))
 	logError(err)
 	return r, err
-}
-
-func newNestedFS(baseFS FileSystem) *nestedFS {
-	return &nestedFS{
-		mapped: map[string]*nestedFS{},
-		baseFS: baseFS,
-	}
-}
-
-func logError(err error) {
-	if err != nil {
-		zap.S().Errorf("%s", err)
-	}
 }
 
 func augmentDirEntryList(original []fs.DirEntry, addVirtualDirs bool) []fs.DirEntry {

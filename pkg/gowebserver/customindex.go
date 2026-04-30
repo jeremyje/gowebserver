@@ -31,6 +31,10 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	nestedDirSuffix = "-dir"
+)
+
 var (
 	//go:embed custom-index.html
 	customIndexHTML []byte
@@ -141,7 +145,7 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	span.SetAttributes(attribute.Bool("enhanced_list", c.enhancedList))
 	if c.enhancedList {
 		path := r.URL.Path
-		path = cleanPath(strings.TrimPrefix(path, "/"))
+		path = strings.ReplaceAll(filepath.Clean(strings.TrimPrefix(path, "/")), "\\", "/")
 
 		zap.S().With("url", r.URL, "path", path).Info("customIndexHandler")
 		if strings.HasSuffix(r.URL.Path, "/") || path == "." {

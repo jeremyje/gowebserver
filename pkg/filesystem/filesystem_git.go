@@ -15,7 +15,7 @@
 //go:build !aix
 // +build !aix
 
-package gowebserver
+package filesystem
 
 import (
 	"fmt"
@@ -28,7 +28,7 @@ import (
 )
 
 func newGitFS(filePath string) (*localFS, error) {
-	if !isSupportedGit(filePath) {
+	if !IsSupportedGit(filePath) {
 		return nil, fmt.Errorf("%s is not a valid git repository", filePath)
 	}
 
@@ -57,7 +57,7 @@ func newGitFS(filePath string) (*localFS, error) {
 	})
 }
 
-func isSupportedGit(filePath string) bool {
+func IsSupportedGit(filePath string) bool {
 	return strings.HasSuffix(strings.ToLower(filePath), ".git")
 }
 
