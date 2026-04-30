@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gowebserver
+package filesystem
 
 import (
 	"context"
@@ -51,22 +51,22 @@ func (a *archiveFS) ReadDir(name string) ([]fs.DirEntry, error) {
 
 func newArchiveFSFromLocalPath(name string) (*archiveFS, error) {
 	ctx := context.Background()
-	fs, err := archives.FileSystem(ctx, name, nil)
+	baseFS, err := archives.FileSystem(ctx, name, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	return &archiveFS{
-		concreteFS: newConcreteFS(fs, func() error { return nil }),
+		concreteFS: newConcreteFS(baseFS, func() error { return nil }),
 	}, nil
 }
 
 func newArchiveFSFromFile(f fs.File) (*archiveFS, error) {
-	fs, err := archiverFileSystemFromArchive(f)
+	baseFS, err := archiverFileSystemFromArchive(f)
 	if err != nil {
 		return nil, err
 	}
 	return &archiveFS{
-		concreteFS: newConcreteFS(fs, f.Close),
+		concreteFS: newConcreteFS(baseFS, f.Close),
 	}, nil
 }

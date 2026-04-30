@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package gowebserver
+package filesystem
 
 import (
 	"fmt"
@@ -44,12 +44,12 @@ var (
 func TestDirlessArchive(t *testing.T) {
 	nodirZipPath := gowsTesting.MustNoDirZipFilePath(t)
 
-	vFS, err := newRawFSFromURI(nodirZipPath)
+	vFS, err := NewRawFSFromURI(nodirZipPath)
 	if err != nil {
 		t.Error(err)
 	}
 	defer vFS.Close()
-	nFS := newNestedFS(vFS)
+	nFS := NewNestedFS(vFS)
 	defer nFS.Close()
 
 	verifyReadDir(t, nFS, "assets", []string{"1.txt", "2.txt", "fivesix", "four", "more"})
@@ -58,12 +58,12 @@ func TestDirlessArchive(t *testing.T) {
 func TestVirtualDirectory(t *testing.T) {
 	nestedZipPath := gowsTesting.MustNestedZipFilePath(t)
 
-	vFS, err := newRawFSFromURI(nestedZipPath)
+	vFS, err := NewRawFSFromURI(nestedZipPath)
 	if err != nil {
 		t.Error(err)
 	}
 	defer vFS.Close()
-	nFS := newNestedFS(vFS)
+	nFS := NewNestedFS(vFS)
 	defer nFS.Close()
 
 	dirs, err := nFS.ReadDir("")
@@ -162,12 +162,12 @@ func TestNestedFileSystem(t *testing.T) {
 		t.Run(fmt.Sprintf("%s %s", tc.uri, tc.baseDir), func(t *testing.T) {
 			t.Parallel()
 
-			vFS, err := newRawFSFromURI(tc.uri)
+			vFS, err := NewRawFSFromURI(tc.uri)
 			if err != nil {
 				t.Error(err)
 			}
 			defer vFS.Close()
-			nFS := newNestedFS(vFS)
+			nFS := NewNestedFS(vFS)
 			defer nFS.Close()
 
 			baseDir := tc.baseDir
@@ -192,7 +192,7 @@ func TestNestedFileSystem(t *testing.T) {
 	}
 }
 
-func verifyFileSystem(tb testing.TB, nFS *nestedFS, baseDir string) {
+func verifyFileSystem(tb testing.TB, nFS FileSystem, baseDir string) {
 	indexFilePath := filepath.Join(baseDir, "index.html")
 	fp, err := nFS.Open(indexFilePath)
 	if err != nil {
@@ -283,7 +283,6 @@ func TestIsSupported(t *testing.T) {
 		input               string
 		isSupportedArchive  bool
 		isSupportedGit      bool
-		isSupportedHTTP     bool
 		isSupportedSevenZip bool
 		isSupportedTar      bool
 		isSupportedZip      bool
@@ -302,10 +301,10 @@ func TestIsSupported(t *testing.T) {
 		{input: "ok.7Z", isSupportedArchive: true, isSupportedSevenZip: true},
 
 		{input: "git@github.com:jeremyje/gowebserver.git", isSupportedGit: true},
-		{input: "https://github.com/jeremyje/gowebserver.git", isSupportedHTTP: true, isSupportedGit: true},
+		{input: "https://github.com/jeremyje/gowebserver.git", isSupportedGit: true},
 
-		{input: "http://www.google.com/", isSupportedHTTP: true},
-		{input: "http://www.google.com.7z", isSupportedArchive: true, isSupportedHTTP: true, isSupportedSevenZip: true},
+		{input: "http://www.google.com/"},
+		{input: "http://www.google.com.7z", isSupportedArchive: true, isSupportedSevenZip: true},
 
 		{input: ""},
 		{input: "/"},
@@ -325,8 +324,7 @@ func TestIsSupported(t *testing.T) {
 		tc := tc
 
 		tf(t, "isSupportedArchive", isSupportedArchive, tc.input, tc.isSupportedArchive)
-		tf(t, "isSupportedGit", isSupportedGit, tc.input, tc.isSupportedGit)
-		tf(t, "isSupportedHTTP", isSupportedHTTP, tc.input, tc.isSupportedHTTP)
+		tf(t, "IsSupportedGit", IsSupportedGit, tc.input, tc.isSupportedGit)
 		tf(t, "isSupportedSevenZip", isSupportedSevenZip, tc.input, tc.isSupportedSevenZip)
 	}
 }
