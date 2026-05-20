@@ -329,6 +329,9 @@ images: linux-images windows-images
 		$(DOCKER) manifest push $$image:$(TAG) ; \
 	done
 
+gowebserver-image: bin/go/linux_amd64/gowebserver
+	$(DOCKER) build --build-arg BINARY_PATH=$< -f cmd/gowebserver/Dockerfile -t $(GOWEBSERVER_IMAGE):localtest .
+
 ALL_LINUX_IMAGES = $(foreach app,$(ALL_APPS),$(foreach platform,$(LINUX_PLATFORMS),linux-image-$(app)-$(platform)))
 linux-images: $(ALL_LINUX_IMAGES)
 
@@ -373,4 +376,4 @@ test-codecov:
 run-wasm: clean assets lint
 	$(GO) run cmd/gowebserver/gowebserver.go -http.port 8181 -path=install/wasm/ -verbose
 
-.PHONY : all assets dist lint clean check test test-10 coverage bench benchmark test-all install run deps presubmit
+.PHONY : all assets dist lint clean check test test-10 coverage bench benchmark test-all install run deps presubmit gowebserver-image

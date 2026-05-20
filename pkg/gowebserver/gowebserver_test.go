@@ -149,7 +149,7 @@ func xTestWebServerFull(t *testing.T) {
 			},
 			Trace: Trace{
 				Enabled: true,
-				URI:     "http://jaeger:14268/api/traces",
+				URI:     "http://jaeger:4318/v1/traces",
 			},
 		},
 		Upload: Serve{

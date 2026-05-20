@@ -21,7 +21,8 @@
       "Bash(go test:*)",
       "Bash(go version:*)",
       "Bash(go vet:*)",
-      "Bash(make*)"
+      "Bash(make*)",
+      "Bash(go list *)"
     ]
   }
 }
