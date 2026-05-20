@@ -17,15 +17,13 @@ package gowebserver
 // https://astaxie.gitbooks.io/build-web-application-with-golang/content/en/04.5.html
 // http://sanatgersappa.blogspot.com/2013/03/handling-multiple-file-uploads-in-go.html
 import (
-	"crypto/md5"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
-	"time"
 
 	_ "embed"
 
@@ -42,7 +40,9 @@ var (
 )
 
 const (
-	uploadFileFormName = "gowebserveruploadfile[]"
+	uploadFileFormName    = "gowebserveruploadfile[]"
+	uploadTokenCookieName = "gowebserver_csrf"
+	uploadTokenFormField  = "token"
 )
 
 type uploadHTTPHandler struct {
@@ -70,10 +70,19 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logger := zap.S().With("url", r.URL)
 
 	if r.Method == "GET" {
-		crutime := time.Now().Unix()
-		h := md5.New()
-		io.WriteString(h, strconv.FormatInt(crutime, 10))
-		token := fmt.Sprintf("%x", h.Sum(nil))
+		tokenBytes := make([]byte, 16)
+		if _, err := rand.Read(tokenBytes); err != nil {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+		token := fmt.Sprintf("%x", tokenBytes)
+		http.SetCookie(w, &http.Cookie{
+			Name:     uploadTokenCookieName,
+			Value:    token,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+			Path:     "/",
+		})
 
 		var params = struct {
 			UploadHTTPPath     string
@@ -87,6 +96,13 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		var resp uploadResponse
 
+		csrfCookie, cookieErr := r.Cookie(uploadTokenCookieName)
+		if cookieErr != nil || csrfCookie.Value == "" {
+			resp.Error = fmt.Errorf("request rejected: missing CSRF token")
+			writeUploadResponse(w, resp, logger, span)
+			return
+		}
+
 		ctx, childSpan := uploadTracer.Start(ctx, "ParseMultipartForm")
 		if err := r.ParseMultipartForm(32 << 20); err != nil {
 			resp.Error = fmt.Errorf("InternalError: cannot parse multi-part form")
@@ -94,8 +110,14 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			childSpan.End()
 			return
 		}
-
 		childSpan.End()
+
+		if formToken := r.FormValue(uploadTokenFormField); formToken == "" || formToken != csrfCookie.Value {
+			resp.Error = fmt.Errorf("request rejected: invalid CSRF token")
+			writeUploadResponse(w, resp, logger, span)
+			return
+		}
+
 		m := r.MultipartForm
 		files := m.File[uploadFileFormName]
 		for i := range files {
@@ -165,19 +187,19 @@ func newUploadHandler(mc *monitoringContext, uploadHTTPPath string, uploadDirect
 }
 
 func writeUploadResponse(w http.ResponseWriter, resp uploadResponse, logger *zap.SugaredLogger, span trace.Span) {
-	if resp.Error != nil {
-		logger.With("error", resp.Error).Warn("Upload error")
-		w.WriteHeader(http.StatusBadRequest)
-		span.RecordError(resp.Error)
-	} else {
-		logger.Debug("Upload Successful")
-	}
 	data, err := json.Marshal(resp)
 	if err != nil {
 		http.Error(w, "Malformed server response.", http.StatusInternalServerError)
 		logger.With("error", err).Warn("Cannot marshal upload JSON response")
 		return
 	}
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
+	if resp.Error != nil {
+		logger.With("error", resp.Error).Warn("Upload error")
+		span.RecordError(resp.Error)
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		logger.Debug("Upload Successful")
+	}
 	w.Write(data)
 }

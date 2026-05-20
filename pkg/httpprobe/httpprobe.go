@@ -62,6 +62,7 @@ func Probe(args Args) error {
 			Message: fmt.Sprintf("%s is not available, %v", u, err),
 		}
 	}
+	defer resp.Body.Close()
 
 	if 200 <= resp.StatusCode && resp.StatusCode < 300 {
 		return nil

@@ -69,7 +69,9 @@ func runApplication(wait func()) error {
 
 	logger.Sugar().Debug(conf)
 
-	checkError(createCertificate(conf))
+	if err := createCertificate(conf); err != nil {
+		return err
+	}
 
 	httpServer, err := New(conf)
 	if err != nil {

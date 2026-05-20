@@ -15,10 +15,11 @@
 package gowebserver
 
 import (
-	"log"
 	"mime"
 	"path/filepath"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 var (
@@ -136,6 +137,6 @@ func nameToIconClass(isDir bool, name string) string {
 		}
 	}
 
-	log.Printf("%s > %s", ext, mimeType)
+	zap.S().Debugf("unknown extension %q with MIME type %q", ext, mimeType)
 	return "unknown"
 }

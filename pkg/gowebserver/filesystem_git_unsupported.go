@@ -13,7 +13,6 @@
 // limitations under the License.
 
 //go:build aix
-// +build aix
 
 package gowebserver
 

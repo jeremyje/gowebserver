@@ -16,12 +16,13 @@ package gowebserver
 
 import (
 	"bytes"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	_ "embed"
+
+	"go.uber.org/zap"
 )
 
 var (
@@ -59,7 +60,7 @@ func newIndexHTTPHandler(servePaths []string, modern bool) (*indexHTTPHandler, e
 		HasNonMediaEntry: true,
 	}
 
-	log.Printf("ROOT: %+v", params)
+	zap.S().Debugf("index root: %+v", params)
 	if err := executeTemplate(templateHTML, params, w); err != nil {
 		return nil, err
 	}
