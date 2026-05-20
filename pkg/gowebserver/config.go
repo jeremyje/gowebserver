@@ -56,7 +56,7 @@ var (
 
 	// Monitoring Flags
 	monitoringDebugEndpointFlag = flag.String("monitoring.debugendpoint", "/debug", "The URL path debugging.")
-	monitoringTraceURIFlag      = flag.String("monitoring.trace.uri", "", "URI endpoing for Jaeger tracing.")
+	monitoringTraceURIFlag      = flag.String("monitoring.trace.uri", "", "OTLP HTTP endpoint URL for tracing (e.g. http://host:4318).")
 	monitoringMetricsPath       = flag.String("monitoring.metrics.path", "/metrics", "The URL path for exporting server metrics for Prometheus monitoring.")
 
 	enhancedListFlag = flag.Bool("enhancedindex", false, "Enable enhanced index.")

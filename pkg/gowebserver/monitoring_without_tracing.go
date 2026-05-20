@@ -21,6 +21,6 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
-func newJaegerExporter(m Monitoring, r *resource.Resource) (*sdktrace.TracerProvider, error) {
+func newTraceProvider(m Monitoring, r *resource.Resource, sp sdktrace.SpanProcessor) (*sdktrace.TracerProvider, error) {
 	return nil, nil
 }

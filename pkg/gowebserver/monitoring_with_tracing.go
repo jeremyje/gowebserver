@@ -17,23 +17,32 @@
 package gowebserver
 
 import (
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"context"
+
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
-func newJaegerExporter(m Monitoring, r *resource.Resource) (*sdktrace.TracerProvider, error) {
-	if len(m.Trace.URI) > 0 {
-		exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(m.Trace.URI)))
-		if err != nil {
-			return nil, err
-		}
-
-		tp := sdktrace.NewTracerProvider(
-			sdktrace.WithBatcher(exp),
-			sdktrace.WithResource(r),
-		)
-		return tp, nil
+func newTraceProvider(m Monitoring, r *resource.Resource, sp sdktrace.SpanProcessor) (*sdktrace.TracerProvider, error) {
+	if len(m.Trace.URI) == 0 {
+		return nil, nil
 	}
-	return nil, nil
+
+	exp, err := otlptracehttp.New(context.Background(),
+		otlptracehttp.WithEndpointURL(m.Trace.URI),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	opts := []sdktrace.TracerProviderOption{
+		sdktrace.WithBatcher(exp),
+		sdktrace.WithResource(r),
+	}
+	if sp != nil {
+		opts = append(opts, sdktrace.WithSpanProcessor(sp))
+	}
+
+	return sdktrace.NewTracerProvider(opts...), nil
 }

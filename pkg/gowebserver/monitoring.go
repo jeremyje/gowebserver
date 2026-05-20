@@ -61,7 +61,19 @@ func setupMonitoring(m Monitoring) (*monitoringContext, error) {
 		return nil, err
 	}
 
-	tp, err := newJaegerExporter(m, r)
+	var zsp *zpages.SpanProcessor
+	if len(m.DebugEndpoint) > 0 {
+		zsp = zpages.NewSpanProcessor()
+	}
+
+	// Convert to interface only when non-nil; a typed nil would satisfy
+	// sp != nil in newTraceProvider and cause a nil-pointer dereference.
+	var sp sdktrace.SpanProcessor
+	if zsp != nil {
+		sp = zsp
+	}
+
+	tp, err := newTraceProvider(m, r, sp)
 	if err != nil {
 		mc.shutdown()
 		return nil, err
@@ -69,9 +81,8 @@ func setupMonitoring(m Monitoring) (*monitoringContext, error) {
 
 	if tp != nil {
 		mc.tp = tp
-		if len(m.DebugEndpoint) > 0 {
-			h := zpages.NewTracezHandler(zpages.NewSpanProcessor())
-			mc.handlers[m.DebugEndpoint+"/tracez"] = h
+		if zsp != nil {
+			mc.handlers[m.DebugEndpoint+"/tracez"] = zpages.NewTracezHandler(zsp)
 		}
 	}
 
@@ -151,7 +162,6 @@ func (m *monitoringContext) shutdown() {
 	}
 	ctx := context.Background()
 	if m.promProvider != nil {
-		runtime.Start()
 		m.promProvider = nil
 	}
 	if m.promExporter != nil {
