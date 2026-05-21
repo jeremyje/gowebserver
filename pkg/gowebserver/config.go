@@ -51,16 +51,16 @@ var (
 	privateKeyFilePathFlag      = flag.String("https.certificate.privatekey", "web.key", "Private key for HTTPS serving.")
 	certificateFilePathFlag     = flag.String("https.certificate.path", "web.cert", "Certificate to host HTTPS with.")
 	certHostsFlag               = flag.String("https.certificate.hosts", "", "Comma-separated hostnames and IPs to generate a certificate for.")
-	validDurationFlag           = flag.Duration("https.certificate.duration", time.Hour*43800, "Lifespan of the certificate. (default: 5 years)")
+	validDurationFlag           = flag.Duration("https.certificate.duration", time.Hour*43800, "Validity period of the generated certificate; the default 43800h is approximately 5 years.")
 	forceOverwriteCertFlag      = flag.Bool("https.certificate.forceoverwrite", false, "Force overwrite existing certificates if they already exist.")
 
 	// Monitoring Flags
-	monitoringDebugEndpointFlag = flag.String("monitoring.debugendpoint", "/debug", "The URL path debugging.")
+	monitoringDebugEndpointFlag = flag.String("monitoring.debugendpoint", "/debug", "URL path prefix for pprof and OpenTelemetry tracez debug endpoints.")
 	monitoringTraceURIFlag      = flag.String("monitoring.trace.uri", "", "OTLP HTTP endpoint URL for tracing (e.g. http://host:4318).")
 	monitoringMetricsPath       = flag.String("monitoring.metrics.path", "/metrics", "The URL path for exporting server metrics for Prometheus monitoring.")
 
-	enhancedListFlag = flag.Bool("enhancedindex", false, "Enable enhanced index.")
-	debugFlag        = flag.Bool("debug", false, "Enable debug HTTP methods.")
+	enhancedListFlag = flag.Bool("enhancedindex", false, "Enable the enhanced directory listing UI with file previews and sorting.")
+	debugFlag        = flag.Bool("debug", false, "Expose the /diediedie shutdown endpoint for testing.")
 
 	version = "UNKNOWN"
 )
