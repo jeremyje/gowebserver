@@ -180,5 +180,7 @@ func writeUploadResponse(w http.ResponseWriter, resp uploadResponse, logger *zap
 		return
 	}
 	w.Header().Add("Content-Type", "application/json")
-	w.Write(data)
+	if _, err := w.Write(data); err != nil {
+		logger.With("error", err).Warn("cannot write upload response")
+	}
 }

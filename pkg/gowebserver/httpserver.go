@@ -164,7 +164,9 @@ func (ws *webServerImpl) Serve(wait func()) error {
 
 	defer func() {
 		for _, cleanup := range allCleanups {
-			cleanup()
+			if err := cleanup(); err != nil {
+				zap.S().With("error", err).Error("cleanup error")
+			}
 		}
 	}()
 

@@ -33,6 +33,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 )
 
 func setupMonitoring(m Monitoring) (*monitoringContext, error) {
@@ -117,11 +118,17 @@ func setupMonitoring(m Monitoring) (*monitoringContext, error) {
 
 func newPrometheusExporter(m Monitoring, r *resource.Resource) (*otelprom.Exporter, *sdkmetric.MeterProvider, http.Handler, error) {
 	registry := prometheus.NewRegistry()
-	registry.Register(collectors.NewBuildInfoCollector())
-	registry.Register(collectors.NewGoCollector())
-	registry.Register(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{
+	if err := registry.Register(collectors.NewBuildInfoCollector()); err != nil {
+		return nil, nil, nil, err
+	}
+	if err := registry.Register(collectors.NewGoCollector()); err != nil {
+		return nil, nil, nil, err
+	}
+	if err := registry.Register(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{
 		ReportErrors: true,
-	}))
+	})); err != nil {
+		return nil, nil, nil, err
+	}
 
 	prometheusExporter, err := otelprom.New(otelprom.WithRegisterer(registry))
 	if err != nil {
@@ -165,10 +172,14 @@ func (m *monitoringContext) shutdown() {
 		m.promProvider = nil
 	}
 	if m.promExporter != nil {
-		m.promExporter.Shutdown(ctx)
+		if err := m.promExporter.Shutdown(ctx); err != nil {
+			zap.S().With("error", err).Error("cannot shutdown prometheus exporter")
+		}
 		m.promExporter = nil
 	}
 	if m.tp != nil {
-		m.tp.Shutdown(ctx)
+		if err := m.tp.Shutdown(ctx); err != nil {
+			zap.S().With("error", err).Error("cannot shutdown trace provider")
+		}
 	}
 }
