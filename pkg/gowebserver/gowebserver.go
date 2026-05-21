@@ -16,7 +16,9 @@ package gowebserver
 
 import (
 	"fmt"
+	"net"
 	"os"
+	"strings"
 
 	"github.com/jeremyje/gomain"
 	"github.com/jeremyje/gowebserver/v2/pkg/certtool"
@@ -79,6 +81,48 @@ func runApplication(wait func()) error {
 	return httpServer.Serve(wait)
 }
 
+// buildCertificateHostnames returns the list of hostnames and IPs to include in the TLS
+// certificate SAN. It merges user-specified hosts with the machine's hostname and all
+// non-loopback local IPs so that the auto-generated cert is valid for any local-network
+// address the server may be reached at (e.g. "server2", "192.168.1.10").
+func buildCertificateHostnames(conf *Config) []string {
+	seen := map[string]bool{}
+	var hostnames []string
+
+	add := func(h string) {
+		h = strings.TrimSpace(h)
+		if h != "" && !seen[h] {
+			seen[h] = true
+			hostnames = append(hostnames, h)
+		}
+	}
+
+	for _, h := range strings.Split(conf.HTTPS.Certificate.CertificateHosts, ",") {
+		add(h)
+	}
+
+	if hostname, err := os.Hostname(); err == nil {
+		add(hostname)
+	}
+
+	if addrs, err := net.InterfaceAddrs(); err == nil {
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip != nil && !ip.IsLoopback() {
+				add(ip.String())
+			}
+		}
+	}
+
+	return hostnames
+}
+
 func createCertificate(conf *Config) error {
 	dir, err := os.Getwd()
 	zap.S().With("certificate", conf.HTTPS.Certificate, "directory", dir, "error", err).Debug("createCertificate")
@@ -115,6 +159,7 @@ func createCertificate(conf *Config) error {
 			},
 			Validity:      conf.HTTPS.Certificate.CertificateValidDuration,
 			CA:            false,
+			Hostnames:     buildCertificateHostnames(conf),
 			ParentKeyPair: parentKP,
 		},
 			conf.HTTPS.Certificate.CertificateFilePath,
