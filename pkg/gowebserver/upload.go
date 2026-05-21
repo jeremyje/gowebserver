@@ -79,7 +79,8 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			UploadHTTPPath     string
 			UploadToken        string
 			UploadFileFormName string
-		}{uh.uploadHTTPPath, token, uploadFileFormName}
+			ApplicationVersion string
+		}{uh.uploadHTTPPath, token, uploadFileFormName, version}
 
 		if err := executeTemplate(uploadHTML, params, w); err != nil {
 			logger.With("error", err).Error("cannot parse upload.html template.")
