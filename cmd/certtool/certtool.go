@@ -32,14 +32,14 @@ var (
 
 	ca = flag.Bool("ca", false, "Generates a root certificate. Use this to establish a chain of trust with derived certificates.")
 
-	country            = flag.String("country", "US", "CountryName field of the certificate attribute.")
-	organization       = flag.String("organization", "gowebserver", "CountryName field of the certificate attribute.")
-	organizationalUnit = flag.String("organizational-unit", "gows", "CountryName field of the certificate attribute.")
-	locality           = flag.String("locality", "Seattle", "CountryName field of the certificate attribute.")
-	province           = flag.String("province", "WA", "CountryName field of the certificate attribute.")
+	country            = flag.String("country", "US", "Country (C) field of the X.509 certificate subject (e.g. US, CA, GB).")
+	organization       = flag.String("organization", "gowebserver", "Organization (O) field of the X.509 certificate subject.")
+	organizationalUnit = flag.String("organizational-unit", "gows", "Organizational Unit (OU) field of the X.509 certificate subject.")
+	locality           = flag.String("locality", "Seattle", "Locality (L) field of the X.509 certificate subject, typically the city name.")
+	province           = flag.String("province", "WA", "Province or state (ST) field of the X.509 certificate subject.")
 
-	hostnames = flag.String("hostnames", "", "Comma separated list of hostnames.")
-	keyType   = flag.String("key-type", "RSA-2048", "Type of key to generate. (default: RSA-2048)")
+	hostnames = flag.String("hostnames", "", "Comma-separated list of hostnames and IP addresses to include as Subject Alternative Names (SANs).")
+	keyType   = flag.String("key-type", "RSA-2048", "Key algorithm and length. Supported values: RSA-2048, RSA-4096, ECDSA-224, ECDSA-256, ECDSA-384, ECDSA-521.")
 
 	parentPublicCertificate = flag.String("parent-public-certificate", "", "(optional) Parent public certificate. If set, the output certificate will trust the parent.")
 	parentPrivateKey        = flag.String("parent-private-key", "", "(optional) Parent private key. Required if -parent-public-certificate is set, private key for the parent public certificate.")
