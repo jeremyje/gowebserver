@@ -16,12 +16,13 @@ package gowebserver
 
 import (
 	"bytes"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	_ "embed"
+
+	"go.uber.org/zap"
 )
 
 var (
@@ -59,7 +60,7 @@ func newIndexHTTPHandler(servePaths []string, modern bool) (*indexHTTPHandler, e
 		HasNonMediaEntry: true,
 	}
 
-	log.Printf("ROOT: %+v", params)
+	zap.S().With("params", params).Debug("newIndexHTTPHandler")
 	if err := executeTemplate(templateHTML, params, w); err != nil {
 		return nil, err
 	}
@@ -71,5 +72,7 @@ func newIndexHTTPHandler(servePaths []string, modern bool) (*indexHTTPHandler, e
 
 func (h *indexHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "text/html")
-	w.Write(h.page)
+	if _, err := w.Write(h.page); err != nil {
+		zap.S().With("error", err).Warn("cannot write index response")
+	}
 }
