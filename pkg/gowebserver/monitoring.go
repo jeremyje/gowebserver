@@ -117,11 +117,11 @@ func setupMonitoring(m Monitoring) (*monitoringContext, error) {
 
 func newPrometheusExporter(m Monitoring, r *resource.Resource) (*otelprom.Exporter, *sdkmetric.MeterProvider, http.Handler, error) {
 	registry := prometheus.NewRegistry()
-	registry.Register(collectors.NewBuildInfoCollector())
-	registry.Register(collectors.NewGoCollector())
-	registry.Register(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{
+	logError(registry.Register(collectors.NewBuildInfoCollector()))
+	logError(registry.Register(collectors.NewGoCollector()))
+	logError(registry.Register(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{
 		ReportErrors: true,
-	}))
+	})))
 
 	prometheusExporter, err := otelprom.New(otelprom.WithRegisterer(registry))
 	if err != nil {
@@ -162,6 +162,9 @@ func (m *monitoringContext) shutdown() {
 	}
 	ctx := context.Background()
 	if m.promProvider != nil {
+		if mp, ok := m.promProvider.(*sdkmetric.MeterProvider); ok {
+			mp.Shutdown(ctx)
+		}
 		m.promProvider = nil
 	}
 	if m.promExporter != nil {

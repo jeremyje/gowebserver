@@ -165,7 +165,7 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			rdf, ok := f.(fs.ReadDirFile)
 			if ok {
 				span.SetAttributes(attribute.Bool("custom_directory_list", true))
-				readDirSpan.AddEvent("")
+				readDirSpan.AddEvent("read directory entries")
 				now := time.Now()
 				entries, err := rdf.ReadDir(-1)
 				span.SetAttributes(attribute.Int("num_entries", len(entries)))

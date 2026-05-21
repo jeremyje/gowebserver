@@ -60,17 +60,42 @@ func TestUpload(t *testing.T) {
 
 	baseURL, close := serveAsync(t, cfg)
 	defer close()
+
+	ctx := context.Background()
+	hc := &http.Client{}
+
+	// GET the upload form to acquire the CSRF cookie and token.
+	getReq, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"/upload", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	getResp, err := hc.Do(getReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer getResp.Body.Close()
+
+	var csrfToken string
+	for _, cookie := range getResp.Cookies() {
+		if cookie.Name == uploadTokenCookieName {
+			csrfToken = cookie.Value
+			break
+		}
+	}
+	if csrfToken == "" {
+		t.Fatal("CSRF token cookie not set by upload GET handler")
+	}
+
 	fp, err := os.Open(zipPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ctx := context.Background()
-	req, err := newUploadFormRequest(ctx, baseURL+"/upload", "test.zip", fp, map[string]string{})
+	req, err := newUploadFormRequest(ctx, baseURL+"/upload", "test.zip", fp, map[string]string{uploadTokenFormField: csrfToken})
 	if err != nil {
 		t.Error(err)
 	}
-	hc := &http.Client{}
+	req.AddCookie(&http.Cookie{Name: uploadTokenCookieName, Value: csrfToken})
 	resp, err := hc.Do(req)
 	if err != nil {
 		t.Error(err)

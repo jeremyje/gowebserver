@@ -33,10 +33,10 @@ var (
 	ca = flag.Bool("ca", false, "Generates a root certificate. Use this to establish a chain of trust with derived certificates.")
 
 	country            = flag.String("country", "US", "CountryName field of the certificate attribute.")
-	organization       = flag.String("organization", "gowebserver", "CountryName field of the certificate attribute.")
-	organizationalUnit = flag.String("organizational-unit", "gows", "CountryName field of the certificate attribute.")
-	locality           = flag.String("locality", "Seattle", "CountryName field of the certificate attribute.")
-	province           = flag.String("province", "WA", "CountryName field of the certificate attribute.")
+	organization       = flag.String("organization", "gowebserver", "OrganizationName field of the certificate attribute.")
+	organizationalUnit = flag.String("organizational-unit", "gows", "OrganizationalUnit field of the certificate attribute.")
+	locality           = flag.String("locality", "Seattle", "Locality field of the certificate attribute.")
+	province           = flag.String("province", "WA", "Province/StateOrProvinceName field of the certificate attribute.")
 
 	hostnames = flag.String("hostnames", "", "Comma separated list of hostnames.")
 	keyType   = flag.String("key-type", "RSA-2048", "Type of key to generate. (default: RSA-2048)")
