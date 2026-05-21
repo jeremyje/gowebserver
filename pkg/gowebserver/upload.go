@@ -17,15 +17,15 @@ package gowebserver
 // https://astaxie.gitbooks.io/build-web-application-with-golang/content/en/04.5.html
 // http://sanatgersappa.blogspot.com/2013/03/handling-multiple-file-uploads-in-go.html
 import (
-	"crypto/md5"
+	"crypto/rand"
+	"crypto/subtle"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
-	"time"
 
 	_ "embed"
 
@@ -43,6 +43,7 @@ var (
 
 const (
 	uploadFileFormName = "gowebserveruploadfile[]"
+	uploadCSRFCookie   = "csrf_token"
 )
 
 type uploadHTTPHandler struct {
@@ -62,6 +63,14 @@ const (
 	uploadTraceName = "uploadHTTPHandler"
 )
 
+func generateCSRFToken() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+
 func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	uploadTracer := uh.tp.Tracer(uploadTraceName)
 	ctx, span := uploadTracer.Start(r.Context(), r.Method)
@@ -70,10 +79,18 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logger := zap.S().With("url", r.URL)
 
 	if r.Method == "GET" {
-		crutime := time.Now().Unix()
-		h := md5.New()
-		io.WriteString(h, strconv.FormatInt(crutime, 10))
-		token := fmt.Sprintf("%x", h.Sum(nil))
+		token, err := generateCSRFToken()
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		http.SetCookie(w, &http.Cookie{
+			Name:     uploadCSRFCookie,
+			Value:    token,
+			Path:     uh.uploadHTTPPath,
+			SameSite: http.SameSiteStrictMode,
+			HttpOnly: true,
+		})
 
 		var params = struct {
 			UploadHTTPPath     string
@@ -88,6 +105,12 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		var resp uploadResponse
 
+		cookie, cookieErr := r.Cookie(uploadCSRFCookie)
+		if cookieErr != nil {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+
 		ctx, childSpan := uploadTracer.Start(ctx, "ParseMultipartForm")
 		if err := r.ParseMultipartForm(32 << 20); err != nil {
 			resp.Error = fmt.Errorf("InternalError: cannot parse multi-part form")
@@ -95,8 +118,13 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			childSpan.End()
 			return
 		}
-
 		childSpan.End()
+
+		if subtle.ConstantTimeCompare([]byte(cookie.Value), []byte(r.FormValue("token"))) != 1 {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+
 		m := r.MultipartForm
 		files := m.File[uploadFileFormName]
 		for i := range files {

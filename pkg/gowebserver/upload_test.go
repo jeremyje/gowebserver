@@ -22,6 +22,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/http/cookiejar"
 	"os"
 	"path/filepath"
 	"testing"
@@ -37,6 +38,49 @@ func TestUploadHTML(t *testing.T) {
 	}
 }
 
+func newUploadServer(t *testing.T) (string, func()) {
+	t.Helper()
+	tmpDir, closeDir, err := createTempDirectory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg := &Config{
+		Serve: []Serve{
+			{Source: tmpDir, Endpoint: "/"},
+		},
+		Upload: Serve{
+			Source:   tmpDir,
+			Endpoint: "/upload",
+		},
+	}
+	baseURL, closeServer := serveAsync(t, cfg)
+	return baseURL, func() {
+		closeServer()
+		closeDir()
+	}
+}
+
+func getUploadCSRFToken(t *testing.T, uploadURL string, hc *http.Client) string {
+	t.Helper()
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uploadURL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := hc.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name == uploadCSRFCookie {
+			return cookie.Value
+		}
+	}
+	t.Fatal("no csrf_token cookie in GET /upload response")
+	return ""
+}
+
 func TestUpload(t *testing.T) {
 	zipPath := gowsTesting.MustZipFilePath(t)
 	tmpDir, close, err := createTempDirectory()
@@ -47,10 +91,7 @@ func TestUpload(t *testing.T) {
 
 	cfg := &Config{
 		Serve: []Serve{
-			{
-				Source:   tmpDir,
-				Endpoint: "/",
-			},
+			{Source: tmpDir, Endpoint: "/"},
 		},
 		Upload: Serve{
 			Source:   tmpDir,
@@ -60,17 +101,24 @@ func TestUpload(t *testing.T) {
 
 	baseURL, close := serveAsync(t, cfg)
 	defer close()
+
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hc := &http.Client{Jar: jar}
+	ctx := context.Background()
+
+	csrfToken := getUploadCSRFToken(t, baseURL+"/upload", hc)
+
 	fp, err := os.Open(zipPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	ctx := context.Background()
-	req, err := newUploadFormRequest(ctx, baseURL+"/upload", "test.zip", fp, map[string]string{})
+	req, err := newUploadFormRequest(ctx, baseURL+"/upload", "test.zip", fp, map[string]string{"token": csrfToken})
 	if err != nil {
 		t.Error(err)
 	}
-	hc := &http.Client{}
 	resp, err := hc.Do(req)
 	if err != nil {
 		t.Error(err)
@@ -102,6 +150,78 @@ func TestUpload(t *testing.T) {
 	if resp.StatusCode != 200 {
 		t.Errorf("http status code is '%d'", resp.StatusCode)
 	}
+}
+
+func TestUploadCSRFProtection(t *testing.T) {
+	zipPath := gowsTesting.MustZipFilePath(t)
+
+	baseURL, close := newUploadServer(t)
+	defer close()
+
+	t.Run("no_cookie_no_token", func(t *testing.T) {
+		fp, err := os.Open(zipPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer fp.Close()
+		req, err := newUploadFormRequest(context.Background(), baseURL+"/upload", "test.zip", fp, map[string]string{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp, err := (&http.Client{}).Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if resp.StatusCode != http.StatusForbidden {
+			t.Errorf("expected %d Forbidden, got %d", http.StatusForbidden, resp.StatusCode)
+		}
+	})
+
+	t.Run("cookie_present_but_token_mismatch", func(t *testing.T) {
+		fp, err := os.Open(zipPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer fp.Close()
+		req, err := newUploadFormRequest(context.Background(), baseURL+"/upload", "test.zip", fp, map[string]string{"token": "aaaaaaaabbbbbbbbccccccccdddddddd"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.AddCookie(&http.Cookie{Name: uploadCSRFCookie, Value: "xxxxxxxxyyyyyyyyzzzzzzzzwwwwwwww"})
+		resp, err := (&http.Client{}).Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if resp.StatusCode != http.StatusForbidden {
+			t.Errorf("expected %d Forbidden, got %d", http.StatusForbidden, resp.StatusCode)
+		}
+	})
+
+	t.Run("valid_csrf_flow", func(t *testing.T) {
+		jar, err := cookiejar.New(nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		hc := &http.Client{Jar: jar}
+		csrfToken := getUploadCSRFToken(t, baseURL+"/upload", hc)
+
+		fp, err := os.Open(zipPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer fp.Close()
+		req, err := newUploadFormRequest(context.Background(), baseURL+"/upload", "test.zip", fp, map[string]string{"token": csrfToken})
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp, err := hc.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("expected %d OK, got %d", http.StatusOK, resp.StatusCode)
+		}
+	})
 }
 
 func sha256File(tb testing.TB, localPath string) string {
