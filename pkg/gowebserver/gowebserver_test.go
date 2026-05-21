@@ -15,6 +15,7 @@
 package gowebserver
 
 import (
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,6 +25,98 @@ import (
 	gomainTesting "github.com/jeremyje/gomain/testing"
 	"github.com/jeremyje/gowebserver/v2/pkg/certtool"
 )
+
+func TestBuildCertificateHostnames(t *testing.T) {
+	localHostname, _ := os.Hostname()
+
+	tests := []struct {
+		name      string
+		hosts     string
+		mustHave  []string
+		mustNotHave []string
+	}{
+		{
+			name:     "empty hosts includes machine hostname and local IPs",
+			hosts:    "",
+			mustHave: []string{localHostname},
+		},
+		{
+			name:     "explicit hosts are included",
+			hosts:    "myserver,10.0.0.1",
+			mustHave: []string{"myserver", "10.0.0.1", localHostname},
+		},
+		{
+			name:        "loopback excluded from auto-detection",
+			hosts:       "",
+			mustNotHave: []string{"::1"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			conf := &Config{
+				HTTPS: HTTPS{
+					Certificate: Certificate{
+						CertificateHosts: tc.hosts,
+					},
+				},
+			}
+			got := buildCertificateHostnames(conf)
+			gotSet := map[string]bool{}
+			for _, h := range got {
+				gotSet[h] = true
+			}
+
+			for _, want := range tc.mustHave {
+				if !gotSet[want] {
+					t.Errorf("expected %q in hostnames %v", want, got)
+				}
+			}
+			for _, unwanted := range tc.mustNotHave {
+				if gotSet[unwanted] {
+					t.Errorf("did not expect %q in hostnames %v", unwanted, got)
+				}
+			}
+
+			// No duplicates
+			seen := map[string]bool{}
+			for _, h := range got {
+				if seen[h] {
+					t.Errorf("duplicate hostname %q in %v", h, got)
+				}
+				seen[h] = true
+			}
+		})
+	}
+
+	// Verify the result is usable for cert generation: all non-loopback local IPs
+	// should appear so the cert is valid for any local-network address.
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		t.Skip("cannot get interface addresses:", err)
+	}
+	conf := &Config{HTTPS: HTTPS{Certificate: Certificate{}}}
+	got := buildCertificateHostnames(conf)
+	gotSet := map[string]bool{}
+	for _, h := range got {
+		gotSet[h] = true
+	}
+	for _, addr := range addrs {
+		var ip net.IP
+		switch v := addr.(type) {
+		case *net.IPNet:
+			ip = v.IP
+		case *net.IPAddr:
+			ip = v.IP
+		}
+		if ip == nil || ip.IsLoopback() {
+			continue
+		}
+		if !gotSet[ip.String()] {
+			t.Errorf("local IP %s missing from cert hostnames %v", ip, got)
+		}
+	}
+}
 
 func TestConfigLogger(t *testing.T) {
 	for _, verbose := range []bool{false, true} {
