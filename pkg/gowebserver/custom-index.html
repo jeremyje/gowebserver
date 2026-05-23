@@ -2312,7 +2312,7 @@
             <use href="#icon-{{$element.IconClass}}" />
           </svg></span></a>
       <a class="content-link"
-        href="{{if $element.IsArchive}}{{urlEncode $element.Name}}-dir/{{else}}{{urlEncode $element.Name}}{{if $element.IsDir}}/{{end}}{{end}}"
+        href="{{if $element.IsViewable}}{{urlEncode $element.Name}}?view=rich{{else if $element.IsArchive}}{{urlEncode $element.Name}}-dir/{{else}}{{urlEncode $element.Name}}{{if $element.IsDir}}/{{end}}{{end}}"
         title="{{$element.Name}} - {{humanizeBytes $element.Size}} - {{humanizeTimestamp $element.ModTime}}">
         <span class="col-name">{{$element.Name}}</span>
         <span class="col-size">{{if and $element.IsDir (not $element.IsArchive) }}&mdash;{{else}}{{humanizeBytes
