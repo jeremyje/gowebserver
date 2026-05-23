@@ -103,6 +103,14 @@ else
 	endif
 endif
 
+CERTTOOL_HOST_BIN = bin/go/$(HOST_PLATFORM)/certtool$(EXE_EXTENSION)
+SIGN_CERT = bin/signing.cert
+SIGN_KEY = bin/signing.key
+SIGN_PFX = bin/signing.pfx
+SIGN_PFX_PASSWORD =
+SIGNTOOL = signtool.exe
+ALL_SIGNED_BINARIES = $(patsubst bin/go/%,bin/signed/%,$(ALL_BINARIES))
+
 all: $(ALL_BINARIES) assets
 assets: $(ASSETS) $(WASM_ASSETS)
 
@@ -376,4 +384,32 @@ test-codecov:
 run-wasm: clean assets lint
 	$(GO) run cmd/gowebserver/gowebserver.go -http.port 8181 -path=install/wasm/ -verbose
 
-.PHONY : all assets dist lint clean check test test-10 coverage bench benchmark test-all install run deps presubmit gowebserver-image
+signed: $(ALL_SIGNED_BINARIES)
+
+# Generate a self-signed CA certificate using the host certtool binary.
+# certtool writes both the cert and key in one shot; the key rule declares
+# that dependency so Make waits for the cert rule to run first.
+$(SIGN_CERT): $(CERTTOOL_HOST_BIN)
+	mkdir -p bin/
+	$< -public-certificate $(SIGN_CERT) -private-key $(SIGN_KEY) -ca
+
+$(SIGN_KEY): $(SIGN_CERT)
+	@:
+
+# Convert PEM cert+key to PFX (PKCS#12) format required by signtool.exe.
+$(SIGN_PFX): $(SIGN_CERT) $(SIGN_KEY)
+	openssl pkcs12 -export -out $@ -inkey $(SIGN_KEY) -in $(SIGN_CERT) -passout pass:$(SIGN_PFX_PASSWORD)
+
+# Sign Windows PE binaries in-place after copying to bin/signed/.
+# The more-specific windows_ prefix takes precedence over the generic rule below.
+bin/signed/windows_%: bin/go/windows_% $(SIGN_PFX)
+	mkdir -p $(dir $@)
+	cp $< $@
+	$(SIGNTOOL) sign /f $(SIGN_PFX) /p "$(SIGN_PFX_PASSWORD)" /fd SHA256 /v $@
+
+# Non-Windows binaries are copied to bin/signed/ without platform-specific signing.
+bin/signed/%: bin/go/% $(SIGN_CERT)
+	mkdir -p $(dir $@)
+	cp $< $@
+
+.PHONY : all assets dist lint clean check test test-10 coverage bench benchmark test-all install run deps presubmit gowebserver-image signed

@@ -199,3 +199,82 @@ jobs:
         run: |
           make DOCKER_PUSH=--push REGISTRY=docker.io/jeremyje images
           make DOCKER_PUSH=--push REGISTRY=ghcr.io/jeremyje images
+
+  build-windows-signed:
+    name: Build and Sign (Windows)
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        # https://github.com/actions/checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        # https://github.com/actions/setup-go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26"
+
+      - name: Add Windows SDK signtool to PATH
+        shell: pwsh
+        run: |
+          $sdkBin = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Directory -ErrorAction SilentlyContinue |
+            Sort-Object Name -Descending | Select-Object -First 1
+          if ($sdkBin) { "$($sdkBin.FullName)\x64" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8 }
+
+      - name: Install WinRAR
+        shell: pwsh
+        run: |
+          choco install winrar -y --no-progress
+          "C:\Program Files\WinRAR" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+
+      - name: Setup MSYS2
+        # https://github.com/msys2/setup-msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          path-type: inherit
+          install: >-
+            make
+            zip
+            unzip
+            mingw-w64-x86_64-7zip
+            mingw-w64-x86_64-lz4
+            mingw-w64-x86_64-openssl
+
+      - name: Prepare Build
+        shell: msys2 {0}
+        run: |
+          make clean
+          make deps
+          make lint
+
+      - name: Build
+        shell: msys2 {0}
+        run: make all -j$(nproc)
+
+      - name: Sign Binaries
+        shell: msys2 {0}
+        run: make signed -j$(nproc)
+
+      - name: Publish Signed Binaries (Pull Request)
+        # https://github.com/actions/upload-artifact
+        uses: actions/upload-artifact@v7
+        if: github.event_name == 'pull_request'
+        with:
+          name: signed-binaries-${{ github.sha }}
+          path: bin/signed/
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Publish Signed Binaries
+        # https://github.com/actions/upload-artifact
+        uses: actions/upload-artifact@v7
+        if: github.event_name != 'pull_request'
+        with:
+          name: signed-binaries-${{ github.sha }}
+          path: bin/signed/
+          retention-days: 7
+          if-no-files-found: error
