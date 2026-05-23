@@ -139,3 +139,12 @@ func nameToIconClass(isDir bool, name string) string {
 	log.Printf("%s > %s", ext, mimeType)
 	return "unknown"
 }
+
+func isRichViewable(iconClass string) bool {
+	switch iconClass {
+	case "code", "terminal", "text", "markup", "stylesheet", "script",
+		"config", "log", "data", "doc", "key", "certificate":
+		return true
+	}
+	return false
+}
