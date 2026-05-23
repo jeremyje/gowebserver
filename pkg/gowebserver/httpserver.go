@@ -22,6 +22,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/cloudfra/ufs"
 	"github.com/rs/cors"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.uber.org/zap"
@@ -134,32 +135,54 @@ func (ws *webServerImpl) Serve(wait func()) error {
 		})
 	}
 
-	hasIndex := false
-	endpoints := []string{}
+	mounts := map[string]string{}
+	rootPath := ""
 	for _, paths := range ws.fileSystemServePath {
 		zap.S().With("localPath", paths.localPath, "http", paths.httpPath).Info("Endpoint")
-		endpoints = append(endpoints, paths.httpPath)
+		if paths.httpPath == "" || paths.httpPath == "/" {
+			rootPath = paths.localPath
+		} else {
+			mounts[strings.TrimLeft(paths.httpPath, "/")] = paths.localPath
+		}
+	}
 
-		fsHandler, cleanup, err := newHandlerFromFS(paths.localPath, ws.monitoringCtx.getTraceProvider(), ws.enhancedListMode)
+	if rootPath == "" && len(mounts) > 0 {
+		// No root endpoint configured but non-root mounts exist: generate a root
+		// index listing and register each mount with its own handler.
+		servePaths := make([]string, 0, len(ws.fileSystemServePath))
+		for _, paths := range ws.fileSystemServePath {
+			servePaths = append(servePaths, paths.httpPath)
+		}
+		indexHandler, err := newIndexHTTPHandler(servePaths, ws.enhancedListMode)
+		if err != nil {
+			return err
+		}
+		ws.addHandler(serverMux, "/", indexHandler)
+
+		for _, paths := range ws.fileSystemServePath {
+			fsHandler, cleanup, err := newHandlerFromFS(paths.localPath, ws.monitoringCtx.getTraceProvider(), ws.enhancedListMode)
+			if err != nil {
+				return err
+			}
+			allCleanups = append(allCleanups, cleanup)
+			httpPath := paths.httpPath
+			strippedPrefix := strings.TrimRight(httpPath, "/")
+			ws.addHandler(serverMux, httpPath, http.StripPrefix(strippedPrefix, fsHandler))
+		}
+	} else {
+		if rootPath == "" {
+			rootPath = "null://"
+		}
+		fsSpec, err := ufs.CreateURI(rootPath, mounts)
+		if err != nil {
+			return err
+		}
+		fsHandler, cleanup, err := newHandlerFromFS(fsSpec, ws.monitoringCtx.getTraceProvider(), ws.enhancedListMode)
 		if err != nil {
 			return err
 		}
 		allCleanups = append(allCleanups, cleanup)
-
-		if paths.httpPath == "/" {
-			ws.addHandler(serverMux, paths.httpPath, fsHandler)
-			hasIndex = true
-		} else {
-			ws.addHandler(serverMux, paths.httpPath, http.StripPrefix(paths.httpPath, fsHandler))
-		}
-	}
-
-	if !hasIndex {
-		h, err := newIndexHTTPHandler(endpoints, ws.enhancedListMode)
-		if err != nil {
-			return err
-		}
-		ws.addHandler(serverMux, "/", h)
+		ws.addHandler(serverMux, "/", fsHandler)
 	}
 
 	defer func() {
