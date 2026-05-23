@@ -88,12 +88,13 @@ func newEntryList(sortBy string) *EntryList {
 }
 
 type DirEntry struct {
-	Name      string
-	Size      uint64
-	ModTime   time.Time
-	IsDir     bool
-	IsArchive bool
-	IconClass string
+	Name       string
+	Size       uint64
+	ModTime    time.Time
+	IsDir      bool
+	IsArchive  bool
+	IsViewable bool
+	IconClass  string
 }
 
 func (d *DirEntry) String() string {
@@ -218,13 +219,15 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 					_, isArchive := actualArchiveDir[entry.Name()]
 					isDir := entry.IsDir() || isArchive
+					iconClass := nameToIconClass(isDir, entry.Name())
 					newEntry := &DirEntry{
-						Name:      entry.Name(),
-						Size:      uint64(size),
-						ModTime:   t,
-						IsDir:     isDir,
-						IsArchive: isArchive,
-						IconClass: nameToIconClass(isDir, entry.Name()),
+						Name:       entry.Name(),
+						Size:       uint64(size),
+						ModTime:    t,
+						IsDir:      isDir,
+						IsArchive:  isArchive,
+						IsViewable: !isDir && isRichViewable(iconClass),
+						IconClass:  iconClass,
 					}
 					files.add(newEntry)
 					statFileSpan.End()

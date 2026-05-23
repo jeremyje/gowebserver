@@ -103,3 +103,42 @@ func TestNameToIconClass(t *testing.T) {
 		})
 	}
 }
+
+func TestIsRichViewable(t *testing.T) {
+	tests := []struct {
+		iconClass string
+		want      bool
+	}{
+		{"code", true},
+		{"terminal", true},
+		{"text", true},
+		{"markup", true},
+		{"stylesheet", true},
+		{"script", true},
+		{"config", true},
+		{"log", true},
+		{"data", true},
+		{"doc", true},
+		{"key", true},
+		{"certificate", true},
+		{"image", false},
+		{"video", false},
+		{"audio", false},
+		{"archive", false},
+		{"pdf", false},
+		{"binary", false},
+		{"folder", false},
+		{"unknown", false},
+		{"database", false},
+		{"spreadsheet", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.iconClass, func(t *testing.T) {
+			t.Parallel()
+			got := isRichViewable(tt.iconClass)
+			if got != tt.want {
+				t.Errorf("isRichViewable(%q) = %v, want %v", tt.iconClass, got, tt.want)
+			}
+		})
+	}
+}

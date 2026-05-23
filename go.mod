@@ -2,6 +2,7 @@ module github.com/jeremyje/gowebserver/v2
 
 require (
 	facette.io/natsort v0.0.0-20181210072756-2cd4dd1e2dcb
+	github.com/alecthomas/chroma/v2 v2.24.1
 	github.com/bodgit/sevenzip v1.6.2
 	github.com/dustin/go-humanize v1.0.1
 	github.com/go-git/go-git/v5 v5.19.1
@@ -40,6 +41,7 @@ require (
 	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dlclark/regexp2 v1.12.0 // indirect
 	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707 // indirect
 	github.com/ebitengine/purego v0.10.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect

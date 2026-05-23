@@ -81,7 +81,11 @@ func newHandlerFromFS(path string, tp trace.TracerProvider, enhancedList bool) (
 	if err != nil {
 		return nil, nilFuncWithError, err
 	}
-	return ci, nFS.Close, nil
+	rv, err := newRichViewHandler(ci, nFS, tp)
+	if err != nil {
+		return nil, nilFuncWithError, err
+	}
+	return rv, nFS.Close, nil
 }
 
 func newRawFSFromURI(path string) (FileSystem, error) {

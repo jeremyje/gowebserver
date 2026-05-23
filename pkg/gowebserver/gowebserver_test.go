@@ -30,9 +30,9 @@ func TestBuildCertificateHostnames(t *testing.T) {
 	localHostname, _ := os.Hostname()
 
 	tests := []struct {
-		name      string
-		hosts     string
-		mustHave  []string
+		name        string
+		hosts       string
+		mustHave    []string
 		mustNotHave []string
 	}{
 		{
