@@ -15,7 +15,7 @@
 version: '3.9'
 services:
   gowebserver-standalone:
-    image: docker.io/jeremyje/gowebserver:v3.4.0
+    image: docker.io/jeremyje/gowebserver:v3.5.0
     container_name: gowebserver-standalone
     hostname: gowebserver-standalone
     networks:
