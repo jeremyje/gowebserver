@@ -142,8 +142,9 @@ func nameToIconClass(isDir bool, name string) string {
 
 func isRichViewable(iconClass string) bool {
 	switch iconClass {
-	case "code", "terminal", "text", "markup", "stylesheet", "script",
-		"config", "log", "data", "doc", "key", "certificate":
+	case "markup", "data":
+		return false
+	case "code", "terminal", "text", "stylesheet", "script", "config", "log", "doc", "key", "certificate":
 		return true
 	}
 	return false

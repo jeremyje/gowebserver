@@ -62,11 +62,11 @@ func (l *EntryList) Less(i, j int) bool {
 	case "date-desc":
 		return jElem.ModTime.Before(iElem.ModTime)
 	case "name":
-		return natsort.Compare(iElem.Name, jElem.Name)
+		return natsort.Compare(iElem.NameForSorting(), jElem.NameForSorting())
 	case "name-desc":
-		return natsort.Compare(jElem.Name, iElem.Name)
+		return natsort.Compare(jElem.NameForSorting(), iElem.NameForSorting())
 	default:
-		return natsort.Compare(iElem.Name, jElem.Name)
+		return natsort.Compare(iElem.NameForSorting(), jElem.NameForSorting())
 	}
 }
 
@@ -95,6 +95,10 @@ type DirEntry struct {
 	IsArchive  bool
 	IsViewable bool
 	IconClass  string
+}
+
+func (d *DirEntry) NameForSorting() string {
+	return strings.ToLower(d.Name)
 }
 
 func (d *DirEntry) String() string {
