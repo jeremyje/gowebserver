@@ -15,6 +15,7 @@
 package gowebserver
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"html/template"
@@ -26,6 +27,7 @@ import (
 	"time"
 
 	"facette.io/natsort"
+	"github.com/cloudfra/ufs"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -34,7 +36,46 @@ import (
 var (
 	//go:embed custom-index.html
 	customIndexHTML []byte
+	nestedDirSuffix = ".d"
 )
+
+func logError(err error) {
+	if err != nil {
+		zap.S().Errorf("%s", err)
+	}
+}
+
+func isSupportedGit(filePath string) bool {
+	return strings.HasSuffix(strings.ToLower(filePath), ".git")
+}
+
+func newHandlerFromFS(fsSpec string, tp trace.TracerProvider, enhancedList bool) (http.Handler, func() error, error) {
+	ctx := context.Background()
+	// fsSpec is probably breaking this.
+	if !isSupportedGit(fsSpec) && isSupportedHTTP(fsSpec) {
+		handler, err := newHTTPReverseProxy(fsSpec)
+		return handler, nilFuncWithError, err
+	}
+
+	nFS, err := ufs.New(ctx, fsSpec)
+	if err != nil {
+		return nil, nilFuncWithError, err
+	}
+
+	ci, err := newCustomIndex(http.FileServer(http.FS(nFS)), nFS, tp, enhancedList)
+	if err != nil {
+		return nil, nilFuncWithError, err
+	}
+	rv, err := newRichViewHandler(ci, nFS, tp)
+	if err != nil {
+		return nil, nilFuncWithError, err
+	}
+	return rv, nFS.Close, nil
+}
+
+func cleanPath(path string) string {
+	return strings.ReplaceAll(filepath.Clean(path), "\\", "/")
+}
 
 type EntryList struct {
 	Entries    map[string]*DirEntry
@@ -138,6 +179,35 @@ func canonicalizeSortBy(v string) string {
 	return "name"
 }
 
+func tryListDir(fsys fs.FS, path string) {
+	f, err := fsys.Open(path)
+	if err != nil {
+		zap.S().With("path", path).With(zap.Error(err)).Warn("failed to open file")
+		return
+	}
+	if dirList, ok := f.(fs.ReadDirFile); ok {
+		dirs, err := dirList.ReadDir(-1)
+		if err != nil {
+			zap.S().With("path", path).With(zap.Error(err)).Warn("failed to open file")
+		}
+		for _, dir := range dirs {
+			zap.S().With("path", path).With("stat", statToString(dir.Info())).Infof("- %s", dir.Name())
+		}
+	} else {
+		zap.S().With("path", path).With("stat", statToString(f.Stat())).Infof("regular file")
+	}
+}
+
+func statToString(info fs.FileInfo, err error) string {
+	statStr := ""
+	if err != nil {
+		statStr = fmt.Sprintf("%s", err)
+	} else {
+		statStr = fmt.Sprintf("size: %d, isDir: %t, time: %s", info.Size(), info.IsDir(), info.ModTime())
+	}
+	return statStr
+}
+
 func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sortBy := canonicalizeSortBy(r.URL.Query().Get("sort"))
 	rootTrace := c.tp.Tracer("customIndex")
@@ -146,10 +216,12 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	span.SetAttributes(attribute.Bool("enhanced_list", c.enhancedList))
 	if c.enhancedList {
 		path := r.URL.Path
+		urlPath := r.URL.Path
 		path = cleanPath(strings.TrimPrefix(path, "/"))
 
+		tryListDir(c.baseFS, path)
 		zap.S().With("url", r.URL, "path", path).Info("customIndexHandler")
-		if strings.HasSuffix(r.URL.Path, "/") || path == "." {
+		if strings.HasSuffix(urlPath, "/") || path == "." {
 			_, openSpan := rootTrace.Start(ctx, "Open")
 			openSpan.SetAttributes(attribute.String("path", path))
 			f, err := c.baseFS.Open(path)
@@ -221,6 +293,9 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						size = stat.Size()
 					}
 
+					if strings.HasSuffix(entry.Name(), ".xz") {
+						zap.S().Infof("%s", entry.Name())
+					}
 					_, isArchive := actualArchiveDir[entry.Name()]
 					isDir := entry.IsDir() || isArchive
 					iconClass := nameToIconClass(isDir, entry.Name())
@@ -265,6 +340,7 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				params.HasImage = hasImage
 				params.HasVideo = hasVideo
 
+				zap.S().Infof("Params: %s", params)
 				if err := c.tmpl.Execute(w, params); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return

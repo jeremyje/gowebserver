@@ -218,7 +218,7 @@ func ExampleWebServer_Serve() {
 	// Output:
 }
 
-func xTestWebServerFull(t *testing.T) {
+func TestWebServerFull(t *testing.T) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
@@ -260,7 +260,7 @@ func xTestWebServerFull(t *testing.T) {
 	}
 
 	close := gomainTesting.Main(httpServer.Serve)
-	time.Sleep(500 * time.Second)
+	time.Sleep(time.Second)
 	close()
 	// Output:
 }

@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cloudfra/ufs"
 	"github.com/google/go-cmp/cmp"
 	gowsTesting "github.com/jeremyje/gowebserver/v2/internal/gowebserver/testing"
 )
@@ -45,12 +46,10 @@ func TestDirEntryString(t *testing.T) {
 func TestCustomIndex(t *testing.T) {
 	nestedZipPath := gowsTesting.MustNestedZipFilePath(t)
 
-	vFS, err := newRawFSFromURI(nestedZipPath)
+	nFS, err := ufs.New(t.Context(), nestedZipPath)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	defer vFS.Close()
-	nFS := newNestedFS(vFS)
 	defer nFS.Close()
 
 	mc := &monitoringContext{}
@@ -64,10 +63,10 @@ func TestCustomIndex(t *testing.T) {
 	ts.StartTLS()
 	defer ts.Close()
 
-	verifyCustomIndex(t, ts.Client(), ts.URL, []string{"single-testassets.zip", "single-testassets.zip-dir/", "testassets/", "testassets.zip-dir/"})
+	verifyCustomIndex(t, ts.Client(), ts.URL, []string{"single-testassets.zip", "single-testassets.zip.d/", "testassets/", "testassets.zip.d/"})
 	verifyCustomIndex(t, ts.Client(), ts.URL+"/testassets", []string{"index.html", "site.js", "assets/"})
 	verifyCustomIndex(t, ts.Client(), ts.URL+"/testassets/", []string{"index.html", "site.js", "assets/"})
-	verifyCustomIndex(t, ts.Client(), ts.URL+"/testassets.zip-dir/", []string{"index.html", "site.js", "assets/"})
+	verifyCustomIndex(t, ts.Client(), ts.URL+"/testassets.zip.d/", []string{"index.html", "site.js", "assets/"})
 	verifyCustomIndex(t, ts.Client(), ts.URL+"/testassets/assets/images", []string{"ocean.jpg", "nature.jpg"})
 	verifyCustomIndex(t, ts.Client(), ts.URL+"/testassets/assets/images/", []string{"ocean.jpg", "nature.jpg"})
 }
