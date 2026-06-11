@@ -1,6 +1,7 @@
 verbose: false
 serve: []
 enhancedList: false
+enableSearch: false
 debug: false
 http:
   port: 0

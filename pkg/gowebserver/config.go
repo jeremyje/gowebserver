@@ -60,6 +60,7 @@ var (
 	monitoringMetricsPath       = flag.String("monitoring.metrics.path", "/metrics", "The URL path for exporting server metrics for Prometheus monitoring.")
 
 	enhancedListFlag = flag.Bool("enhancedindex", false, "Enable the enhanced directory listing UI with file previews and sorting.")
+	enableSearchFlag = flag.Bool("search", false, "Enable search in the enhanced directory listing UI.")
 	debugFlag        = flag.Bool("debug", false, "Expose the /diediedie shutdown endpoint for testing.")
 
 	version = "UNKNOWN"
@@ -112,6 +113,7 @@ type Config struct {
 	Serve             []Serve `yaml:"serve"`
 	ConfigurationFile string  `yaml:"-"`
 	EnhancedList      bool    `yaml:"enhancedList"`
+	EnableSearch      bool    `yaml:"enableSearch"`
 	Debug             bool    `yaml:"debug"`
 
 	HTTP       HTTP       `yaml:"http"`
@@ -203,6 +205,7 @@ func loadFromFlags() (*Config, error) {
 		Serve:             sl,
 		ConfigurationFile: *configFileFlag,
 		EnhancedList:      *enhancedListFlag,
+		EnableSearch:      *enableSearchFlag,
 		Debug:             *debugFlag,
 		HTTP: HTTP{
 			Port: *httpPortFlag,

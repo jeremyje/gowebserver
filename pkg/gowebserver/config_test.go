@@ -45,6 +45,7 @@ func TestPopulatedConfig(t *testing.T) {
 	conf := &Config{
 		Verbose:      true,
 		EnhancedList: true,
+		EnableSearch: true,
 		Debug:        true,
 		Serve: []Serve{{
 			Source:   "/home/folder",
@@ -105,6 +106,7 @@ func TestNoDefaultConfig(t *testing.T) {
 	want := &Config{
 		Verbose:      true,
 		EnhancedList: true,
+		EnableSearch: true,
 		Serve: []Serve{
 			{
 				Source:   "/home/example",
@@ -166,6 +168,7 @@ func TestPopulatedYamlConfig(t *testing.T) {
 	want := &Config{
 		Verbose:      true,
 		EnhancedList: true,
+		EnableSearch: true,
 		Debug:        true,
 		Serve: []Serve{
 			{
@@ -237,6 +240,7 @@ func TestDefaultConfiguration(t *testing.T) {
 	want := &Config{
 		Verbose:      false,
 		EnhancedList: false,
+		EnableSearch: false,
 		Serve: []Serve{
 			{
 				Source:   "",

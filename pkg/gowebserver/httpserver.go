@@ -46,6 +46,7 @@ type webServerImpl struct {
 	uploadPath          string
 	uploadHTTPPath      string
 	enhancedListMode    bool
+	searchEnabled       bool
 	enableDebugMethods  bool
 	monitoringCtx       *monitoringContext
 
@@ -153,14 +154,14 @@ func (ws *webServerImpl) Serve(wait func()) error {
 		for _, paths := range ws.fileSystemServePath {
 			servePaths = append(servePaths, paths.httpPath)
 		}
-		indexHandler, err := newIndexHTTPHandler(servePaths, ws.enhancedListMode)
+		indexHandler, err := newIndexHTTPHandler(servePaths, ws.enhancedListMode, ws.searchEnabled)
 		if err != nil {
 			return err
 		}
 		ws.addHandler(serverMux, "/", indexHandler)
 
 		for _, paths := range ws.fileSystemServePath {
-			fsHandler, cleanup, err := newHandlerFromFS(paths.localPath, ws.monitoringCtx.getTraceProvider(), ws.enhancedListMode)
+			fsHandler, cleanup, err := newHandlerFromFS(paths.localPath, ws.monitoringCtx.getTraceProvider(), ws.enhancedListMode, ws.searchEnabled)
 			if err != nil {
 				return err
 			}
@@ -177,7 +178,7 @@ func (ws *webServerImpl) Serve(wait func()) error {
 		if err != nil {
 			return err
 		}
-		fsHandler, cleanup, err := newHandlerFromFS(fsSpec, ws.monitoringCtx.getTraceProvider(), ws.enhancedListMode)
+		fsHandler, cleanup, err := newHandlerFromFS(fsSpec, ws.monitoringCtx.getTraceProvider(), ws.enhancedListMode, ws.searchEnabled)
 		if err != nil {
 			return err
 		}
@@ -296,6 +297,7 @@ func New(conf *Config) (WebServer, error) {
 		certificateFilePath: conf.HTTPS.Certificate.CertificateFilePath,
 		privateKeyFilePath:  conf.HTTPS.Certificate.PrivateKeyFilePath,
 		enhancedListMode:    conf.EnhancedList,
+		searchEnabled:       conf.EnableSearch,
 		enableDebugMethods:  conf.Debug,
 		uploadPath:          uploadPath,
 		uploadHTTPPath:      conf.Upload.Endpoint,

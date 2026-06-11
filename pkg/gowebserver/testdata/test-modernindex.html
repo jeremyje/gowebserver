@@ -253,6 +253,118 @@
     }
 
      
+    .search-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-box .search-icon {
+      position: absolute;
+      left: 14px;
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: var(--text-secondary);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 40px;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .search-input:focus {
+      outline: none;
+      background: var(--bg);
+      border-color: var(--link);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--link) 25%, transparent);
+    }
+
+    .search-input::-webkit-search-cancel-button,
+    .search-input::-webkit-search-decoration {
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .search-clear {
+      position: absolute;
+      right: 6px;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .search-clear:hover {
+      background: var(--hover-bg);
+      color: var(--text);
+    }
+
+    .search-clear svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .search-button {
+      flex-shrink: 0;
+      padding: 0 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--link);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .search-button:hover {
+      opacity: 0.85;
+    }
+
+    @media (max-width: 480px) {
+      .search-input {
+        padding: 8px 36px;
+      }
+
+      .search-button {
+        padding: 0 16px;
+        font-size: 0.85rem;
+      }
+    }
+
+     
     .listing {
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -2288,6 +2400,9 @@
   </svg>
 
   <h1>/</h1>
+
+  
+  
 
   
   <div class="listing">
