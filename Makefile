@@ -298,7 +298,7 @@ run: clean assets lint
 	$(GO) run cmd/gowebserver/gowebserver.go -http.port 8181 -path=. -verbose -debug -enhancedindex=true
 
 multirun: clean assets lint
-	$(GO) run cmd/gowebserver/gowebserver.go -path=./cmd/,./pkg/,. -verbose=true -servepath=mains,code,root -http.port 8181 -enhancedindex=true -debug
+	$(GO) run cmd/gowebserver/gowebserver.go -path=./cmd/,./pkg/,. -verbose=true -servepath=mains,code,root -http.port 8181 -enhancedindex=true -debug -search=true
 
 install: gowebserver
 	mkdir -p $(DESTDIR)$(bindir) $(DESTDIR)$(man1dir)

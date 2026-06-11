@@ -34,7 +34,7 @@ type indexHTTPHandler struct {
 	page []byte
 }
 
-func newIndexHTTPHandler(servePaths []string, modern bool) (*indexHTTPHandler, error) {
+func newIndexHTTPHandler(servePaths []string, modern bool, searchEnabled bool) (*indexHTTPHandler, error) {
 	templateHTML := templateIndexHTML
 	if modern {
 		templateHTML = customIndexHTML
@@ -56,6 +56,7 @@ func newIndexHTTPHandler(servePaths []string, modern bool) (*indexHTTPHandler, e
 		RootName:         "/",
 		DirEntries:       entries,
 		SortBy:           "name",
+		SearchEnabled:    searchEnabled,
 		UseTimestamp:     false,
 		HasNonMediaEntry: true,
 	}

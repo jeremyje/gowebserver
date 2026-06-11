@@ -3,6 +3,7 @@ serve:
   - source: /home/folder
     endpoint: /serving
 enhancedList: true
+enableSearch: true
 debug: true
 http:
   port: 1000

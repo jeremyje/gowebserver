@@ -52,7 +52,7 @@ func TestIndexHTTPHandlerServeHTTP(t *testing.T) {
 		tc := tc
 		t.Run(fmt.Sprintf("modern= %t", tc.modern), func(t *testing.T) {
 			t.Parallel()
-			h, err := newIndexHTTPHandler([]string{"/ok", "/abc"}, tc.modern)
+			h, err := newIndexHTTPHandler([]string{"/ok", "/abc"}, tc.modern, false)
 			if err != nil {
 				t.Fatal(err)
 			}

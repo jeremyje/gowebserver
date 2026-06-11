@@ -49,7 +49,7 @@ func isSupportedGit(filePath string) bool {
 	return strings.HasSuffix(strings.ToLower(filePath), ".git")
 }
 
-func newHandlerFromFS(fsSpec string, tp trace.TracerProvider, enhancedList bool) (http.Handler, func() error, error) {
+func newHandlerFromFS(fsSpec string, tp trace.TracerProvider, enhancedList bool, searchEnabled bool) (http.Handler, func() error, error) {
 	ctx := context.Background()
 	// fsSpec is probably breaking this.
 	if !isSupportedGit(fsSpec) && isSupportedHTTP(fsSpec) {
@@ -62,7 +62,7 @@ func newHandlerFromFS(fsSpec string, tp trace.TracerProvider, enhancedList bool)
 		return nil, nilFuncWithError, err
 	}
 
-	ci, err := newCustomIndex(http.FileServer(http.FS(nFS)), nFS, tp, enhancedList)
+	ci, err := newCustomIndex(http.FileServer(http.FS(nFS)), nFS, tp, enhancedList, searchEnabled)
 	if err != nil {
 		return nil, nilFuncWithError, err
 	}
@@ -154,6 +154,8 @@ type CustomIndexReport struct {
 	RootName           string
 	DirEntries         []*DirEntry
 	SortBy             string
+	Query              string
+	SearchEnabled      bool
 	UseTimestamp       bool
 	HasNonMediaEntry   bool
 	HasImage           bool
@@ -162,11 +164,12 @@ type CustomIndexReport struct {
 }
 
 type customIndexHandler struct {
-	baseHandler  http.Handler
-	baseFS       fs.FS
-	enhancedList bool
-	tp           trace.TracerProvider
-	tmpl         *template.Template
+	baseHandler   http.Handler
+	baseFS        fs.FS
+	enhancedList  bool
+	searchEnabled bool
+	tp            trace.TracerProvider
+	tmpl          *template.Template
 }
 
 func canonicalizeSortBy(v string) string {
@@ -210,6 +213,7 @@ func statToString(info fs.FileInfo, err error) string {
 
 func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sortBy := canonicalizeSortBy(r.URL.Query().Get("sort"))
+	query := r.URL.Query().Get("q")
 	rootTrace := c.tp.Tracer("customIndex")
 	ctx, span := rootTrace.Start(r.Context(), r.URL.Path)
 	defer span.End()
@@ -256,6 +260,8 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					RootName:           strings.TrimSuffix(filepath.Base(path), nestedDirSuffix),
 					DirEntries:         []*DirEntry{},
 					SortBy:             sortBy,
+					Query:              query,
+					SearchEnabled:      c.searchEnabled,
 					UseTimestamp:       strings.Contains(sortBy, "date"),
 					ApplicationVersion: version,
 				}
@@ -354,16 +360,17 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c.baseHandler.ServeHTTP(w, r)
 }
 
-func newCustomIndex(baseHandler http.Handler, baseFS fs.FS, tp trace.TracerProvider, enhancedList bool) (http.Handler, error) {
+func newCustomIndex(baseHandler http.Handler, baseFS fs.FS, tp trace.TracerProvider, enhancedList bool, searchEnabled bool) (http.Handler, error) {
 	tmpl, err := createTemplate(customIndexHTML)
 	if err != nil {
 		return nil, err
 	}
 	return &customIndexHandler{
-		baseHandler:  baseHandler,
-		baseFS:       baseFS,
-		enhancedList: enhancedList,
-		tp:           tp,
-		tmpl:         tmpl,
+		baseHandler:   baseHandler,
+		baseFS:        baseFS,
+		enhancedList:  enhancedList,
+		searchEnabled: searchEnabled,
+		tp:            tp,
+		tmpl:          tmpl,
 	}, nil
 }
