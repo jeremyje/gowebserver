@@ -260,7 +260,7 @@ func TestDefaultConfiguration(t *testing.T) {
 			},
 		},
 		Monitoring: Monitoring{
-			DebugEndpoint: "/debug",
+			DebugEndpoint: "",
 			Metrics: Metrics{
 				Enabled: true,
 				Path:    "/metrics",

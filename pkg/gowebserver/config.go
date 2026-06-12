@@ -55,7 +55,7 @@ var (
 	forceOverwriteCertFlag      = flag.Bool("https.certificate.forceoverwrite", false, "Force overwrite existing certificates if they already exist.")
 
 	// Monitoring Flags
-	monitoringDebugEndpointFlag = flag.String("monitoring.debugendpoint", "/debug", "URL path prefix for pprof and OpenTelemetry tracez debug endpoints.")
+	monitoringDebugEndpointFlag = flag.String("monitoring.debugendpoint", "", "URL path prefix for pprof and OpenTelemetry tracez debug endpoints. Leave empty to disable these endpoints.")
 	monitoringTraceURIFlag      = flag.String("monitoring.trace.uri", "", "OTLP HTTP endpoint URL for tracing (e.g. http://host:4318).")
 	monitoringMetricsPath       = flag.String("monitoring.metrics.path", "/metrics", "The URL path for exporting server metrics for Prometheus monitoring.")
 

@@ -421,15 +421,15 @@ func GenerateAndWriteKeyPair(args *Args, publicCertificateFile string, privateKe
 }
 
 func WriteKeyPair(kp *KeyPair, publicCertificateFile string, privateKeyFile string) error {
-	if err := writeFile(publicCertificateFile, kp.PublicCertificate); err != nil {
+	if err := writeFile(publicCertificateFile, kp.PublicCertificate, 0644); err != nil {
 		return err
 	}
-	if err := writeFile(privateKeyFile, kp.PrivateKey); err != nil {
+	if err := writeFile(privateKeyFile, kp.PrivateKey, 0600); err != nil {
 		return err
 	}
 	return nil
 }
 
-func writeFile(fileName string, data []byte) error {
-	return os.WriteFile(fileName, data, 0644)
+func writeFile(fileName string, data []byte, mode os.FileMode) error {
+	return os.WriteFile(fileName, data, mode)
 }
