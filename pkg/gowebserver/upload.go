@@ -22,9 +22,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	_ "embed"
@@ -88,10 +90,16 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		var resp uploadResponse
 
+		if !isSameOrigin(r) {
+			resp.Error = fmt.Errorf("Forbidden: cross-origin upload requests are not allowed")
+			writeUploadResponse(w, resp, http.StatusForbidden, logger, span)
+			return
+		}
+
 		ctx, childSpan := uploadTracer.Start(ctx, "ParseMultipartForm")
 		if err := r.ParseMultipartForm(32 << 20); err != nil {
 			resp.Error = fmt.Errorf("InternalError: cannot parse multi-part form")
-			writeUploadResponse(w, resp, logger, childSpan)
+			writeUploadResponse(w, resp, http.StatusBadRequest, logger, childSpan)
 			childSpan.End()
 			return
 		}
@@ -109,7 +117,7 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			file, err := files[i].Open()
 			if err != nil {
 				resp.Error = fmt.Errorf("InternalError: Cannot download file (%s), %w", fileName, err)
-				writeUploadResponse(w, resp, logger, childSpan)
+				writeUploadResponse(w, resp, http.StatusInternalServerError, logger, childSpan)
 				return
 			}
 			defer file.Close()
@@ -118,21 +126,22 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			if err := ensureDirs(localPath); err != nil {
 				resp.Error = fmt.Errorf("InternalError: Cannot create directory to store file (%s), %w", uh.uploadDirectory, err)
-				writeUploadResponse(w, resp, logger, childSpan)
+				writeUploadResponse(w, resp, http.StatusInternalServerError, logger, childSpan)
 				return
 			}
 
 			f, err := os.Create(localPath)
 			if err != nil {
 				resp.Error = fmt.Errorf("InternalError: Cannot create file (%s), %w", localPath, err)
-				writeUploadResponse(w, resp, logger, childSpan)
+				writeUploadResponse(w, resp, http.StatusInternalServerError, logger, childSpan)
 				return
 			}
 			defer f.Close()
 			bytesWritten, err := io.Copy(f, file)
 			if err != nil {
 				resp.Error = fmt.Errorf("InternalError: Cannot write file (%s), %w", localPath, err)
-				writeUploadResponse(w, resp, logger, childSpan)
+				writeUploadResponse(w, resp, http.StatusInternalServerError, logger, childSpan)
+				return
 			}
 			childSpan.SetAttributes(attribute.Int64("bytesWritten", bytesWritten))
 			uh.uploadedBytesTotal.Add(ctx, bytesWritten)
@@ -141,7 +150,7 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		resp.Success = true
-		writeUploadResponse(w, resp, logger, span)
+		writeUploadResponse(w, resp, http.StatusOK, logger, span)
 	}
 }
 
@@ -165,10 +174,27 @@ func newUploadHandler(mc *monitoringContext, uploadHTTPPath string, uploadDirect
 	}, nil
 }
 
-func writeUploadResponse(w http.ResponseWriter, resp uploadResponse, logger *zap.SugaredLogger, span trace.Span) {
+// isSameOrigin reports whether the request's Origin header (if present)
+// matches the request's own Host, to guard the upload endpoint against
+// cross-site form submissions. Requests without an Origin header (e.g.
+// same-origin form posts from older browsers, or non-browser clients) are
+// allowed through since they cannot be issued cross-site by a browser in a
+// way that this check would catch.
+func isSameOrigin(r *http.Request) bool {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		return true
+	}
+	originURL, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+	return strings.EqualFold(originURL.Host, r.Host)
+}
+
+func writeUploadResponse(w http.ResponseWriter, resp uploadResponse, statusCode int, logger *zap.SugaredLogger, span trace.Span) {
 	if resp.Error != nil {
 		logger.With("error", resp.Error).Warn("Upload error")
-		w.WriteHeader(http.StatusBadRequest)
 		span.RecordError(resp.Error)
 	} else {
 		logger.Debug("Upload Successful")
@@ -179,7 +205,9 @@ func writeUploadResponse(w http.ResponseWriter, resp uploadResponse, logger *zap
 		logger.With("error", err).Warn("Cannot marshal upload JSON response")
 		return
 	}
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(statusCode)
 	if _, err := w.Write(data); err != nil {
 		logger.With("error", err).Warn("cannot write upload response")
 	}
