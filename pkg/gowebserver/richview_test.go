@@ -159,6 +159,28 @@ func TestRichViewHandler_ThemeOverride(t *testing.T) {
 	}
 }
 
+func TestRichViewHandler_HashInFileName(t *testing.T) {
+	h := makeRichViewHandler(t, map[string][]byte{
+		"weird#1.txt": []byte("hello world\n"),
+	})
+
+	req := httptest.NewRequest("GET", "/placeholder?view=rich", nil)
+	req.URL.Path = "/weird#1.txt"
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+	body := rec.Body.String()
+	if strings.Contains(body, `"/weird#1.txt"`) {
+		t.Errorf("links must not contain a literal '#', browsers treat it as a fragment separator: %q", body)
+	}
+	if !strings.Contains(body, "/weird%231.txt") {
+		t.Errorf("expected escaped path '/weird%%231.txt' in body, got: %q", body[:min(600, len(body))])
+	}
+}
+
 func TestRichViewHandler_InvalidTheme(t *testing.T) {
 	h := makeRichViewHandler(t, map[string][]byte{
 		"hello.go": []byte("package main\n"),
