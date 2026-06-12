@@ -20,6 +20,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"net/http"
 	"os"
@@ -51,6 +52,7 @@ type uploadHTTPHandler struct {
 	uploadDirectory    string
 	uploadedBytesTotal metric.Int64Counter
 	uploadedFilesTotal metric.Int64Counter
+	tmpl               *template.Template
 }
 
 type uploadResponse struct {
@@ -82,8 +84,8 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			ApplicationVersion string
 		}{uh.uploadHTTPPath, token, uploadFileFormName, version}
 
-		if err := executeTemplate(uploadHTML, params, w); err != nil {
-			logger.With("error", err).Error("cannot parse upload.html template.")
+		if err := uh.tmpl.Execute(w, params); err != nil {
+			logger.With("error", err).Error("cannot execute upload.html template.")
 		}
 	} else {
 		var resp uploadResponse
@@ -156,12 +158,17 @@ func newUploadHandler(mc *monitoringContext, uploadHTTPPath string, uploadDirect
 	if err != nil {
 		return nil, err
 	}
+	tmpl, err := createTemplate(uploadHTML)
+	if err != nil {
+		return nil, err
+	}
 	return &uploadHTTPHandler{
 		tp:                 mc.getTraceProvider(),
 		uploadHTTPPath:     uploadHTTPPath,
 		uploadDirectory:    uploadDirectory,
 		uploadedBytesTotal: uploadedBytesTotal,
 		uploadedFilesTotal: uploadedFilesTotal,
+		tmpl:               tmpl,
 	}, nil
 }
 
