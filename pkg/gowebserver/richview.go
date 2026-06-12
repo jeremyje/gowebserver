@@ -97,9 +97,9 @@ func (h *richViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filePath := cleanPath(strings.TrimPrefix(r.URL.Path, "/"))
+	fsPath := cleanPath(strings.TrimPrefix(r.URL.Path, "/"))
 
-	f, err := h.baseFS.Open(filePath)
+	f, err := h.baseFS.Open(fsPath)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -113,7 +113,7 @@ func (h *richViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if stat.IsDir() {
-		http.Redirect(w, r, r.URL.Path, http.StatusFound)
+		http.Redirect(w, r, encodeURLPath(r.URL.Path), http.StatusFound)
 		return
 	}
 
@@ -124,16 +124,18 @@ func (h *richViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fileName := path.Base(r.URL.Path)
-	rawURL := r.URL.Path
+	filePath := encodeURLPath(r.URL.Path)
+	rawURL := filePath
 	parentPath := path.Dir(r.URL.Path)
 	if !strings.HasSuffix(parentPath, "/") {
 		parentPath += "/"
 	}
+	parentPath = encodeURLPath(parentPath)
 
 	if len(content) > richViewMaxFileSize {
 		report := &RichViewReport{
 			FileName:           fileName,
-			FilePath:           r.URL.Path,
+			FilePath:           filePath,
 			ParentPath:         parentPath,
 			RawURL:             rawURL,
 			ApplicationVersion: version,
@@ -199,7 +201,7 @@ func (h *richViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	report := &RichViewReport{
 		FileName:           fileName,
-		FilePath:           r.URL.Path,
+		FilePath:           filePath,
 		ParentPath:         parentPath,
 		RawURL:             rawURL,
 		Language:           language,
