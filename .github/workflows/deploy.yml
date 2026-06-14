@@ -37,7 +37,8 @@ jobs:
         # https://github.com/actions/setup-go
         uses: actions/setup-go@v6
         with:
-          go-version: "1.26"
+          go-version: stable
+          cache: false
 
       - name: Install Prerequisites
         run: |
