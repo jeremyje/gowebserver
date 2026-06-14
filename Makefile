@@ -306,6 +306,7 @@ install: gowebserver
 	install -m 0644 ${MAN_PAGE_NAME} $(DESTDIR)$(man1dir)
 
 deps:
+	$(GO) get -u ./...
 	$(GO) mod tidy
 	$(GO) mod download
 

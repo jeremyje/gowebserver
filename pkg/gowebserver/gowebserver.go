@@ -54,6 +54,7 @@ func configLogger(verbose bool) (*zap.Logger, func() error) {
 	if logger == nil {
 		return nil, func() error { return nil }
 	}
+	zap.RedirectStdLog(logger)
 	return logger, logger.Sync
 }
 
