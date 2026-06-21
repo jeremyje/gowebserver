@@ -274,3 +274,12 @@ func stepEnd(val int, step int, max int) bool {
 func urlEncode(u string) string {
 	return url.PathEscape(u)
 }
+
+// encodeURLPath percent-encodes the given URL path so that characters with
+// special meaning in URLs (such as '#', '?', and '%') are preserved as part
+// of the path instead of being interpreted as the start of a fragment or
+// query string when used in an href/Location value. Path separators ('/')
+// are preserved.
+func encodeURLPath(p string) string {
+	return (&url.URL{Path: p}).EscapedPath()
+}
