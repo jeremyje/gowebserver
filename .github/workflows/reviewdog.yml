@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code.
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: misspell
         # https://github.com/reviewdog/action-misspell
         uses: reviewdog/action-misspell@v1
@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: hadolint
         # https://github.com/reviewdog/action-hadolint
         uses: reviewdog/action-hadolint@v1
@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code.
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: codespell
         # https://github.com/plettich/action-codespell
         uses: plettich/action-codespell@master
