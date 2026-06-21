@@ -169,14 +169,15 @@ func ensureDirs(fileName string) error {
 
 func sanitizeFileName(fileName string) string {
 	name := strings.ReplaceAll(filepath.Clean(fileName), "..", ".")
-	sanitized := ""
+	var sanitized strings.Builder
+	sanitized.Grow(len(name))
 	for _, r := range name {
 		if _, ok := validChars[r]; ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z') || ('0' <= r && r <= '9') || ok {
-			sanitized = sanitized + string(r)
+			sanitized.WriteRune(r)
 		}
 	}
 
-	parts := strings.Split(strings.ReplaceAll(sanitized, "\\", "/"), "/")
+	parts := strings.Split(strings.ReplaceAll(sanitized.String(), "\\", "/"), "/")
 	sanitizedParts := []string{}
 	for _, part := range parts {
 		if strings.ReplaceAll(part, ".", "") != "" {

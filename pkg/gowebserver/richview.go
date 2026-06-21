@@ -165,9 +165,10 @@ func (h *richViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Detect language.
+	contentStr := string(content)
 	lexer := lexers.Match(fileName)
 	if lexer == nil {
-		lexer = lexers.Analyse(string(content))
+		lexer = lexers.Analyse(contentStr)
 	}
 	if lexer == nil {
 		lexer = lexers.Fallback
@@ -182,7 +183,7 @@ func (h *richViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	iterator, err := lexer.Tokenise(nil, string(content))
+	iterator, err := lexer.Tokenise(nil, contentStr)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
