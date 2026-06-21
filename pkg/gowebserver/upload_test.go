@@ -104,6 +104,58 @@ func TestUpload(t *testing.T) {
 	}
 }
 
+func TestUpload_CrossOriginRejected(t *testing.T) {
+	zipPath := gowsTesting.MustZipFilePath(t)
+	tmpDir, close, err := createTempDirectory()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer close()
+
+	cfg := &Config{
+		Serve: []Serve{
+			{
+				Source:   tmpDir,
+				Endpoint: "/",
+			},
+		},
+		Upload: Serve{
+			Source:   tmpDir,
+			Endpoint: "/upload",
+		},
+	}
+
+	baseURL, close := serveAsync(t, cfg)
+	defer close()
+	fp, err := os.Open(zipPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer fp.Close()
+
+	ctx := context.Background()
+	req, err := newUploadFormRequest(ctx, baseURL+"/upload", "evil.zip", fp, map[string]string{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Origin", "https://evil.example.com")
+
+	hc := &http.Client{}
+	resp, err := hc.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusForbidden {
+		t.Errorf("http status code is '%d', want %d", resp.StatusCode, http.StatusForbidden)
+	}
+
+	if _, err := os.Stat(filepath.Join(tmpDir, "evil.zip")); !os.IsNotExist(err) {
+		t.Errorf("cross-origin upload should not have been written, stat err = %v", err)
+	}
+}
+
 func sha256File(tb testing.TB, localPath string) string {
 	f, err := os.Open(localPath)
 	if err != nil {
