@@ -78,6 +78,10 @@ ALL_APPS = gowebserver certtool httpprobe
 
 ALL_BINARIES = $(foreach app,$(ALL_APPS),$(foreach platform,$(ALL_PLATFORMS),bin/go/$(platform)/$(app)$(if $(findstring windows_,$(platform)),.exe,)))
 WINDOWS_VERSIONS = 1709 1803 1809 1903 1909 2004 20H2 ltsc2022 ltsc2025
+SIGNTOOL ?= signtool
+CODESIGN_PFX ?= bin/codesign.pfx
+CODESIGN_PASSWORD ?= gowebserver-signing
+WINDOWS_EXES = $(foreach app,$(ALL_APPS),$(foreach platform,$(WINDOWS_PLATFORMS),bin/go/$(platform)/$(app).exe))
 BUILDX_BUILDER = buildx-builder
 DOCKER_BUILDER_FLAG = --builder $(BUILDX_BUILDER) --provenance=false
 space := $(null) #
@@ -200,6 +204,27 @@ bin/release/server-386.exe: bin/go/windows_386/gowebserver.exe
 bin/release/server-arm64.exe: bin/go/windows_arm64/gowebserver.exe
 	mkdir -p bin/release/ && cp $< $@
 
+$(CODESIGN_PFX):
+	mkdir -p bin/
+	powershell -Command "$$cert = New-SelfSignedCertificate -Type CodeSigning -Subject 'CN=gowebserver' -KeySpec Signature -KeyUsage DigitalSignature -HashAlgorithm SHA256 -KeyAlgorithm RSA -KeyLength 2048 -FriendlyName 'gowebserver' -CertStoreLocation 'Cert:\CurrentUser\My' -NotAfter (Get-Date).AddYears(3); $$pwd = ConvertTo-SecureString -String '$(CODESIGN_PASSWORD)' -Force -AsPlainText; Export-PfxCertificate -Cert $$cert -FilePath '$(CODESIGN_PFX)' -Password $$pwd"
+
+build-windows-exes:
+	mkdir -p bin/go/windows_amd64 bin/go/windows_386 bin/go/windows_arm64
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 $(GO) build -o bin/go/windows_amd64/gowebserver.exe -ldflags '-X $(PKG)/pkg/gowebserver.version=$(VERSION)' cmd/gowebserver/gowebserver.go
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 $(GO) build -o bin/go/windows_amd64/certtool.exe -ldflags '-X $(PKG)/pkg/gowebserver.version=$(VERSION)' cmd/certtool/certtool.go
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 $(GO) build -o bin/go/windows_amd64/httpprobe.exe -ldflags '-X $(PKG)/pkg/gowebserver.version=$(VERSION)' cmd/httpprobe/httpprobe.go
+	GOOS=windows GOARCH=386 CGO_ENABLED=0 $(GO) build -o bin/go/windows_386/gowebserver.exe -ldflags '-X $(PKG)/pkg/gowebserver.version=$(VERSION)' cmd/gowebserver/gowebserver.go
+	GOOS=windows GOARCH=386 CGO_ENABLED=0 $(GO) build -o bin/go/windows_386/certtool.exe -ldflags '-X $(PKG)/pkg/gowebserver.version=$(VERSION)' cmd/certtool/certtool.go
+	GOOS=windows GOARCH=386 CGO_ENABLED=0 $(GO) build -o bin/go/windows_386/httpprobe.exe -ldflags '-X $(PKG)/pkg/gowebserver.version=$(VERSION)' cmd/httpprobe/httpprobe.go
+	GOOS=windows GOARCH=arm64 CGO_ENABLED=0 $(GO) build -o bin/go/windows_arm64/gowebserver.exe -ldflags '-X $(PKG)/pkg/gowebserver.version=$(VERSION)' cmd/gowebserver/gowebserver.go
+	GOOS=windows GOARCH=arm64 CGO_ENABLED=0 $(GO) build -o bin/go/windows_arm64/certtool.exe -ldflags '-X $(PKG)/pkg/gowebserver.version=$(VERSION)' cmd/certtool/certtool.go
+	GOOS=windows GOARCH=arm64 CGO_ENABLED=0 $(GO) build -o bin/go/windows_arm64/httpprobe.exe -ldflags '-X $(PKG)/pkg/gowebserver.version=$(VERSION)' cmd/httpprobe/httpprobe.go
+
+sign-windows: build-windows-exes $(CODESIGN_PFX)
+	for exe in $(WINDOWS_EXES); do \
+		$(SIGNTOOL) sign /f $(CODESIGN_PFX) /p $(CODESIGN_PASSWORD) /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $$exe; \
+	done
+
 dist: bin/release.tar.gz
 
 bin/release.tar.gz: $(ALL_BINARIES)
@@ -211,7 +236,7 @@ lint: $(ASSETS)
 	$(GO) vet ${SOURCE_DIRS}
 
 clean:
-	$(RM) -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz $(ASSETS) *.tar.bz2 *.snap
+	$(RM) -f ${BINARY_NAME} ${BINARY_NAME}-* cert.pem rsa.pem release.tar.gz $(ASSETS) $(CODESIGN_PFX) *.tar.bz2 *.snap
 	$(RM) -rf parts/ prime/ snap/.snapcraft/ stage/ *.snap
 	$(RM) -rf upload/
 	$(RM) -rf toolchain/
@@ -227,11 +252,11 @@ install/wasm/gowebserver.wasm: bin/go/js_wasm/gowebserver
 
 install/wasm/wasm_exec.js:
 	mkdir -p $(dir $@)
-	cp -f $(shell go env GOROOT)/lib/wasm/wasm_exec.js $@
+	cp -f "$(shell go env GOROOT)/lib/wasm/wasm_exec.js" $@
 
 install/wasm/wasm_exec.html:
 	mkdir -p $(dir $@)
-	cp -f $(shell go env GOROOT)/misc/wasm/wasm_exec.html $@
+	cp -f "$(shell go env GOROOT)/misc/wasm/wasm_exec.html" $@
 	sed -i 's/..\/..\/lib\/wasm\///g' $@
 
 internal/gowebserver/testing/nodir-testassets.zip: $(TEST_ARCHIVES) internal/gowebserver/testing/single-testassets.zip internal/gowebserver/testing/nested-testassets.zip
@@ -377,4 +402,4 @@ test-codecov:
 run-wasm: clean assets lint
 	$(GO) run cmd/gowebserver/gowebserver.go -http.port 8181 -path=install/wasm/ -verbose
 
-.PHONY : all assets dist lint clean check test test-10 coverage bench benchmark test-all install run deps presubmit gowebserver-image
+.PHONY : all assets dist lint clean check test test-10 coverage bench benchmark test-all install run deps presubmit gowebserver-image sign-windows build-windows-exes
