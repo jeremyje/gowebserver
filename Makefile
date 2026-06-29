@@ -286,7 +286,15 @@ coverage.txt: $(ASSETS)
 			cat package.coverage >> coverage.txt; \
 			$(RM) package.coverage; \
 		fi; \
-	done
+	done; \
+	sed -i '2,$${/mode: /d;}' $@
+
+bin/tools/gocover-cobertura$(EXE_EXTENSION):
+	mkdir -p $(dir $@)
+	GOBIN=$(dir $(REPOSITORY_ROOT)/$@) $(GO) install github.com/t-yuki/gocover-cobertura@latest
+
+coverage.xml: coverage.txt bin/tools/gocover-cobertura$(EXE_EXTENSION)
+	$(REPOSITORY_ROOT)/bin/tools/gocover-cobertura$(EXE_EXTENSION) < $< > $@
 
 bench: benchmark
 benchmark: $(ASSETS)

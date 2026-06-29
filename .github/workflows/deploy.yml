@@ -16,9 +16,9 @@ name: CI
 on:
   push:
     tags: ["v*"]
-    branches: ["main", "indexing"]
+    branches: ["main"]
   pull_request:
-    branches: ["main", "indexing"]
+    branches: ["main"]
 jobs:
   # Set the job key. The key is displayed as the job name
   # when a job name is not provided
@@ -28,6 +28,7 @@ jobs:
     permissions:
       contents: write
       packages: write
+      code-quality: write
     steps:
       - name: Checkout code
         # https://github.com/actions/checkout
@@ -58,7 +59,7 @@ jobs:
         run: |
           make test-10
           make benchmark
-          make coverage.txt
+          make coverage.txt coverage.xml
 
       - name: Push Code Coverage
         # https://github.com/codecov/codecov-action
@@ -70,6 +71,16 @@ jobs:
           name: codecov-umbrella # optional
           fail_ci_if_error: true # optional (default = false)
           verbose: true # optional (default = false)
+
+      - name: Upload Coverage Report
+        # https://github.com/actions/upload-code-coverage
+        # https://docs.github.com/en/code-security/how-tos/maintain-quality-code/set-up-code-coverage#step-2-upload-the-coverage-report
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-code-coverage@v1
+        with:
+          file: coverage.xml
+          language: Go
+          label: code-coverage/gotest
 
       - name: Build
         run: make all -j$(nproc)
