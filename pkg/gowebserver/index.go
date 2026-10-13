@@ -16,15 +16,13 @@ package gowebserver
 
 import (
 	"bytes"
-	_ "embed"
 	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 )
 
-//go:embed template-index.html
-var templateIndexHTML []byte
+var templateIndexHTML = mustLoadTemplate("template-index")
 
 type indexHTTPHandler struct {
 	page []byte

@@ -18,7 +18,6 @@ package gowebserver
 // http://sanatgersappa.blogspot.com/2013/03/handling-multiple-file-uploads-in-go.html
 import (
 	"crypto/sha256"
-	_ "embed"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -38,8 +37,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-//go:embed upload.html
-var uploadHTML []byte
+var uploadHTML = mustLoadTemplate("upload")
 
 const (
 	uploadFileFormName = "gowebserveruploadfile[]"

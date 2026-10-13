@@ -16,7 +16,6 @@ package gowebserver
 
 import (
 	"context"
-	_ "embed"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -36,8 +35,7 @@ import (
 )
 
 var (
-	//go:embed custom-index.html
-	customIndexHTML []byte
+	customIndexHTML = mustLoadTemplate("custom-index")
 	nestedDirSuffix = ".d"
 )
 

@@ -1,0 +1,390 @@
+:root {
+  --bg: #ffffff;
+  --bg-secondary: #f5f6f8;
+  --text: #1a1a1a;
+  --text-secondary: #555;
+  --border: #dde0e4;
+  --hover-bg: #e8eaee;
+  --link: #0366d6;
+  --shadow: rgba(0, 0, 0, 0.06);
+  --upload-glow: rgba(3, 102, 214, 0.12);
+  --success: #16a34a;
+  --error: #ef4444;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1b1e;
+    --bg-secondary: #232528;
+    --text: #e0e0e0;
+    --text-secondary: #999;
+    --border: #3a3d42;
+    --hover-bg: #35383e;
+    --link: #58a6ff;
+    --shadow: rgba(0, 0, 0, 0.2);
+    --upload-glow: rgba(88, 166, 255, 0.14);
+    --success: #4ade80;
+    --error: #f87171;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 16px;
+}
+
+h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+/* ===== Upload card ===== */
+.upload-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 32px;
+  overflow: hidden;
+}
+
+/* ===== Drop zone ===== */
+.drop-zone {
+  position: relative;
+  padding: 64px 24px;
+  text-align: center;
+  background: var(--bg);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.drop-zone:hover:not(.is-dragover):not(.is-uploading):not(.is-success):not(.is-error) {
+  background: var(--bg-secondary);
+}
+
+.drop-zone.is-dragover {
+  background: var(--bg-secondary);
+}
+
+.drop-zone.is-uploading,
+.drop-zone.is-success,
+.drop-zone.is-error {
+  cursor: default;
+}
+
+/* ===== SVG marching-ants border ===== */
+.drop-outline {
+  position: absolute;
+  inset: 12px;
+  width: calc(100% - 24px);
+  height: calc(100% - 24px);
+  pointer-events: none;
+  overflow: visible;
+  transition: opacity 0.2s ease;
+}
+
+.drop-outline-rect {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 2;
+  stroke-dasharray: 8 8;
+  transition: stroke 0.2s ease;
+}
+
+/* Hover: outline brightens */
+.drop-zone:hover:not(.is-dragover):not(.is-uploading):not(.is-success):not(.is-error) .drop-outline-rect {
+  stroke: var(--text-secondary);
+}
+
+/* Dragover: march + turn blue */
+.drop-zone.is-dragover .drop-outline-rect {
+  stroke: var(--link);
+  animation: march 0.35s linear infinite;
+}
+
+@keyframes march {
+  to { stroke-dashoffset: -16; }
+}
+
+/* Hide outline in active states */
+.drop-zone.is-uploading .drop-outline,
+.drop-zone.is-success .drop-outline,
+.drop-zone.is-error .drop-outline {
+  opacity: 0;
+}
+
+/* ===== Drop ripple on drop event ===== */
+.drop-zone.is-dropped::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background: radial-gradient(circle at center, var(--upload-glow) 0%, transparent 65%);
+  animation: drop-ripple 0.55s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes drop-ripple {
+  0%   { opacity: 0.9; transform: scale(0.25); }
+  100% { opacity: 0;   transform: scale(1.4); }
+}
+
+/* ===== Drop content (icon + label) ===== */
+.drop-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.drop-zone.is-uploading .drop-content,
+.drop-zone.is-success .drop-content,
+.drop-zone.is-error .drop-content {
+  visibility: hidden;
+}
+
+/* ===== Upload icon ===== */
+.upload-icon {
+  width: 52px;
+  height: 52px;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+/* Idle: gentle float */
+.drop-zone:not(.is-dragover):not(.is-uploading):not(.is-success):not(.is-error) .upload-icon {
+  animation: icon-float 3s ease-in-out infinite;
+}
+
+@keyframes icon-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-7px); }
+}
+
+/* Hover: icon brightens */
+.drop-zone:hover:not(.is-dragover):not(.is-uploading):not(.is-success):not(.is-error) .upload-icon {
+  color: var(--link);
+}
+
+/* Dragover: icon turns blue, float stops, arrow flies upward in a loop */
+.drop-zone.is-dragover .upload-icon {
+  color: var(--link);
+  animation: none;
+}
+
+.drop-zone.is-dragover .upload-arrow {
+  animation: upload-fly 0.75s ease-in-out infinite;
+}
+
+@keyframes upload-fly {
+  0%   { transform: translateY(0);    opacity: 1; }
+  55%  { transform: translateY(-16px); opacity: 0; }
+  56%  { transform: translateY(10px);  opacity: 0; }
+  85%  { transform: translateY(0);    opacity: 1; }
+  100% { transform: translateY(0);    opacity: 1; }
+}
+
+/* ===== File input (hidden) ===== */
+.file-input {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
+}
+
+.drop-label {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.drop-label-strong {
+  color: var(--link);
+  font-weight: 600;
+}
+
+.drop-label:hover .drop-label-strong {
+  text-decoration: underline;
+}
+
+.drop-hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+/* ===== State overlays ===== */
+.status {
+  display: none;
+  position: absolute;
+  inset: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: var(--bg);
+}
+
+.drop-zone.is-uploading .status-uploading,
+.drop-zone.is-success  .status-success,
+.drop-zone.is-error    .status-error {
+  display: flex;
+}
+
+/* ===== SVG snake spinner ===== */
+.upload-spinner {
+  width: 48px;
+  height: 48px;
+  animation: spinner-rotate 2s linear infinite;
+  transform-origin: center center;
+}
+
+.spinner-track {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 3.5;
+}
+
+.spinner-arc {
+  fill: none;
+  stroke: var(--link);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1, 125;
+  stroke-dashoffset: 0;
+  animation: spinner-dash 1.5s ease-in-out infinite;
+}
+
+@keyframes spinner-rotate {
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes spinner-dash {
+  0%   { stroke-dasharray: 1,  125; stroke-dashoffset: 0;    }
+  50%  { stroke-dasharray: 89, 125; stroke-dashoffset: -35;  }
+  100% { stroke-dasharray: 89, 125; stroke-dashoffset: -124; }
+}
+
+.status-uploading span {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+/* ===== Success: circle + check draw in ===== */
+.status-success {
+  animation: fade-up 0.25s ease forwards;
+}
+
+.status-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.status-success .status-text { color: var(--success); }
+
+.success-icon { overflow: visible; }
+
+/* Circle draws itself clockwise from the top */
+.success-circle {
+  fill: none;
+  stroke: var(--success);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 138;   /* 2π × 22 ≈ 138 */
+  stroke-dashoffset: 138;
+  transform-origin: 26px 26px;
+  transform: rotate(-90deg);
+  animation: draw-circle 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Checkmark draws itself after the circle finishes */
+.success-check {
+  fill: none;
+  stroke: var(--success);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 34;
+  stroke-dashoffset: 34;
+  animation: draw-check 0.35s ease forwards 0.45s;
+}
+
+@keyframes draw-circle { to { stroke-dashoffset: 0; } }
+@keyframes draw-check  { to { stroke-dashoffset: 0; } }
+
+/* ===== Error: shake ===== */
+.status-error {
+  animation: fade-up 0.25s ease forwards;
+}
+
+.status-error .status-text { color: var(--error); }
+
+.error-icon {
+  overflow: visible;
+  animation: shake 0.5s ease;
+}
+
+@keyframes shake {
+  0%,  100% { transform: translateX(0); }
+  15%        { transform: translateX(-8px); }
+  30%        { transform: translateX(7px); }
+  45%        { transform: translateX(-5px); }
+  60%        { transform: translateX(4px); }
+  75%        { transform: translateX(-2px); }
+  90%        { transform: translateX(2px); }
+}
+
+.error-detail {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  max-width: 320px;
+  text-align: center;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== Restart link ===== */
+.restart-link {
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.restart-link:hover { text-decoration: underline; }
+
+/* ===== Footer ===== */
+.footer {
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}

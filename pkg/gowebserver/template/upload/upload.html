@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Files</title>
+  <link rel="canonical" href="{{.UploadHTTPPath}}">
+  <style>
+    {{include "upload.css"}}
+  </style>
+</head>
+
+<body>
+  <h1>Upload Files</h1>
+
+  <form method="post" action="{{.UploadHTTPPath}}" enctype="multipart/form-data" novalidate>
+    <div class="upload-card">
+      <div class="drop-zone" id="drop-zone">
+
+        <!-- SVG marching-ants border -->
+        <svg class="drop-outline" aria-hidden="true">
+          <rect class="drop-outline-rect" x="0" y="0" width="100%" height="100%" rx="4" ry="4" />
+        </svg>
+
+        <!-- Idle / ready content -->
+        <div class="drop-content">
+          <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <g class="upload-arrow">
+              <line x1="12" y1="15" x2="12" y2="3" />
+              <polyline points="7 8 12 3 17 8" />
+            </g>
+            <line x1="4" y1="21" x2="20" y2="21" />
+            <rect x="4" y="17" width="16" height="4" rx="1" />
+          </svg>
+
+          <input type="file" name="{{.UploadFileFormName}}" id="file-input" class="file-input" multiple />
+          <label for="file-input" class="drop-label" id="drop-label">
+            <span class="drop-label-strong" id="drop-label-strong">Choose files</span><span
+              id="drop-label-rest"> or drag and drop here</span>
+          </label>
+          <span class="drop-hint">Multiple files supported</span>
+        </div>
+
+        <!-- Uploading -->
+        <div class="status status-uploading">
+          <svg class="upload-spinner" viewBox="25 25 50 50" aria-hidden="true">
+            <circle class="spinner-track" cx="50" cy="50" r="20" />
+            <circle class="spinner-arc"   cx="50" cy="50" r="20" />
+          </svg>
+          <span>Uploading&hellip;</span>
+        </div>
+
+        <!-- Success -->
+        <div class="status status-success">
+          <!-- 52×52 viewBox; circle r=22 centered at 26,26; circumference ≈ 138 -->
+          <svg class="success-icon" width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
+            <circle class="success-circle" cx="26" cy="26" r="22" />
+            <path   class="success-check"  d="M14 27 L22 35 L38 17" />
+          </svg>
+          <span class="status-text">Upload complete!</span>
+          <a href="{{.UploadHTTPPath}}" class="restart-link restart">Upload more files</a>
+        </div>
+
+        <!-- Error -->
+        <div class="status status-error">
+          <svg class="error-icon" width="52" height="52" viewBox="0 0 52 52" fill="none"
+            stroke="var(--error)" stroke-width="3" stroke-linecap="round" aria-hidden="true">
+            <circle cx="26" cy="26" r="22" />
+            <line x1="26" y1="16" x2="26" y2="29" />
+            <circle cx="26" cy="37" r="2" fill="var(--error)" stroke="none" />
+          </svg>
+          <span class="status-text">Upload failed</span>
+          <span class="error-detail" id="error-detail"></span>
+          <a href="{{.UploadHTTPPath}}" class="restart-link restart">Try again</a>
+        </div>
+
+      </div>
+    </div>
+
+    <input type="hidden" name="token" value="{{.UploadToken}}" />
+  </form>
+
+  <div class="footer">Go Web Server {{.ApplicationVersion}}</div>
+
+  <script>
+    'use strict';
+    (function () {
+      {{include "upload.js"}}
+    })();
+  </script>
+</body>
+
+</html>

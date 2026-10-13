@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>{{.FileName}}</title>
+  <script>
+    try {
+      var t = localStorage.getItem('gows-theme');
+      if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+      if (localStorage.getItem('gows-wrap') === '1') document.documentElement.classList.add('wrap');
+    } catch (e) { }
+  </script>
+  <style>
+    {{template "page-style"}}
+
+    {{include "rich-view.css"}}
+
+    {{.ChromaCSS}}
+  </style>
+</head>
+
+<body>
+  <header class="hero" id="hero">
+    <nav class="crumbs" id="crumbs" aria-label="Breadcrumb"></nav>
+    <h1 class="title" id="title">{{.FileName}}</h1>
+    <p class="meta">
+      {{if .Language}}<span class="lang">{{.Language}}</span>{{end}}
+      {{if .Lines}}<span>{{.Lines}} {{if eq .Lines 1}}line{{else}}lines{{end}}</span>{{end}}
+      {{if .Size}}<span>{{.Size}}</span>{{end}}
+    </p>
+  </header>
+
+  <div class="toolbar" id="toolbar">
+    <a class="back" href="{{.ParentPath}}" aria-label="Back to folder" title="Back to folder">
+      <svg viewBox="0 0 24 24"><path class="i-back" d="M15 18l-6-6 6-6" /></svg><span>Folder</span>
+    </a>
+    <span class="tb-title" id="tb-title" aria-hidden="true">{{.FileName}}</span>
+    <span class="spacer"></span>
+    {{if .AvailableThemes}}
+    <label class="select" title="Code colors">
+      <select id="code-theme" aria-label="Code colors">
+        {{range .AvailableThemes}}
+        <option value="{{$.RawURL}}?view=rich&amp;theme={{.}}" {{if eq . $.Theme}}selected{{end}}>{{if eq . "auto"}}Match theme{{else}}{{.}}{{end}}</option>
+        {{end}}
+      </select>
+      <svg viewBox="0 0 24 24"><polyline class="i-caret" points="6 9 12 15 18 9" /></svg>
+    </label>
+    <button class="icon-btn" id="wrap" type="button" aria-pressed="false" aria-label="Wrap long lines" title="Wrap long lines">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 18h5" /><g class="i-wrap"><path d="M4 12h13a3 3 0 010 6h-4" /><polyline points="15 16 13 18 15 20" /></g></svg>
+    </button>
+    <button class="icon-btn" id="copy" type="button" aria-label="Copy contents" title="Copy contents" hidden>
+      <svg viewBox="0 0 24 24"><rect class="i-sheet" x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V6a2 2 0 012-2h8" /></svg>
+    </button>
+    {{end}}
+    <a class="icon-btn" href="{{.RawURL}}" aria-label="Open raw file" title="Open raw file">
+      <svg viewBox="0 0 24 24"><path class="i-launch" d="M14 4h6v6M20 4l-9 9" /><path d="M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5" /></svg>
+    </a>
+    <a class="icon-btn" href="{{.RawURL}}" download aria-label="Download" title="Download">
+      <svg viewBox="0 0 24 24"><defs><clipPath id="dl-clip"><rect x="0" y="0" width="24" height="23.7" /></clipPath></defs><g clip-path="url(#dl-clip)"><path class="i-drop" d="M12 4v11M7 10l5 5 5-5" /></g><path class="i-gl" d="M5 20h7" /><path class="i-gr" d="M12 20h7" /></svg>
+    </a>
+    <button class="icon-btn" id="theme" type="button" aria-label="Theme: automatic">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /><path d="M12 4a8 8 0 010 16z" fill="currentColor" /></svg>
+    </button>
+  </div>
+
+  <main>
+    {{if .Oversized}}
+    <div class="notice">
+      <p><strong>Too large to preview</strong>This file is too large for rich view (limit: 10 MB).</p>
+      <a href="{{.RawURL}}" download><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>Download raw file</a>
+    </div>
+    {{else}}
+    <div class="code" id="code">{{.HighlightedHTML}}</div>
+    {{end}}
+  </main>
+
+  <footer class="site-footer">gowebserver {{.ApplicationVersion}}</footer>
+
+  {{template "page-script"}}
+  <script>
+    (function () {
+      'use strict';
+      {{include "rich-view.js"}}
+    })();
+  </script>
+</body>
+
+</html>

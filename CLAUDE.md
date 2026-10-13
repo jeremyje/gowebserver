@@ -18,6 +18,11 @@ make coverage         # Generate coverage report
 make lint             # Run go fmt and go vet
 make deps             # Download and tidy dependencies
 make run              # Build and run locally on port 8181
+make test-js          # Run the templates' JavaScript tests (also part of make test)
+make benchmark-js     # Run the templates' JavaScript benchmarks
+make test-browser     # Run the pages in headless Chromium and Firefox
+make benchmark-browser  # Time the file browser in a headless browser
+make browse TARGET=.  # Open a URL or folder headless: logs, timings, screenshot
 make presubmit        # Run complete CI checks locally
 ```
 
@@ -51,9 +56,27 @@ internal/gowebserver/testing/  # Test utilities and embedded test archives
 - **index.go / customindex.go**: Directory listing templates (basic and custom css UI)
 - **monitoring.go**: Prometheus metrics, OpenTelemetry tracing, pprof endpoints
 - **upload.go**: Multi-file upload with MD5 token validation
-- **richview.go / rich-view.html**: Syntax-highlighted text viewer (`?view=rich`)
-- **page-theme.html**: Templates both pages include (`page-style`, `page-script`): design tokens, header, toolbar, button hover, theme switcher, the title that travels into the toolbar. Change shared look and behavior there, not in either page; `createTemplate` parses it into every page's template set
-- **custom-index.html**: Enhanced file browser template. Media is emitted as a compact JS array and rendered by a virtualized grid (only rows near the viewport are in the DOM); the slideshow mounts only the current slide and its neighbors. Keep both properties when editing, since folders can hold tens of thousands of photos. `testdata/test-modernindex.html` is a golden render of it; regenerate with the `cp` command `TestIndexHTTPHandlerServeHTTP` prints.
+- **richview.go**: Syntax-highlighted text viewer (`?view=rich`)
+- **templates.go**: Loads the page templates; see below
+
+### Page templates (pkg/gowebserver/template/)
+
+Each template has a directory, `template/NAME/NAME.html`, with its CSS and JavaScript in files beside it. A page is served as one response, so `loadTemplate` puts them back inline: a line that is only `{{include "FILE"}}` becomes that file's content. Included files are plain CSS or JavaScript; anything that needs a template action stays in the HTML (an action in an included file is an error).
+
+- **custom-index/**: Enhanced file browser. Its scripts (`util.js`, `thumbs.js`, `data.js`, `accent.js`, `grid.js`, `scrubber.js`, `slideshow.js`, `main.js`) are included in that order inside one function, so they share a scope. Media is emitted as a compact JS array and rendered by a virtualized grid (only rows near the viewport are in the DOM); the slideshow mounts only the current slide and its neighbors. Keep both properties when editing, since folders can hold tens of thousands of photos. `testdata/test-modernindex.html` is a golden render of it; regenerate with the `cp` command `TestIndexHTTPHandlerServeHTTP` prints.
+- **page-theme/**: Templates both pages include (`page-style`, `page-script`): design tokens, header, toolbar, button hover, theme switcher, the title that travels into the toolbar. Change shared look and behavior there, not in either page; `createTemplate` parses it into every page's template set
+- **rich-view/**: The text viewer's page
+- **upload/**: The upload page
+- **template-index/**: The plain directory listing
+
+JavaScript tests come in two kinds, both driven by `Makefile_javascript.mk` (Node and npm are assumed installed; nothing is installed beside the sources):
+
+- `template/NAME/test/*.test.js` and `template/NAME/bench/*.bench.js` run on Node alone (`node:test`, no packages) against the stand-in browser in `template/harness.js`, which has no layout: a test sets the sizes it needs. `make test-js` (part of `make test`, through `TEST_TARGETS`) and `make benchmark-js`.
+- `template/NAME/browser/*.browser.js` run in real headless browsers (Playwright, installed with the browsers under `build/toolchain`) against the real server, through `template/browser.js`. `make test-browser` runs them in each of `HEADLESS_BROWSERS` (chromium and firefox; webkit needs system libraries). It is not part of `make test`.
+
+To see how a page actually behaves, use the browser rather than guessing: `make browse TARGET=<url or folder> [SCREENSHOT=file.png] [BROWSER=firefox]` prints what the page logged, what failed, timings and grid counts and saves a screenshot (read it with the Read tool); `make benchmark-browser [PHOTOS=5000]` times loading and scrolling a generated folder, cold and warm. These rebuild the server first, since the templates are embedded in it.
+
+Only `template/*/*.{html,css,js}` is embedded, so keep tests in those subdirectories.
 
 Filesystem handlers are mounted with `http.StripPrefix`, so `r.URL.Path` lacks the serve path (e.g. `/e`). Build links and redirects relative to the request (`relativeURL`, `redirectRelative`), never from `r.URL.Path`.
 

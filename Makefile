@@ -24,6 +24,12 @@ PLAN9_PLATFORMS =
 IOS_PLATFORMS = 
 NETBSD_PLATFORMS = netbsd/amd64 netbsd/arm64 netbsd/arm/v5 netbsd/arm/v6 netbsd/arm/v7 # netbsd/386 
 
+JAVASCRIPT_DIR = pkg/gowebserver/template
+JAVASCRIPT_SERVER = build/bin/$(HOST_OS)/$(HOST_ARCH)/gowebserver$(EXE)
+
+# Before Makefile_build.mk: it adds test-js to the TEST_TARGETS that the test
+# rule there is made from.
+include Makefile_javascript.mk
 include Makefile_build.mk
 
 run: clean assets lint
