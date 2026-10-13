@@ -3240,8 +3240,8 @@
     .ss-strip {
       display: flex;
       justify-content: center;
-      gap: 4px;
-      height: 52px;
+      gap: 5px;
+      height: 63px;
       pointer-events: auto;
     }
 
@@ -3251,8 +3251,8 @@
 
     .ss-strip button {
       flex: none;
-      width: 44px;
-      height: 44px;
+      width: 55px;
+      height: 55px;
       margin-top: 4px;
       padding: 0;
       border: 0;
@@ -3279,15 +3279,6 @@
       height: 100%;
       object-fit: cover;
       display: block;
-    }
-
-     
-    .ss-strip button {
-      transform-origin: 50% 100%;
-    }
-
-    .ss-strip.docking button {
-      transition: opacity 0.2s, box-shadow 0.2s;
     }
 
      
@@ -4228,21 +4219,35 @@
       
       
       
+      
+      
+      
+      
+      
       var SMALL_PICTURE_OVER = 2e6, smallQueue = [], smallActive = 0, SMALL_CONCURRENCY = 2;
+      var smallFound = 0, smallMissing = new Set(), SMALL_GIVE_UP = 4;
       function smallPicture(el, w, h) {
         if (el.tagName !== 'IMG' || !window.createImageBitmap || !window.fetch ||
           !(el.naturalWidth * el.naturalHeight > SMALL_PICTURE_OVER)) return Promise.resolve(el);
         var src = el.currentSrc;
+        var direct = function () { return !smallFound && smallMissing.size >= SMALL_GIVE_UP; };
+        if (direct()) return Promise.resolve(el);
+        if (smallMissing.has(src)) return Promise.resolve(null);
         return new Promise(function (resolve) {
           smallQueue.push(function () {
             return fetch(src, { cache: 'only-if-cached', mode: 'same-origin' }).then(function (res) {
               if (!res.ok) throw new Error('not cached');
+              smallFound++;
               return res.blob();
             }).then(function (blob) {
               return createImageBitmap(blob, { resizeWidth: w, resizeHeight: h, resizeQuality: 'low' });
+            }, function () {
+              smallMissing.add(src);
+              
+              return direct() && el.currentSrc === src ? el : null;
             }).catch(function () {
               
-              return el.currentSrc === src ? el : null;
+              return null;
             }).then(resolve);
           });
           pumpSmall();
@@ -4566,7 +4571,10 @@
               a.style.height = r.tileH + 'px';
               a.style.left = (j * (r.tileW + r.gap)) + 'px';
               a._item = it;
-              a.innerHTML = (it.video ? '' : '<img alt="" decoding="async" draggable="false">') +
+              
+              
+              a.innerHTML = (!it.video ? '<img alt="" decoding="async" draggable="false">' :
+                CFG.videoThumbs ? '<img class="vthumb" alt="" decoding="async" draggable="false">' : '') +
                 '<span class="cap">' + escapeHTML(it.name) + '</span>' +
                 (it.video ? '<span class="badge">' + svgUse('ui-play') + '<span class="dur">' + (it.dur ? fmtDuration(it.dur) : '') + '</span></span>' : '');
               div.appendChild(a);
@@ -4586,10 +4594,14 @@
           if (a._loading) return;
           a._loading = true;
           var it = a._item;
-          if (it.video) { queueVideo(a); return; }
+          if (it.video && !CFG.videoThumbs) { queueVideo(a); return; }
           var img = a.firstChild;
           thumbLoader.load(img, tileThumbURL(it, parseFloat(a.style.width)), function (ok) {
-            showTile(a, ok ? 'ready' : 'err');
+            if (ok || !it.video) { showTile(a, ok ? 'ready' : 'err'); return; }
+            
+            
+            img.remove();
+            queueVideo(a);
           });
         }
 
@@ -4597,7 +4609,7 @@
         
         
         function unqueueTile(a) {
-          if (a._loading && !a._item.video && thumbLoader.unqueue(a.firstChild)) a._loading = false;
+          if (a._loading && thumbLoader.unqueue(a.firstChild)) a._loading = false;
         }
 
         function render() {
@@ -4605,11 +4617,17 @@
           if (!rows.length) return;
           var vh = innerHeight;
           var viewTop = scrollY - top();
-          var over = fast ? vh * 0.5 : vh * 1.25;
+          
+          
+          
+          
+          
+          var keep = vh * 1.25, over = fast ? vh * 0.5 : keep;
           var first = rowAt(Math.max(0, viewTop - over));
           var last = rowAt(viewTop + vh + over);
+          var keepFirst = rowAt(Math.max(0, viewTop - keep)), keepLast = rowAt(viewTop + vh + keep);
           mounted.forEach(function (div, i) {
-            if (i < first || i > last) { unmountRow(div); mounted.delete(i); }
+            if (i < keepFirst || i > keepLast) { unmountRow(div); mounted.delete(i); }
           });
           var frag = null;
           for (var i = first; i <= last; i++) {
@@ -4669,7 +4687,12 @@
             if (div.classList.contains('m-head') || div.classList.contains('m-group')) return;
             var rect = div.getBoundingClientRect();
             if (rect.bottom <= 0 || rect.top >= innerHeight) return;
-            var media = div.querySelectorAll('.tile.ready:not(.vid) img, .tile.ready video');
+            
+            var media = [];
+            for (var c = div.firstChild; c; c = c.nextSibling) {
+              var m = c.classList.contains('ready') && (c.querySelector('img') || c.querySelector('video'));
+              if (m) media.push(m);
+            }
             Array.prototype.push.apply(onScreen, media);
             var d = Math.abs(rect.top + rect.height / 2 - mid);
             if (d < bestD && media.length) { best = media[0]; bestD = d; }
@@ -4801,11 +4824,14 @@
       
       
       
+      
+      
+      
+      
+      
+      
+      
       var videoQueue = [], videoActive = 0, VIDEO_CONCURRENCY = 3;
-      
-      
-      
-      var VIDEO_FRAME_AT = 5;
 
       function fmtDuration(sec) {
         var t = Math.floor(sec), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
@@ -4825,9 +4851,31 @@
         }
       }
 
-      function mountVideo(a) {
+      
+      
+      function tileVideo(a) {
         var it = a._item;
         var v = doc.createElement('video');
+        v.muted = true;
+        v.loop = true;
+        v.playsInline = true;
+        v.disablePictureInPicture = true;
+        v.setAttribute('aria-hidden', 'true');
+        v.addEventListener('loadedmetadata', function () {
+          if (!isFinite(v.duration)) return;
+          it.dur = v.duration;
+          var d = a.querySelector('.dur');
+          if (d) d.textContent = fmtDuration(v.duration);
+        }, { once: true });
+        v.addEventListener('playing', function () { if (a._hovering) revealVideo(a); });
+        return v;
+      }
+
+      
+      
+      
+      function mountVideo(a) {
+        var v = tileVideo(a);
         var done = false;
         videoActive++;
         var release = function () {
@@ -4837,48 +4885,11 @@
           pumpVideos();
         };
         a._release = release;
-        v.muted = true;
-        v.loop = true;
-        v.playsInline = true;
         v.preload = 'metadata';
-        v.disablePictureInPicture = true;
-        v.setAttribute('aria-hidden', 'true');
-        v.addEventListener('loadedmetadata', function () {
-          it.dur = v.duration;
-          var d = a.querySelector('.dur');
-          if (d && isFinite(v.duration)) d.textContent = fmtDuration(v.duration);
-          
-          
-          if (!CFG.videoThumbs && isFinite(v.duration) && v.duration <= VIDEO_FRAME_AT) v.currentTime = v.duration * 0.1;
-          showTile(a, 'ready');
-          release();
-        }, { once: true });
+        v.addEventListener('loadedmetadata', function () { showTile(a, 'ready'); release(); }, { once: true });
         v.addEventListener('error', function () { showTile(a, 'err'); release(); }, { once: true });
         setTimeout(release, 10000);
-        v.addEventListener('playing', function () { if (a._hovering) revealVideo(a); });
-        
-        
-        
-        
-        
-        if (CFG.videoThumbs) {
-          var th = doc.createElement('img');
-          th.className = 'vthumb';
-          th.alt = '';
-          th.decoding = 'async';
-          th.draggable = false;
-          
-          
-          
-          
-          thumbLoader.load(th, tileThumbURL(it, parseFloat(a.style.width)), function (ok) {
-            if (ok) showTile(a, 'ready'); else th.remove();
-          });
-          a.insertBefore(th, a.firstChild);
-          v.src = it.url;
-        } else {
-          v.src = it.url + '#t=' + VIDEO_FRAME_AT;
-        }
+        v.src = a._item.url + '#t=0.5';
         a.insertBefore(v, a.firstChild);
       }
 
@@ -4892,27 +4903,29 @@
       
       
       function previewVideo(a, on) {
-        var v = a.querySelector('video');
-        if (!v) return;
         clearTimeout(a._pauseTimer);
         a._hovering = on;
+        var v = a.querySelector('video');
         if (!a.querySelector('.vthumb')) {
+          if (!v) return;
           if (on) v.play().catch(function () { }); else v.pause();
           return;
         }
         if (!on) {
           a.classList.remove('vplay');
-          a._pauseTimer = setTimeout(function () { v.pause(); }, VTHUMB_FADE_BACK);
+          if (v) a._pauseTimer = setTimeout(function () { v.pause(); }, VTHUMB_FADE_BACK);
           return;
+        }
+        if (!v) {
+          
+          if (!a.classList.contains('ready')) return;
+          v = tileVideo(a);
+          v.src = a._item.url;
+          
+          a.insertBefore(v, a.firstChild);
         }
         
         if (!v.paused && v.readyState > 2) revealVideo(a);
-        
-        
-        if (!a._warm && !a._seeked && isFinite(v.duration) && v.duration > 0) {
-          a._seeked = true;
-          v.currentTime = v.duration * 0.1;
-        }
         v.play().catch(function () { });
       }
 
@@ -4924,10 +4937,8 @@
 
       function unloadVideo(a) {
         clearTimeout(a._pauseTimer);
-        a._hovering = a._warm = a._seeked = false;
+        a._hovering = a._warm = false;
         a.classList.remove('vplay', 'vwarm');
-        var th = a.querySelector('.vthumb');
-        if (th) { thumbLoader.cancel(th); th.remove(); }
         var v = a.querySelector('video');
         if (v) {
           v.pause();
@@ -5393,8 +5404,6 @@
             if (b !== before) strip.insertBefore(b, before); else before = before.nextSibling;
             if (k === idx) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
           }
-          
-          if (dockGeo) { dockMeasure(); dock(); }
         }
 
         strip.addEventListener('click', function (e) {
@@ -5430,85 +5439,6 @@
         }
         dlg.addEventListener('pointermove', stripZone);
         dlg.addEventListener('pointerdown', stripZone);
-
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        var DOCK_MAX = 1.9, DOCK_REACH = 130, DOCK_EASE = 0.35;
-        var dockX = null, dockGeo = null, dockLeft = 0, dockFrame = 0;
-        var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-        function dockMeasure() {
-          dockGeo = Array.prototype.map.call(strip.children, function (b) {
-            return { el: b, c: b.offsetLeft + b.offsetWidth / 2, w: b.offsetWidth };
-          });
-          
-          dockLeft = strip.offsetParent ? strip.offsetParent.getBoundingClientRect().left : 0;
-        }
-        function dockTick() {
-          dockFrame = 0;
-          if (!dockGeo) return;
-          var moving = false, extra = 0;
-          for (var i = 0; i < dockGeo.length; i++) {
-            var d = dockX === null ? Infinity : Math.abs(dockX - dockGeo[i].c);
-            var target = d < DOCK_REACH ? 1 + (DOCK_MAX - 1) * (1 + Math.cos(Math.PI * d / DOCK_REACH)) / 2 : 1;
-            
-            
-            var el = dockGeo[i].el, cur = el._dockS || 1;
-            var s = cur + (target - cur) * DOCK_EASE;
-            if (Math.abs(target - s) < 0.002) s = target; else moving = true;
-            el._dockS = s;
-            extra += dockGeo[i].w * (s - 1);
-          }
-          if (!moving && dockX === null) {
-            undock();
-            return;
-          }
-          
-          
-          var before = 0;
-          for (var j = 0; j < dockGeo.length; j++) {
-            var grow = dockGeo[j].w * (dockGeo[j].el._dockS - 1);
-            var shift = before + grow / 2 - extra / 2;
-            before += grow;
-            var lift = dockGeo[j].el.hasAttribute('aria-current') ? ' translateY(-4px)' : '';
-            dockGeo[j].el.style.transform = 'translateX(' + shift.toFixed(1) + 'px)' + lift + ' scale(' + dockGeo[j].el._dockS.toFixed(3) + ')';
-          }
-          if (moving) dockFrame = requestAnimationFrame(dockTick);
-        }
-        function dock() {
-          if (!dockFrame) dockFrame = requestAnimationFrame(dockTick);
-        }
-        function undock() {
-          cancelAnimationFrame(dockFrame);
-          dockFrame = 0;
-          dockX = null;
-          dockGeo = null;
-          strip.classList.remove('docking');
-          Array.prototype.forEach.call(strip.children, function (b) { b.style.transform = ''; b._dockS = 1; });
-        }
-        strip.addEventListener('pointermove', function (e) {
-          if (e.pointerType !== 'mouse' || reduceMotion.matches) return;
-          if (!dockGeo) dockMeasure();
-          dockX = e.clientX - dockLeft;
-          strip.classList.add('docking');
-          dock();
-        });
-        
-        strip.addEventListener('pointerleave', function () {
-          if (!dockGeo) return;
-          dockX = null;
-          dock();
-        });
 
         function durationFor(v) {
           return Math.round(420 - Math.min(Math.abs(v || 0), 2) * 110);
@@ -5865,7 +5795,6 @@
           dx = 0;
           zoom = { z: 1, x: 0, y: 0 };
           ambient.reset();
-          undock();
           hideStrip();
           strip.innerHTML = '';
           dlg.querySelector('.ss-bg').style.opacity = '';

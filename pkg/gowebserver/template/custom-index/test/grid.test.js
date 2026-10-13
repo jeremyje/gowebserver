@@ -36,6 +36,8 @@ function setup(media, opts) {
   opts = Object.assign({ sort: 'name', thumbs: true, videoThumbs: true, width: 1280 }, opts);
   const opened = [];
   const pg = page('<p id="summary"></p><p id="no-match"></p><div id="media"></div>', {
+    // A mouse, which is what hovers.
+    media: { '(hover: hover) and (pointer: fine)': opts.mouse !== false },
     globals: {
       GOWS: { sort: opts.sort, thumbs: opts.thumbs, videoThumbs: opts.videoThumbs, media },
       pageAmbient: { show() { } },
@@ -183,18 +185,72 @@ test('nothing is fetched during a fling; it loads when the scroll settles', asyn
   assert.equal(g.pg.requests.length, 4);
 });
 
-test('at most three videos load at once, each with its thumbnail', async () => {
-  const g = setup(folder(0, 9));
-  assert.equal(g.el.querySelectorAll('video').length, 3);
+test('a fling keeps the rows it has, and their pictures', async () => {
+  const g = setup(folder(5000));
   await g.pg.settle();
-  assert.deepEqual(g.pg.requests.filter((r) => r.el.tagName === 'IMG').map((r) => r.url),
-    ['v0.mp4?width=512&height=288&fit=outside', 'v1.mp4?width=512&height=288&fit=outside', 'v2.mp4?width=512&height=288&fit=outside']);
-  // Its length arrives with the metadata, and frees the slot.
-  const v = g.el.querySelector('video');
+  g.arrive();
+  const shown = g.el.querySelectorAll('.tile.ready');
+  assert.equal(shown.length, 4);
+  await g.pg.settle();
+  const loading = g.pg.requests.map((r) => r.el);
+  assert.equal(loading.length, 4);
+  const before = g.rows().length;
+  // Fast, but not far: everything that was there is still near.
+  g.pg.tick(10);
+  g.pg.scroll(300);
+  g.pg.frame();
+  assert.ok(shown.every((a) => a.isConnected && a.classList.contains('ready')), 'shown tiles stay');
+  assert.ok(loading.every((img) => img.isConnected && img.src !== ''), 'pictures on the way are still wanted');
+  assert.ok(g.rows().length >= before);
+});
+
+test('a video tile is the server\'s thumbnail; the video comes on hover', async () => {
+  const g = setup(folder(0, 9));
+  await g.pg.settle();
+  // Thumbnails, through the same queue as the photos', and no videos.
+  assert.equal(g.el.querySelectorAll('video').length, 0);
+  assert.deepEqual(g.pg.requests.map((r) => r.url),
+    [0, 1, 2, 3].map((i) => 'v' + i + '.mp4?width=512&height=288&fit=outside'));
+  const tile = g.el.querySelector('.tile.vid');
+  // Nothing to preview until there's a picture to fade from.
+  tile.fire('pointerover');
+  assert.equal(tile.querySelector('video'), null);
+  g.arrive();
+  assert.equal(tile.classList.contains('ready'), true);
+
+  tile.fire('pointerover');
+  const v = tile.querySelector('video');
+  assert.equal(v.src, 'v0.mp4');
+  assert.equal(v.paused, false);
+  assert.equal(v.currentTime, undefined, 'it plays from the start');
+  assert.equal(tile.firstChild, v, 'under the thumbnail');
+  assert.equal(g.el.querySelectorAll('video').length, 1);
+  // The thumbnail gives way once the video is really playing.
+  assert.equal(tile.classList.contains('vplay'), false);
+  v.fire('playing');
+  assert.equal(tile.classList.contains('vplay'), true);
+  // Its length arrives with the video.
+  assert.equal(tile.querySelector('.dur').textContent, '');
   v.duration = 75;
   v.fire('loadedmetadata');
-  assert.equal(v.parentNode.querySelector('.dur').textContent, '1:15');
-  assert.equal(g.el.querySelectorAll('video').length, 4);
+  assert.equal(tile.querySelector('.dur').textContent, '1:15');
+
+  // Leaving brings the thumbnail back, then pauses the same video.
+  tile.fire('pointerout', { relatedTarget: null });
+  assert.equal(tile.classList.contains('vplay'), false);
+  g.pg.tick(400);
+  assert.equal(v.paused, true);
+  tile.fire('pointerover');
+  assert.equal(tile.querySelectorAll('video').length, 1);
+  assert.equal(v.paused, false);
+});
+
+test('without a mouse a video tile never makes a video', async () => {
+  const g = setup(folder(0, 2), { mouse: false });
+  await g.pg.settle();
+  g.arrive();
+  g.el.querySelector('.tile.vid').fire('pointerover');
+  assert.equal(g.el.querySelectorAll('video').length, 0);
 });
 
 test('a video whose thumbnail fails shows the video alone', async () => {
@@ -204,26 +260,23 @@ test('a video whose thumbnail fails shows the video alone', async () => {
   const tile = g.el.querySelector('.tile.vid');
   assert.equal(tile.querySelector('.vthumb'), null);
   assert.equal(tile.classList.contains('err'), false);
-  assert.ok(tile.querySelector('video'));
+  assert.equal(tile.querySelector('video').src, 'v0.mp4#t=0.5');
 });
 
-test('without server frames a video tile asks the browser for one', () => {
-  const g = setup(folder(0, 1), { videoThumbs: false });
-  const v = g.el.querySelector('video');
-  // The frame five seconds in.
-  assert.equal(v.src, 'v0.mp4#t=5');
+test('without server frames a video tile is the video, a few loading at once', () => {
+  const g = setup(folder(0, 9), { videoThumbs: false });
+  assert.equal(g.el.querySelectorAll('video').length, 3);
   assert.equal(g.el.querySelector('.vthumb'), null);
+  const v = g.el.querySelector('video');
+  // A frame from just after the start, which the browser picks.
+  assert.equal(v.src, 'v0.mp4#t=0.5');
+  // Its length arrives with the metadata, and frees the slot.
   v.duration = 75;
   v.fire('loadedmetadata');
   assert.equal(v.currentTime, undefined);
-});
-
-test('a video shorter than that shows a frame from early on', () => {
-  const g = setup(folder(0, 1), { videoThumbs: false });
-  const v = g.el.querySelector('video');
-  v.duration = 3;
-  v.fire('loadedmetadata');
-  assert.ok(Math.abs(v.currentTime - 0.3) < 1e-9, String(v.currentTime));
+  assert.equal(v.parentNode.querySelector('.dur').textContent, '1:15');
+  assert.equal(v.parentNode.classList.contains('ready'), true);
+  assert.equal(g.el.querySelectorAll('video').length, 4);
 });
 
 test('a picture fades in at rest and appears at once while scrolling', async () => {

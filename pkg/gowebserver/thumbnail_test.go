@@ -772,9 +772,9 @@ func TestThumbnailVideo(t *testing.T) {
 		if !strings.Contains(string(args), "-i pipe:0") {
 			t.Errorf("ffmpeg args %q: want the file piped to stdin", args)
 		}
-		// 10% of the 20s the probe reported.
-		if runs := frameArgs(t, argsFile); len(runs) != 1 || !strings.Contains(runs[0], "-ss 2.000 -i pipe:0") {
-			t.Errorf("frame runs %q: want one at 2s", runs)
+		// The probe reported 20s, so there is a frame five seconds in.
+		if runs := frameArgs(t, argsFile); len(runs) != 1 || !strings.Contains(runs[0], "-ss 5.000 -i pipe:0") {
+			t.Errorf("frame runs %q: want one at 5s", runs)
 		}
 	})
 
@@ -820,8 +820,8 @@ func TestThumbnailVideo(t *testing.T) {
 		if !strings.Contains(string(args), "-i "+filepath.Join(dir, "clip.mp4")) {
 			t.Errorf("ffmpeg args %q: want the file's path so ffmpeg can seek", args)
 		}
-		if runs := frameArgs(t, argsFile); len(runs) != 1 || !strings.Contains(runs[0], "-ss 2.000 -i ") {
-			t.Errorf("frame runs %q: want one at 10%% of 20s", runs)
+		if runs := frameArgs(t, argsFile); len(runs) != 1 || !strings.Contains(runs[0], "-ss 5.000 -i ") {
+			t.Errorf("frame runs %q: want one at 5s", runs)
 		}
 	})
 
@@ -833,8 +833,18 @@ func TestThumbnailVideo(t *testing.T) {
 		bin, argsFile := fakeFFmpeg(t, stripes(64, 36), "N/A")
 		h, _ := newTestThumbnailHandler(t, os.DirFS(dir), bin)
 		decodeThumb(t, thumbGet(t, h, "/clip.mp4?width=32", nil))
-		if runs := frameArgs(t, argsFile); len(runs) != 1 || !strings.Contains(runs[0], "-ss 1.000 ") {
-			t.Errorf("frame runs %q: want one a second in", runs)
+		if runs := frameArgs(t, argsFile); len(runs) != 1 || !strings.Contains(runs[0], "-ss 5.000 ") {
+			t.Errorf("frame runs %q: want one five seconds in", runs)
+		}
+	})
+
+	t.Run("a video shorter than that", func(t *testing.T) {
+		bin, argsFile := fakeFFmpeg(t, stripes(64, 36), "00:00:04.00")
+		h, _ := newTestThumbnailHandler(t, video, bin)
+		decodeThumb(t, thumbGet(t, h, "/clip.mp4?width=32", nil))
+		// 10% of the 4s the probe reported.
+		if runs := frameArgs(t, argsFile); len(runs) != 1 || !strings.Contains(runs[0], "-ss 0.400 ") {
+			t.Errorf("frame runs %q: want one at 0.4s", runs)
 		}
 	})
 

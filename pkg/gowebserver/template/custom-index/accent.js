@@ -8,7 +8,8 @@
 var vividCanvas = null, vividLin = null;
 var VIVID_BINS = 24;
 
-// Something that draws el at w by h without holding the page up.
+// Something that draws el at w by h without holding the page up, or
+// null when there's no such thing to be had.
 // Drawing a photo decodes it then and there, and a large one (the
 // tiles show the files themselves when the server can't resize them)
 // takes long enough to freeze the page, a screen of them for seconds.
@@ -17,23 +18,36 @@ var VIVID_BINS = 24;
 // the only place it's fetched from, never the network again. (A bitmap
 // made from the element itself would be decoded right here too.) A
 // few at a time, since each is a whole file in memory while it's
-// decoded. Anything else, and a photo where that isn't possible, is
-// drawn as it is.
+// decoded.
+// A photo the browser no longer has (its cache is small next to a
+// folder of these) is left out, and not asked for again: the color
+// comes from the others. Only a browser that never finds one there,
+// so presumably can't be asked this way, draws them as they are.
+// Anything else is quick to draw, and is drawn as it is.
 var SMALL_PICTURE_OVER = 2e6, smallQueue = [], smallActive = 0, SMALL_CONCURRENCY = 2;
+var smallFound = 0, smallMissing = new Set(), SMALL_GIVE_UP = 4;
 function smallPicture(el, w, h) {
   if (el.tagName !== 'IMG' || !window.createImageBitmap || !window.fetch ||
     !(el.naturalWidth * el.naturalHeight > SMALL_PICTURE_OVER)) return Promise.resolve(el);
   var src = el.currentSrc;
+  var direct = function () { return !smallFound && smallMissing.size >= SMALL_GIVE_UP; };
+  if (direct()) return Promise.resolve(el);
+  if (smallMissing.has(src)) return Promise.resolve(null);
   return new Promise(function (resolve) {
     smallQueue.push(function () {
       return fetch(src, { cache: 'only-if-cached', mode: 'same-origin' }).then(function (res) {
         if (!res.ok) throw new Error('not cached');
+        smallFound++;
         return res.blob();
       }).then(function (blob) {
         return createImageBitmap(blob, { resizeWidth: w, resizeHeight: h, resizeQuality: 'low' });
+      }, function () {
+        smallMissing.add(src);
+        // Still the picture it was (its tile hasn't scrolled away)?
+        return direct() && el.currentSrc === src ? el : null;
       }).catch(function () {
-        // Not the picture it was (its tile scrolled away): nothing to draw.
-        return el.currentSrc === src ? el : null;
+        // Fetched, but not something a bitmap can be made of.
+        return null;
       }).then(resolve);
     });
     pumpSmall();

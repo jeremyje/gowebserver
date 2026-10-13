@@ -380,7 +380,7 @@ func (h *thumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 	span.SetAttributes(attribute.String("path", name), attribute.String("spec", spec.key()))
 
-	key := path.Join(h.source, thumbnailPath(name, info, spec))
+	key := path.Join(h.source, thumbnailPath(name, info, spec, video))
 	sum := sha256.Sum256([]byte(key))
 	etag := `"` + hex.EncodeToString(sum[:12]) + `"`
 
@@ -420,9 +420,15 @@ func (h *thumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // thumbnailPath is where the thumbnail of the file name (with info) for
 // spec lives in the store. The version, from the file's size and
-// modification time, gives an edited file a new thumbnail and ETag.
-func thumbnailPath(name string, info fs.FileInfo, spec *thumbnailSpec) string {
-	v := sha256.Sum256([]byte(fmt.Sprintf("%d/%d", info.Size(), info.ModTime().UnixNano())))
+// modification time, gives an edited file a new thumbnail and ETag. A
+// video's also has where its frame is taken from, so thumbnails stored
+// when that was elsewhere aren't served.
+func thumbnailPath(name string, info fs.FileInfo, spec *thumbnailSpec, video bool) string {
+	version := fmt.Sprintf("%d/%d", info.Size(), info.ModTime().UnixNano())
+	if video {
+		version += "/frame@" + thumbnailVideoFrameAt.String()
+	}
+	v := sha256.Sum256([]byte(version))
 	return path.Join(name, spec.key()+"@"+hex.EncodeToString(v[:6]))
 }
 
@@ -499,8 +505,13 @@ func (h *thumbnailHandler) decodeImage(name string) (image.Image, int, error) {
 	return img, orientation, nil
 }
 
-// videoFrame grabs a frame 10% of the way through the video (or the first
-// frame, for very short videos) with ffmpeg, which also applies the
+// thumbnailVideoFrameAt is how far into a video its thumbnail is taken
+// from: far enough to be past titles and fades from black. A video no
+// longer than that gives the frame 10% of the way through instead.
+const thumbnailVideoFrameAt = 5 * time.Second
+
+// videoFrame grabs the frame thumbnailVideoFrameAt into the video (see
+// ffmpegFrames for shorter ones) with ffmpeg, which also applies the
 // video's rotation. Files on local disk are passed by path so ffmpeg can seek.
 // Others, inside archives, are piped in, which works for streamable
 // containers; when it doesn't (an MP4 with its index at the end, the
@@ -566,9 +577,9 @@ func (h *thumbnailHandler) copyToTemp(name string) (string, error) {
 	return tmp.Name(), nil
 }
 
-// ffmpegFrames returns the frame 10% of the way through the video, or
-// the first frame when that fails (a clip too short for ffmpeg to seek
-// in). When pipe is set, input is "pipe:0" and the file pipe (in h.fsys)
+// ffmpegFrames returns the frame thumbnailVideoFrameAt into the video
+// (10% of the way through one no longer than that), or the first frame
+// when that fails (a clip too short for ffmpeg to seek in). When pipe is set, input is "pipe:0" and the file pipe (in h.fsys)
 // is opened afresh for each run of ffmpeg and fed to its stdin.
 func (h *thumbnailHandler) ffmpegFrames(ctx context.Context, input, pipe string) (image.Image, error) {
 	var times []time.Duration
@@ -581,14 +592,18 @@ func (h *thumbnailHandler) ffmpegFrames(ctx context.Context, input, pipe string)
 	case ctx.Err() != nil:
 		return nil, ctx.Err()
 	case err == nil:
-		times = []time.Duration{dur / 10, 0}
+		at := thumbnailVideoFrameAt
+		if dur <= at {
+			at = dur / 10
+		}
+		times = []time.Duration{at, 0}
 	case pipe != "":
 		// Unknown through a pipe usually means ffmpeg can't read the file
 		// that way at all (an MP4 with its index at the end), so make one
 		// attempt, not several, before the caller copies the file.
 		times = []time.Duration{0}
 	default:
-		times = []time.Duration{time.Second, 0}
+		times = []time.Duration{thumbnailVideoFrameAt, time.Second, 0}
 	}
 	var last error
 	for _, at := range times {
