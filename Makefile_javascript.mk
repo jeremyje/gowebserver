@@ -91,9 +91,10 @@ test-browser: $(JAVASCRIPT_TOOLCHAIN) javascript-server
 		$(JAVASCRIPT_ENV) BROWSER=$$browser $(NODE) --test --test-concurrency=1 "*/browser/*.browser.js" || exit 1; \
 	done
 
-# Page timings in BROWSER: make benchmark-browser [BROWSER=firefox] [PHOTOS=5000]
+# Page timings in BROWSER:
+#   make benchmark-browser [BROWSER=firefox] [PHOTOS=5000] [PHOTO_SIZE=3000x2000] [THUMBNAILS=off]
 benchmark-browser: $(JAVASCRIPT_TOOLCHAIN) javascript-server
-	cd "$(REPOSITORY_ROOT)/$(JAVASCRIPT_DIR)" && $(JAVASCRIPT_ENV) BROWSER=$(BROWSER) PHOTOS=$(PHOTOS) $(NODE) browserbench.js
+	cd "$(REPOSITORY_ROOT)/$(JAVASCRIPT_DIR)" && $(JAVASCRIPT_ENV) BROWSER=$(BROWSER) PHOTOS=$(PHOTOS) PHOTO_SIZE=$(PHOTO_SIZE) THUMBNAILS=$(THUMBNAILS) $(NODE) browserbench.js
 
 # A look at a page in BROWSER: what it logged, what failed to load, how
 # long it took and a screenshot. TARGET is a URL, or a directory to serve

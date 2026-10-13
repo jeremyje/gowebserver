@@ -39,8 +39,7 @@ function setup(media, opts) {
     globals: {
       GOWS: { sort: opts.sort, thumbs: opts.thumbs, videoThumbs: opts.videoThumbs, media },
       pageAmbient: { show() { } },
-      accent: { set() { } },
-      vividColor: () => null,
+      accent: { from() { } },
       scrubber: { measure() { }, place() { }, refresh() { } },
       slideshow: { open: (list, pos) => opened.push([list.length, pos]) },
     },
@@ -210,8 +209,46 @@ test('a video whose thumbnail fails shows the video alone', async () => {
 
 test('without server frames a video tile asks the browser for one', () => {
   const g = setup(folder(0, 1), { videoThumbs: false });
-  assert.equal(g.el.querySelector('video').src, 'v0.mp4#t=0.5');
+  const v = g.el.querySelector('video');
+  // The frame five seconds in.
+  assert.equal(v.src, 'v0.mp4#t=5');
   assert.equal(g.el.querySelector('.vthumb'), null);
+  v.duration = 75;
+  v.fire('loadedmetadata');
+  assert.equal(v.currentTime, undefined);
+});
+
+test('a video shorter than that shows a frame from early on', () => {
+  const g = setup(folder(0, 1), { videoThumbs: false });
+  const v = g.el.querySelector('video');
+  v.duration = 3;
+  v.fire('loadedmetadata');
+  assert.ok(Math.abs(v.currentTime - 0.3) < 1e-9, String(v.currentTime));
+});
+
+test('a picture fades in at rest and appears at once while scrolling', async () => {
+  const g = setup(folder(200));
+  await g.pg.settle();
+  g.arrive();
+  const first = g.el.querySelector('.tile.ready');
+  assert.ok(first);
+  assert.equal(g.el.querySelectorAll('.tile.snap').length, 0);
+
+  // A slow scroll: the grid loads as it goes.
+  g.pg.tick(1000);
+  g.pg.scroll(400);
+  g.pg.frame();
+  await g.pg.settle();
+  const before = g.el.querySelectorAll('.tile.ready').length;
+  g.pg.tick(20);
+  g.arrive();
+  const shown = g.el.querySelectorAll('.tile.ready').length - before;
+  assert.ok(shown > 0);
+  assert.equal(g.el.querySelectorAll('.tile.snap').length, shown);
+  // Once the scroll has settled the tiles can fade again.
+  g.pg.tick(200);
+  assert.equal(g.el.querySelectorAll('.tile.snap').length, 0);
+  assert.equal(g.el.querySelectorAll('.tile.ready').length, before + shown);
 });
 
 test('filtering lays out only what matches', () => {

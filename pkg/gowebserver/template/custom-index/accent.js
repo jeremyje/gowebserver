@@ -7,14 +7,69 @@
 // scales its influence. Lightness is left to the theme (--accent-l).
 var vividCanvas = null, vividLin = null;
 var VIVID_BINS = 24;
+
+// Something that draws el at w by h without holding the page up.
+// Drawing a photo decodes it then and there, and a large one (the
+// tiles show the files themselves when the server can't resize them)
+// takes long enough to freeze the page, a screen of them for seconds.
+// So a large photo is decoded off to the side instead, into a bitmap
+// of that size, from the file the browser already has: the cache is
+// the only place it's fetched from, never the network again. (A bitmap
+// made from the element itself would be decoded right here too.) A
+// few at a time, since each is a whole file in memory while it's
+// decoded. Anything else, and a photo where that isn't possible, is
+// drawn as it is.
+var SMALL_PICTURE_OVER = 2e6, smallQueue = [], smallActive = 0, SMALL_CONCURRENCY = 2;
+function smallPicture(el, w, h) {
+  if (el.tagName !== 'IMG' || !window.createImageBitmap || !window.fetch ||
+    !(el.naturalWidth * el.naturalHeight > SMALL_PICTURE_OVER)) return Promise.resolve(el);
+  var src = el.currentSrc;
+  return new Promise(function (resolve) {
+    smallQueue.push(function () {
+      return fetch(src, { cache: 'only-if-cached', mode: 'same-origin' }).then(function (res) {
+        if (!res.ok) throw new Error('not cached');
+        return res.blob();
+      }).then(function (blob) {
+        return createImageBitmap(blob, { resizeWidth: w, resizeHeight: h, resizeQuality: 'low' });
+      }).catch(function () {
+        // Not the picture it was (its tile scrolled away): nothing to draw.
+        return el.currentSrc === src ? el : null;
+      }).then(resolve);
+    });
+    pumpSmall();
+  });
+}
+
+function pumpSmall() {
+  while (smallActive < SMALL_CONCURRENCY && smallQueue.length) {
+    smallActive++;
+    smallQueue.shift()().then(function () { smallActive--; pumpSmall(); });
+  }
+}
+
 // One element's colors, by hue bin: four runs of VIVID_BINS numbers
 // (weight, weighted cos and sin of the hue, weighted chroma), or null
 // if it can't be read. A loaded photo never changes, so its tally is
-// kept on the element and the photo is drawn and read back once, not
-// every time the page stops scrolling with it still on screen.
+// kept by its URL and the photo is read once: not every time the page
+// stops scrolling with it still on screen, and not again when its row
+// scrolls away and comes back as new elements.
+var vividSeen = new Map(), VIVID_SEEN_MAX = 4000;
 function vividTally(el) {
   var still = el.tagName === 'IMG' && el.complete && el.currentSrc;
-  if (still && el._vivid && el._vividSrc === el.currentSrc) return el._vivid;
+  if (still && vividSeen.has(still)) return Promise.resolve(vividSeen.get(still));
+  return smallPicture(el, 16, 12).then(function (pic) {
+    var t = pic && vividCount(pic);
+    if (pic && pic.close) pic.close();
+    if (t && still) {
+      // The oldest goes first; a Map keeps the order they were added in.
+      if (vividSeen.size >= VIVID_SEEN_MAX) vividSeen.delete(vividSeen.keys().next().value);
+      vividSeen.set(still, t);
+    }
+    return t || null;
+  });
+}
+
+function vividCount(pic) {
   if (!vividCanvas) {
     vividCanvas = doc.createElement('canvas');
     vividCanvas.width = 16;
@@ -29,7 +84,8 @@ function vividTally(el) {
   var ctx = vividCanvas.getContext('2d', { willReadFrequently: true });
   var BINS = VIVID_BINS, MIN_C = 0.08, px;
   try {
-    ctx.drawImage(el, 0, 0, vividCanvas.width, vividCanvas.height);
+    ctx.clearRect(0, 0, vividCanvas.width, vividCanvas.height);
+    ctx.drawImage(pic, 0, 0, vividCanvas.width, vividCanvas.height);
     px = ctx.getImageData(0, 0, vividCanvas.width, vividCanvas.height).data;
   } catch (e) { return null; }
   var t = new Float64Array(BINS * 4);
@@ -49,16 +105,22 @@ function vividTally(el) {
     var wt = c * c * c;
     t[bin] += wt; t[BINS + bin] += wt * Math.cos(hue); t[2 * BINS + bin] += wt * Math.sin(hue); t[3 * BINS + bin] += wt * c;
   }
-  if (still) { el._vivid = t; el._vividSrc = el.currentSrc; }
   return t;
 }
 
+// Resolves to that color once every source has been read.
 function vividColor(sources) {
+  return Promise.all(sources.map(function (src) { return vividTally(src.el); })).then(function (tallies) {
+    return vividPick(sources, tallies);
+  });
+}
+
+function vividPick(sources, tallies) {
   var BINS = VIVID_BINS;
   var w = new Float64Array(BINS), sx = new Float64Array(BINS),
     sy = new Float64Array(BINS), sc = new Float64Array(BINS);
-  sources.forEach(function (src) {
-    var t = vividTally(src.el);
+  sources.forEach(function (src, i) {
+    var t = tallies[i];
     if (!t) return;
     for (var k = 0; k < BINS; k++) {
       w[k] += t[k] * src.w; sx[k] += t[BINS + k] * src.w;
@@ -81,7 +143,7 @@ function vividColor(sources) {
 // the slideshow is open. A slide with no vivid color falls back to the
 // page's color, and a page with none to the default accent.
 var accent = (function () {
-  var src = {}, lastH = null, shownH = '', shownC = '', on = false;
+  var src = {}, asked = {}, lastH = null, shownH = '', shownC = '', on = false;
   // Every element inherits these, so each write restyles the whole
   // page: only what actually changed is written.
   function apply() {
@@ -100,30 +162,90 @@ var accent = (function () {
     if (!on) { on = true; root.classList.add('amb-accent'); }
   }
   return {
-    set: function (key, col) { src[key] = col; apply(); },
-    clear: function (key) { delete src[key]; apply(); }
+    // Takes key's color from sources ({el, w}, as for vividColor) once
+    // they have been read; only the latest request for a key counts.
+    from: function (key, sources) {
+      var n = asked[key] = (asked[key] || 0) + 1;
+      vividColor(sources).then(function (col) {
+        if (asked[key] !== n) return;
+        src[key] = col;
+        apply();
+      });
+    },
+    clear: function (key) {
+      asked[key] = (asked[key] || 0) + 1;
+      delete src[key];
+      apply();
+    }
   };
 })();
 
 // ===== Ambient backdrop =====
-// Draws a media element into a tiny canvas; CSS scales and blurs it.
+// A media element as a soft wash of its colors: a 24x16 copy of it,
+// enlarged and blurred. The blur is done here, once, into a canvas
+// still small enough that it costs almost nothing to keep or to draw;
+// CSS only stretches that over the page. (As a CSS filter the blur was
+// redone over the whole viewport for every frame of a scroll.) The
+// amount of blur and the color adjustment are the backdrop's
+// --backdrop-blur and --backdrop-tone. Where a canvas can't filter,
+// .css-blur has CSS do it after all.
 // onColor is called with the element each time the backdrop changes.
+var ambientTiny = null;
 function Ambient(el, onColor) {
   var canvases = el ? el.querySelectorAll('canvas') : [];
-  var cur = 0, last = null;
+  var cur = 0, last = null, blur = 0, tone = '', filters = null;
+
+  function setUp() {
+    filters = 'filter' in canvases[0].getContext('2d');
+    if (!filters) { el.classList.add('css-blur'); return; }
+    var css = getComputedStyle(el);
+    blur = parseFloat(css.getPropertyValue('--backdrop-blur')) || 0;
+    tone = css.getPropertyValue('--backdrop-tone').trim();
+  }
+
+  function draw(pic, canvas) {
+    if (!ambientTiny) {
+      ambientTiny = doc.createElement('canvas');
+      ambientTiny.width = 24;
+      ambientTiny.height = 16;
+    }
+    var tiny = ambientTiny.getContext('2d'), ctx = canvas.getContext('2d');
+    tiny.clearRect(0, 0, ambientTiny.width, ambientTiny.height);
+    tiny.drawImage(pic, 0, 0, ambientTiny.width, ambientTiny.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (filters) {
+      // The blur is in CSS pixels of the backdrop as shown; here it's
+      // in the canvas's own, which are that much smaller.
+      var shown = el.offsetWidth || innerWidth;
+      ctx.filter = ('blur(' + (blur * canvas.width / shown).toFixed(2) + 'px) ' + tone).trim();
+    }
+    ctx.drawImage(ambientTiny, 0, 0, canvas.width, canvas.height);
+  }
+
   return {
     show: function (src) {
       if (!el || !src || src === last) return;
-      var next = canvases[1 - cur];
-      try {
-        next.getContext('2d').drawImage(src, 0, 0, next.width, next.height);
-      } catch (e) { return; }
       last = src;
-      if (onColor) onColor(src);
-      next.classList.add('on');
-      canvases[cur].classList.remove('on');
-      cur = 1 - cur;
-      el.classList.add('on');
+      smallPicture(src, 24, 16).then(function (pic) {
+        // Another one was asked for meanwhile.
+        if (last !== src) { if (pic && pic.close) pic.close(); return; }
+        var next = canvases[1 - cur];
+        try {
+          if (!pic) throw new Error('nothing to draw');
+          if (filters === null) setUp();
+          draw(pic, next);
+        } catch (e) {
+          last = null;
+          return;
+        } finally {
+          if (pic && pic.close) pic.close();
+        }
+        if (onColor) onColor(src);
+        next.classList.add('on');
+        canvases[cur].classList.remove('on');
+        cur = 1 - cur;
+        el.classList.add('on');
+      });
     },
     reset: function () { last = null; }
   };

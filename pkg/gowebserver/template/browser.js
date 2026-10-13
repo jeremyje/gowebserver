@@ -78,6 +78,7 @@ function freePort() {
 // else a new folder holding:
 //   opts.photos  that many PNGs, photo-00000.png onward
 //   opts.files   {name: content} for anything else
+// opts.args are more flags for the server.
 // close() stops the server and removes what serve made.
 async function serve(opts) {
   opts = opts || {};
@@ -105,7 +106,7 @@ async function serve(opts) {
   const proc = spawn(bin, [
     '-path', dir, '-http.port', String(port), '-https.port', String(tlsPort), '-enhancedindex=true',
     '-thumbnails.cachepath', 'memory:', '-upload.path', uploads,
-  ], { cwd: work, stdio: ['ignore', 'ignore', 'pipe'] });
+  ].concat(opts.args || []), { cwd: work, stdio: ['ignore', 'ignore', 'pipe'] });
   let log = '';
   proc.stderr.on('data', (d) => { log = (log + d).slice(-4000); });
   const close = () => {
