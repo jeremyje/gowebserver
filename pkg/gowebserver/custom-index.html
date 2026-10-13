@@ -1827,7 +1827,9 @@
       pointer-events: none;
     }
 
-    .tile.err::before {
+    /* The placeholder for a picture that didn't load. */
+    .tile.err::before,
+    .ss-strip button.err::before {
       content: "";
       position: absolute;
       inset: 0;
@@ -1839,6 +1841,17 @@
       color: var(--ink-3);
       -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E") center / contain no-repeat;
       mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
+
+    .ss-strip button.err {
+      position: relative;
+    }
+
+    .ss-strip button.err::before {
+      width: 20px;
+      height: 20px;
+      opacity: 0.6;
+      color: #fff;
     }
 
     .tile:focus-visible {
@@ -3394,34 +3407,90 @@
       // thumbnail the server still has to make holds one until it's made.
       // Giving every tile its src at once fills all six with the rest
       // queued behind them, and a video, a slide or the next page waits at
-      // the back of that queue for seconds. So thumbnails load a few at a
-      // time, which always leaves connections free for everything else.
-      // HTTP/2 and 3 share one connection, so there the limit is only
-      // about not flooding the server.
+      // the back of that queue for seconds. So every thumbnail on the page
+      // goes through this one queue, which fetches them a batch at a time,
+      // always leaving connections free for everything else. HTTP/2 and 3
+      // share one connection, so there the batch size is only about not
+      // flooding the server.
+      // A batch is also shown together: its pictures are handed back in a
+      // single frame once they have all arrived, so a screen of tiles
+      // fills in a few steps, not one style change and paint per picture.
+      // A batch waits at most BATCH_WAIT for its slowest picture; what has
+      // arrived by then is shown, and the rest joins the next batch.
       var thumbLoader = (function () {
-        var queue = [], active = 0, limit = 4;
+        var queue = [], arrived = [], loading = 0, limit = 4, timer = 0, pumping = false;
+        var BATCH_WAIT = 1500;
         try {
           var nav = performance.getEntriesByType('navigation')[0];
           if (nav && /^h[23]/.test(nav.nextHopProtocol)) limit = 12;
         } catch (e) { }
 
+        // Fills the batch's free slots from the queue, opening a batch if
+        // none is.
         function pump() {
-          while (active < limit && queue.length) start(queue.shift());
+          pumping = false;
+          if (!queue.length || loading >= limit) return;
+          queue.splice(0, limit - loading).forEach(start);
+          if (!timer) timer = setTimeout(close, BATCH_WAIT);
+        }
+
+        // Pumps once everything being queued right now has been, so a
+        // screen of tiles queued one by one doesn't start a batch of one.
+        function pumpSoon() {
+          if (pumping) return;
+          pumping = true;
+          Promise.resolve().then(pump);
         }
 
         function start(img) {
-          active++;
-          img._thumbBusy = true;
-          var done = function () { finish(img); };
-          img.addEventListener('load', done, { once: true });
-          img.addEventListener('error', done, { once: true });
+          loading++;
+          img._thumb = 'loading';
+          img._thumbEnd = function (e) { arrive(img, e.type === 'load'); };
+          img.addEventListener('load', img._thumbEnd);
+          img.addEventListener('error', img._thumbEnd);
           img.src = img._thumbURL;
         }
 
-        function finish(img) {
-          if (!img._thumbBusy) return;
-          img._thumbBusy = false;
-          active--;
+        // Stops listening to img, which is no longer loading.
+        function stop(img) {
+          img.removeEventListener('load', img._thumbEnd);
+          img.removeEventListener('error', img._thumbEnd);
+          img._thumbEnd = null;
+          loading--;
+        }
+
+        function arrive(img, ok) {
+          stop(img);
+          img._thumb = 'arrived';
+          img._thumbOK = ok;
+          arrived.push(img);
+          settle();
+        }
+
+        // Closes the batch once nothing in it is still loading. With no
+        // batch open, img was left over from one that timed out: it's
+        // shown now, and its slot goes to the next batch.
+        function settle() {
+          if (!loading || !timer) close();
+        }
+
+        // Ends the batch: shows what arrived, in one frame, and starts the
+        // next one.
+        function close() {
+          clearTimeout(timer);
+          timer = 0;
+          if (arrived.length) {
+            var batch = arrived;
+            arrived = [];
+            requestAnimationFrame(function () {
+              batch.forEach(function (img) {
+                // Cancelled since it arrived.
+                if (img._thumb !== 'arrived') return;
+                img._thumb = '';
+                img._thumbDone(img._thumbOK);
+              });
+            });
+          }
           pump();
         }
 
@@ -3430,23 +3499,30 @@
           var i = queue.indexOf(img);
           if (i < 0) return false;
           queue.splice(i, 1);
+          img._thumb = '';
           return true;
         }
 
         return {
-          // Loads url into img when there's a free slot. front puts it
-          // ahead of everything waiting.
-          load: function (img, url, front) {
+          // Loads url into img in an upcoming batch, then calls done with
+          // whether it loaded, along with the rest of its batch. front
+          // puts it ahead of everything waiting.
+          load: function (img, url, done, front) {
             img._thumbURL = url;
+            img._thumbDone = done;
+            img._thumb = 'queued';
             if (front) queue.unshift(img); else queue.push(img);
-            pump();
+            pumpSoon();
           },
           unqueue: unqueue,
-          // Stops img loading, whether it's waiting or under way.
+          // Stops img loading, whether it's waiting or under way; done
+          // isn't called.
           cancel: function (img) {
             if (unqueue(img)) return;
+            var was = img._thumb;
+            img._thumb = '';
             img.removeAttribute('src');
-            finish(img);
+            if (was === 'loading') { stop(img); settle(); }
           }
         };
       })();
@@ -3767,9 +3843,9 @@
           var it = a._item;
           if (it.video) { queueVideo(a); return; }
           var img = a.firstChild;
-          img.onload = function () { a.classList.add('ready'); };
-          img.onerror = function () { a.classList.add('err'); };
-          thumbLoader.load(img, tileThumbURL(it, parseFloat(a.style.width)));
+          thumbLoader.load(img, tileThumbURL(it, parseFloat(a.style.width)), function (ok) {
+            a.classList.add(ok ? 'ready' : 'err');
+          });
         }
 
         // Takes a photo tile that's still waiting to load out of the queue,
@@ -4012,8 +4088,11 @@
           th.draggable = false;
           // The tile shows as soon as its thumbnail does, before the video
           // has loaded enough to know its length.
-          th.onload = function () { a.classList.add('ready'); };
-          thumbLoader.load(th, tileThumbURL(it, parseFloat(a.style.width)));
+          // Without one (the server couldn't grab a frame), the tile is the
+          // video alone, as when the server makes no thumbnails.
+          thumbLoader.load(th, tileThumbURL(it, parseFloat(a.style.width)), function (ok) {
+            if (ok) a.classList.add('ready'); else th.remove();
+          });
           a.insertBefore(th, a.firstChild);
           v.src = it.url;
         } else {
@@ -4494,6 +4573,16 @@
           renderStrip();
         }
 
+        // Swaps a filmstrip thumbnail that didn't load for the placeholder.
+        function stripThumbDone(b) {
+          return function (ok) {
+            if (ok) return;
+            b._img.remove();
+            b._img = null;
+            b.classList.add('err');
+          };
+        }
+
         function renderStrip() {
           if (!CFG.thumbs) return;
           strip.hidden = list.length < 2;
@@ -4517,7 +4606,7 @@
                 b.innerHTML = '<img alt="" decoding="async" fetchpriority="low">';
                 b._img = b.firstChild;
                 // Ahead of the grid's, which the slideshow covers.
-                thumbLoader.load(b._img, tileThumbURL(list[k], 0), true);
+                thumbLoader.load(b._img, tileThumbURL(list[k], 0), stripThumbDone(b), true);
               }
             }
             if (b !== before) strip.insertBefore(b, before); else before = before.nextSibling;
