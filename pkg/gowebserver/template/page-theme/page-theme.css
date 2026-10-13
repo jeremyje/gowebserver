@@ -389,7 +389,7 @@
  * the button already has (--btn-inset); the squash animates the icon's
  * scale property, so it combines with any transform animation the
  * icon has of its own. */
-@media (hover: hover) {
+@media (any-hover: hover) {
   :is(.icon-btn, .pill, .ss-btn, .ss-nav, .seg a, .back, .select select, .search input):hover {
     animation: btn-ring 0.7s var(--ease-out);
   }

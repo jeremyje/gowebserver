@@ -309,9 +309,10 @@ function createGrid(el) {
     slideshow.open(it.video ? vis.videos : vis.photos, it.pos, a, false);
   });
 
-  // Muted preview on hover, desktop only.
+  // Muted preview on hover: a mouse or trackpad only, never a finger,
+  // even on a tablet that has both.
   el.addEventListener('pointerover', function (e) {
-    if (!finePointer.matches) return;
+    if (e.pointerType === 'touch' || !finePointer.matches) return;
     var a = e.target.closest('.tile.vid');
     if (a) previewVideo(a, true);
   });

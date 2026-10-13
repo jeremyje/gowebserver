@@ -3,7 +3,10 @@ var doc = document;
 var root = doc.documentElement;
 var $ = function (id) { return doc.getElementById(id); };
 var reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-var finePointer = matchMedia('(hover: hover) and (pointer: fine)');
+// Whether a mouse or trackpad is attached. "any-", since an iPad with a
+// trackpad still calls touch its main input, so (hover: hover) is false
+// there. The CSS hover rules ask the same way.
+var finePointer = matchMedia('(any-hover: hover) and (any-pointer: fine)');
 var numFmt = new Intl.NumberFormat();
 var dateFmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 var monthFmt = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });

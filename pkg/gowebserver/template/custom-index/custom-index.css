@@ -1913,7 +1913,7 @@ main {
   fill: currentColor;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media (any-hover: hover) and (any-pointer: fine) {
   /* The video too, so a video tile's thumbnail fades into the
      playing video in place. */
   .tile:hover img,
@@ -2280,7 +2280,7 @@ main {
 /* ===== Slideshow button tooltips =====
  * The button's aria-label plus its keyboard shortcut. Hover devices
  * only; touch has no hover to reveal them. */
-@media (hover: hover) {
+@media (any-hover: hover) {
   .ss-top .ss-btn {
     position: relative;
   }
@@ -2625,7 +2625,7 @@ main {
  * The ring and squash every button gets are in the shared page
  * template (page-theme.html); these are the icons with their own
  * move. */
-@media (hover: hover) {
+@media (any-hover: hover) {
 
   /* Close: the icon squeezes as its strokes fold into a line. */
   #ss-close:hover > svg {
@@ -2853,7 +2853,7 @@ main {
   animation: none !important;
 }
 
-@media (hover: none), (pointer: coarse), (max-width: 700px) {
+@media (any-hover: none), (max-width: 700px) {
   .ss-nav {
     display: none;
   }

@@ -380,7 +380,7 @@
 
 
      
-    @media (hover: hover) {
+    @media (any-hover: hover) {
       :is(.icon-btn, .pill, .ss-btn, .ss-nav, .seg a, .back, .select select, .search input):hover {
         animation: btn-ring 0.7s var(--ease-out);
       }
@@ -2424,7 +2424,7 @@
       fill: currentColor;
     }
 
-    @media (hover: hover) and (pointer: fine) {
+    @media (any-hover: hover) and (any-pointer: fine) {
        
       .tile:hover img,
       .tile:hover video {
@@ -2781,7 +2781,7 @@
     }
 
      
-    @media (hover: hover) {
+    @media (any-hover: hover) {
       .ss-top .ss-btn {
         position: relative;
       }
@@ -3101,7 +3101,7 @@
     }
 
      
-    @media (hover: hover) {
+    @media (any-hover: hover) {
 
        
       #ss-close:hover > svg {
@@ -3326,7 +3326,7 @@
       animation: none !important;
     }
 
-    @media (hover: none), (pointer: coarse), (max-width: 700px) {
+    @media (any-hover: none), (max-width: 700px) {
       .ss-nav {
         display: none;
       }
@@ -3943,7 +3943,10 @@
       var root = doc.documentElement;
       var $ = function (id) { return doc.getElementById(id); };
       var reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-      var finePointer = matchMedia('(hover: hover) and (pointer: fine)');
+      
+      
+      
+      var finePointer = matchMedia('(any-hover: hover) and (any-pointer: fine)');
       var numFmt = new Intl.NumberFormat();
       var dateFmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
       var monthFmt = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });
@@ -4778,8 +4781,9 @@
         });
 
         
+        
         el.addEventListener('pointerover', function (e) {
-          if (!finePointer.matches) return;
+          if (e.pointerType === 'touch' || !finePointer.matches) return;
           var a = e.target.closest('.tile.vid');
           if (a) previewVideo(a, true);
         });
