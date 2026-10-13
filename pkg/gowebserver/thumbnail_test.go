@@ -133,7 +133,7 @@ func newTestThumbnailHandler(t *testing.T, fsys fs.FS, ffmpegPath string) (http.
 			t.Fatal(err)
 		}
 	}
-	th, err := newThumbnailer(Thumbnails{Enabled: true, CachePath: filepath.Join(t.TempDir(), "thumbnails.db")}, ff, mc.getTraceProvider())
+	th, err := newThumbnailer(Thumbnails{Enabled: true, CachePath: filepath.Join(t.TempDir(), "thumbnails.db")}, ff, mc)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -409,7 +409,7 @@ func TestThumbnailStore(t *testing.T) {
 	open := func() {
 		t.Helper()
 		var err error
-		if th, err = newThumbnailer(Thumbnails{Enabled: true, CachePath: db}, nil, (&monitoringContext{}).getTraceProvider()); err != nil {
+		if th, err = newThumbnailer(Thumbnails{Enabled: true, CachePath: db}, nil, &monitoringContext{}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -483,7 +483,7 @@ func TestThumbnailStoreMemory(t *testing.T) {
 	t.Setenv("XDG_CACHE_HOME", cache)
 	t.Setenv("HOME", cache)
 	fsys := fstest.MapFS{"a.jpg": {Data: encodeJPEG(t, stripes(40, 20))}}
-	th, err := newThumbnailer(Thumbnails{Enabled: true, CachePath: thumbnailCacheMemory}, nil, (&monitoringContext{}).getTraceProvider())
+	th, err := newThumbnailer(Thumbnails{Enabled: true, CachePath: thumbnailCacheMemory}, nil, &monitoringContext{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -500,7 +500,7 @@ func TestThumbnailStoreMemory(t *testing.T) {
 }
 
 func TestThumbnailShared(t *testing.T) {
-	th, err := newThumbnailer(Thumbnails{Enabled: true, CachePath: thumbnailCacheMemory}, nil, (&monitoringContext{}).getTraceProvider())
+	th, err := newThumbnailer(Thumbnails{Enabled: true, CachePath: thumbnailCacheMemory}, nil, &monitoringContext{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -772,7 +772,7 @@ func TestThumbnailVideo(t *testing.T) {
 		if !strings.Contains(string(args), "-i pipe:0") {
 			t.Errorf("ffmpeg args %q: want the file piped to stdin", args)
 		}
-		// The probe reported 20s, so there is a frame five seconds in.
+		// There is a frame five seconds in, so that's the only run.
 		if runs := frameArgs(t, argsFile); len(runs) != 1 || !strings.Contains(runs[0], "-ss 5.000 -i pipe:0") {
 			t.Errorf("frame runs %q: want one at 5s", runs)
 		}
@@ -823,6 +823,41 @@ func TestThumbnailVideo(t *testing.T) {
 		if runs := frameArgs(t, argsFile); len(runs) != 1 || !strings.Contains(runs[0], "-ss 5.000 -i ") {
 			t.Errorf("frame runs %q: want one at 5s", runs)
 		}
+		// The video's length wasn't needed, so it wasn't asked for.
+		if all := strings.Split(strings.TrimSpace(string(args)), "\n"); len(all) != 1 {
+			t.Errorf("ffmpeg runs %q: want only the frame", all)
+		}
+	})
+
+	// noFrameAt makes the fake ffmpeg give no frame at the times that
+	// don't contain any of ok ("-ss 0.400 " and the like), as ffmpeg
+	// does when asked to seek past the end.
+	noFrameExcept := func(t *testing.T, bin string, ok ...string) {
+		t.Helper()
+		script, err := os.ReadFile(bin)
+		if err != nil {
+			t.Fatal(err)
+		}
+		pattern := ""
+		for _, o := range ok {
+			pattern += "*'" + o + "'*) ;; "
+		}
+		only := strings.Replace(string(script), "cat > /dev/null\n", "cat > /dev/null\ncase \"$*\" in *-frames:v*) case \"$*\" in "+pattern+"*) exit 0;; esac;; esac\n", 1)
+		if err := os.WriteFile(bin, []byte(only), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	t.Run("a video shorter than that", func(t *testing.T) {
+		bin, argsFile := fakeFFmpeg(t, stripes(64, 36), "00:00:04.00")
+		noFrameExcept(t, bin, "-ss 0.400 ")
+		h, _ := newTestThumbnailHandler(t, video, bin)
+		decodeThumb(t, thumbGet(t, h, "/clip.mp4?width=32", nil))
+		// Nothing five seconds in; 10% of the 4s the probe then reported.
+		runs := frameArgs(t, argsFile)
+		if len(runs) != 2 || !strings.Contains(runs[0], "-ss 5.000 ") || !strings.Contains(runs[1], "-ss 0.400 ") {
+			t.Errorf("frame runs %q: want 5s, then 0.4s", runs)
+		}
 	})
 
 	t.Run("unknown duration", func(t *testing.T) {
@@ -831,39 +866,34 @@ func TestThumbnailVideo(t *testing.T) {
 			t.Fatal(err)
 		}
 		bin, argsFile := fakeFFmpeg(t, stripes(64, 36), "N/A")
+		noFrameExcept(t, bin, "-ss 1.000 ")
 		h, _ := newTestThumbnailHandler(t, os.DirFS(dir), bin)
 		decodeThumb(t, thumbGet(t, h, "/clip.mp4?width=32", nil))
-		if runs := frameArgs(t, argsFile); len(runs) != 1 || !strings.Contains(runs[0], "-ss 5.000 ") {
-			t.Errorf("frame runs %q: want one five seconds in", runs)
-		}
-	})
-
-	t.Run("a video shorter than that", func(t *testing.T) {
-		bin, argsFile := fakeFFmpeg(t, stripes(64, 36), "00:00:04.00")
-		h, _ := newTestThumbnailHandler(t, video, bin)
-		decodeThumb(t, thumbGet(t, h, "/clip.mp4?width=32", nil))
-		// 10% of the 4s the probe reported.
-		if runs := frameArgs(t, argsFile); len(runs) != 1 || !strings.Contains(runs[0], "-ss 0.400 ") {
-			t.Errorf("frame runs %q: want one at 0.4s", runs)
+		runs := frameArgs(t, argsFile)
+		if len(runs) != 2 || !strings.Contains(runs[0], "-ss 5.000 ") || !strings.Contains(runs[1], "-ss 1.000 ") {
+			t.Errorf("frame runs %q: want 5s, then a second in", runs)
 		}
 	})
 
 	t.Run("first frame of a short clip", func(t *testing.T) {
-		// ffmpeg gives no frame when asked to seek past the end.
 		bin, argsFile := fakeFFmpeg(t, stripes(64, 36), "00:00:00.08")
-		script, err := os.ReadFile(bin)
-		if err != nil {
-			t.Fatal(err)
-		}
-		noSeek := strings.Replace(string(script), "cat > /dev/null\n", "cat > /dev/null\ncase \"$*\" in *-frames:v*) case \"$*\" in *'-ss 0.000 '*) ;; *) exit 0;; esac;; esac\n", 1)
-		if err := os.WriteFile(bin, []byte(noSeek), 0o700); err != nil {
-			t.Fatal(err)
-		}
+		noFrameExcept(t, bin, "-ss 0.000 ")
 		h, _ := newTestThumbnailHandler(t, video, bin)
 		decodeThumb(t, thumbGet(t, h, "/clip.mp4?width=32", nil))
 		runs := frameArgs(t, argsFile)
-		if len(runs) != 2 || !strings.Contains(runs[0], "-ss 0.008 ") || !strings.Contains(runs[1], "-ss 0.000 ") {
-			t.Errorf("frame runs %q: want 10%% in, then the first frame", runs)
+		if len(runs) != 3 || !strings.Contains(runs[1], "-ss 0.008 ") || !strings.Contains(runs[2], "-ss 0.000 ") {
+			t.Errorf("frame runs %q: want 5s, 10%% in, then the first frame", runs)
+		}
+	})
+
+	t.Run("no frame anywhere in a longer video", func(t *testing.T) {
+		bin, argsFile := fakeFFmpeg(t, stripes(64, 36), "00:00:20.00")
+		noFrameExcept(t, bin, "-ss 0.000 ")
+		h, _ := newTestThumbnailHandler(t, video, bin)
+		decodeThumb(t, thumbGet(t, h, "/clip.mp4?width=32", nil))
+		runs := frameArgs(t, argsFile)
+		if len(runs) != 2 || !strings.Contains(runs[1], "-ss 0.000 ") {
+			t.Errorf("frame runs %q: want 5s, then the first frame", runs)
 		}
 	})
 }

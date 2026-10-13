@@ -2314,9 +2314,9 @@
     }
 
      
-    .tile.snap img,
-    .tile.snap video {
-      transition-property: transform;
+    .tile.quick img,
+    .tile.quick video {
+      transition-duration: 0.15s;
     }
 
      
@@ -4571,6 +4571,7 @@
               a.style.height = r.tileH + 'px';
               a.style.left = (j * (r.tileW + r.gap)) + 'px';
               a._item = it;
+              a._plain = it.video && !CFG.videoThumbs;
               
               
               a.innerHTML = (!it.video ? '<img alt="" decoding="async" draggable="false">' :
@@ -4590,18 +4591,29 @@
           div.remove();
         }
 
-        function loadTile(a) {
+        
+        
+        
+        
+        
+        function loadTile(a, seen) {
+          var it = a._item;
+          if (a._plain) {
+            if (seen && !a._loading) { a._loading = true; queueVideo(a); }
+            else if (!seen && unqueueVideo(a)) a._loading = false;
+            return;
+          }
           if (a._loading) return;
           a._loading = true;
-          var it = a._item;
-          if (it.video && !CFG.videoThumbs) { queueVideo(a); return; }
           var img = a.firstChild;
           thumbLoader.load(img, tileThumbURL(it, parseFloat(a.style.width)), function (ok) {
             if (ok || !it.video) { showTile(a, ok ? 'ready' : 'err'); return; }
             
             
             img.remove();
-            queueVideo(a);
+            a._plain = true;
+            a._loading = false;
+            schedule();
           });
         }
 
@@ -4609,7 +4621,7 @@
         
         
         function unqueueTile(a) {
-          if (a._loading && thumbLoader.unqueue(a.firstChild)) a._loading = false;
+          if (a._loading && (a._plain ? unqueueVideo(a) : thumbLoader.unqueue(a.firstChild))) a._loading = false;
         }
 
         function render() {
@@ -4645,8 +4657,9 @@
             var r = rows[i];
             if (r.type !== 'tiles') return;
             var near = !fast && r.y + r.h > loadTop && r.y < loadBottom;
+            var seen = near && r.y + r.h > viewTop && r.y < viewTop + vh;
             for (var c = div.firstChild; c; c = c.nextSibling) {
-              if (near) loadTile(c); else unqueueTile(c);
+              if (near) loadTile(c, seen); else unqueueTile(c);
             }
           });
         }
@@ -4805,22 +4818,25 @@
       
       
       
-      var snapped = [], snapTimer = 0;
+      
+      
+      var QUICK_FADE = 150, quickened = [], quickTimer = 0;
       function showTile(a, cls) {
         if (grid && grid.scrolling()) {
-          a.classList.add('snap');
-          snapped.push(a);
-          if (!snapTimer) snapTimer = setTimeout(unsnap, SCROLL_SETTLE);
+          a.classList.add('quick');
+          quickened.push(a);
+          if (!quickTimer) quickTimer = setTimeout(unquicken, QUICK_FADE * 2);
         }
         a.classList.add(cls);
       }
 
-      function unsnap() {
-        snapTimer = 0;
-        snapped.forEach(function (a) { a.classList.remove('snap'); });
-        snapped = [];
+      function unquicken() {
+        quickTimer = 0;
+        quickened.forEach(function (a) { a.classList.remove('quick'); });
+        quickened = [];
       }
 
+      
       
       
       
@@ -4842,6 +4858,14 @@
       function queueVideo(a) {
         videoQueue.push(a);
         pumpVideos();
+      }
+
+      
+      function unqueueVideo(a) {
+        var i = videoQueue.indexOf(a);
+        if (i < 0) return false;
+        videoQueue.splice(i, 1);
+        return true;
       }
 
       function pumpVideos() {
@@ -5375,10 +5399,16 @@
           };
         }
 
+        
+        
+        var STRIP_STEP = 60, STRIP_MARGIN = 28;
         function renderStrip() {
           if (!CFG.thumbs) return;
           strip.hidden = list.length < 2;
-          var lo = Math.max(0, idx - STRIP_RADIUS), hi = Math.min(list.length - 1, idx + STRIP_RADIUS);
+          
+          
+          var radius = Math.max(1, Math.min(STRIP_RADIUS, Math.floor(((innerWidth - STRIP_MARGIN) / STRIP_STEP - 1) / 2)));
+          var lo = Math.max(0, idx - radius), hi = Math.min(list.length - 1, idx + radius);
           var keep = {};
           Array.prototype.slice.call(strip.children).forEach(function (b) {
             if (b._k < lo || b._k > hi) { if (b._img) thumbLoader.cancel(b._img); b.remove(); }
@@ -5883,7 +5913,7 @@
           resetZoom(false);
           position(0);
         }
-        addEventListener('resize', function () { if (isOpen) relayoutSlides(); });
+        addEventListener('resize', function () { if (isOpen) { relayoutSlides(); renderStrip(); } });
 
         return { open: open };
       })();

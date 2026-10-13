@@ -31,6 +31,7 @@ function setup(n, opts) {
   }
   const ambient = { show() { }, reset() { }, clear() { } };
   const pg = page('<p id="summary"></p><p id="no-match"></p>' + markup('custom-index/custom-index.html', '<dialog class="ss"', '</dialog>'), {
+    innerWidth: opts.width || 1600,
     globals: {
       GOWS: { sort: 'name', thumbs: opts.thumbs !== false, videoThumbs: true, media },
       grid: null,
@@ -75,6 +76,16 @@ test('the filmstrip holds only the thumbnails around the current slide', () => {
   t.key('End');
   assert.equal(t.strip().length, 13);
   assert.equal(t.$('ss-name').textContent, 'm9999.jpg');
+});
+
+test('the filmstrip holds as many thumbnails as fit across the window', () => {
+  // 60px each; the current one stays in the middle.
+  for (const [width, want] of [[1600, 25], [1280, 19], [390, 5], [200, 3]]) {
+    const t = setup(1000, { width });
+    t.slideshow.open(t.all, 500, null, false);
+    assert.equal(t.strip().length, want, width + 'px');
+    assert.equal(t.strip()[(want - 1) / 2].hasAttribute('aria-current'), true);
+  }
 });
 
 test('the ends of the folder stop the arrows', () => {

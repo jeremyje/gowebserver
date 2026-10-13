@@ -1799,10 +1799,11 @@ main {
   opacity: 1;
 }
 
-/* Shown while the page was scrolling: no fade (see showTile). */
-.tile.snap img,
-.tile.snap video {
-  transition-property: transform;
+/* Shown while the page was scrolling: a short fade (see showTile,
+   whose QUICK_FADE this is). */
+.tile.quick img,
+.tile.quick video {
+  transition-duration: 0.15s;
 }
 
 /* A video tile's server thumbnail sits over the video and fades out

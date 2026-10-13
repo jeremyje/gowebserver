@@ -141,7 +141,7 @@ func (ws *webServerImpl) Serve(wait func()) error {
 	}
 
 	// One thumbnailer (and store) is shared by every served filesystem.
-	thumbs, err := newThumbnailer(ws.thumbnails, ws.ffmpeg, ws.monitoringCtx.getTraceProvider())
+	thumbs, err := newThumbnailer(ws.thumbnails, ws.ffmpeg, ws.monitoringCtx)
 	if err != nil {
 		return err
 	}

@@ -260,7 +260,48 @@ test('a video whose thumbnail fails shows the video alone', async () => {
   const tile = g.el.querySelector('.tile.vid');
   assert.equal(tile.querySelector('.vthumb'), null);
   assert.equal(tile.classList.contains('err'), false);
+  // On screen, so it gets the video with the next frame.
+  g.pg.frame();
   assert.equal(tile.querySelector('video').src, 'v0.mp4#t=0.5');
+});
+
+test('a tile that is the video makes it only once it is on screen', async () => {
+  // Six rows of three, 12px apart: two and a bit fit above the fold.
+  const g = setup(folder(0, 18), { videoThumbs: false });
+  const made = () => g.tiles().filter((a) => a.querySelector('video')).map((a) => a.getAttribute('aria-label'));
+  const ready = () => g.el.querySelectorAll('video').forEach((v) => { if (!v.parentNode.classList.contains('ready')) { v.duration = 9; v.fire('loadedmetadata'); } });
+  assert.equal(g.tiles().length, 18, 'every row is near enough to be in the page');
+  for (let i = 0; i < 4; i++) ready();
+  const first = made();
+  assert.ok(first.length >= 6 && first.length < 18, 'only the rows on screen: ' + first);
+  assert.deepEqual(first, g.names().slice(0, first.length));
+
+  // Scrolled a row at a time, the next rows get theirs as they arrive.
+  g.pg.tick(1000);
+  g.pg.scroll(250);
+  g.pg.frame();
+  for (let i = 0; i < 4; i++) ready();
+  assert.ok(made().length > first.length);
+  assert.ok(made().length <= 18);
+});
+
+test('a video tile scrolled off before its turn gives the turn up', async () => {
+  const g = setup(folder(0, 60), { videoThumbs: false });
+  // Three are loading; the rest of the screen waits.
+  assert.equal(g.el.querySelectorAll('video').length, 3);
+  g.pg.tick(100000);
+  g.pg.scroll(2500);
+  g.pg.frame();
+  const loading = g.el.querySelectorAll('video');
+  loading.forEach((v) => { v.duration = 9; v.fire('loadedmetadata'); });
+  // What loads next is on screen now, not what was waiting back there.
+  const top = g.pg.scrollY - 100, bottom = top + 800;
+  const next = g.el.querySelectorAll('video').filter((v) => loading.indexOf(v) < 0);
+  assert.ok(next.length > 0);
+  for (const v of next) {
+    const y = Number(/translateY\((.+)px\)/.exec(v.parentNode.parentNode.style.transform)[1]);
+    assert.ok(y + 300 > top && y < bottom, 'row at ' + y + ' with the screen at ' + top);
+  }
 });
 
 test('without server frames a video tile is the video, a few loading at once', () => {
@@ -279,13 +320,13 @@ test('without server frames a video tile is the video, a few loading at once', (
   assert.equal(g.el.querySelectorAll('video').length, 4);
 });
 
-test('a picture fades in at rest and appears at once while scrolling', async () => {
+test('a picture fades in at rest, and quickly while scrolling', async () => {
   const g = setup(folder(200));
   await g.pg.settle();
   g.arrive();
   const first = g.el.querySelector('.tile.ready');
   assert.ok(first);
-  assert.equal(g.el.querySelectorAll('.tile.snap').length, 0);
+  assert.equal(g.el.querySelectorAll('.tile.quick').length, 0);
 
   // A slow scroll: the grid loads as it goes.
   g.pg.tick(1000);
@@ -297,10 +338,10 @@ test('a picture fades in at rest and appears at once while scrolling', async () 
   g.arrive();
   const shown = g.el.querySelectorAll('.tile.ready').length - before;
   assert.ok(shown > 0);
-  assert.equal(g.el.querySelectorAll('.tile.snap').length, shown);
+  assert.equal(g.el.querySelectorAll('.tile.quick').length, shown);
   // Once the scroll has settled the tiles can fade again.
-  g.pg.tick(200);
-  assert.equal(g.el.querySelectorAll('.tile.snap').length, 0);
+  g.pg.tick(300);
+  assert.equal(g.el.querySelectorAll('.tile.quick').length, 0);
   assert.equal(g.el.querySelectorAll('.tile.ready').length, before + shown);
 });
 

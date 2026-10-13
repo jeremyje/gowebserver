@@ -337,10 +337,16 @@ var slideshow = (function () {
     };
   }
 
+  // A filmstrip thumbnail with the gap to the next (.ss-strip in the
+  // stylesheet), and the padding either side of the strip.
+  var STRIP_STEP = 60, STRIP_MARGIN = 28;
   function renderStrip() {
     if (!CFG.thumbs) return;
     strip.hidden = list.length < 2;
-    var lo = Math.max(0, idx - STRIP_RADIUS), hi = Math.min(list.length - 1, idx + STRIP_RADIUS);
+    // As many either side of the current one as fit across the
+    // window, up to STRIP_RADIUS.
+    var radius = Math.max(1, Math.min(STRIP_RADIUS, Math.floor(((innerWidth - STRIP_MARGIN) / STRIP_STEP - 1) / 2)));
+    var lo = Math.max(0, idx - radius), hi = Math.min(list.length - 1, idx + radius);
     var keep = {};
     Array.prototype.slice.call(strip.children).forEach(function (b) {
       if (b._k < lo || b._k > hi) { if (b._img) thumbLoader.cancel(b._img); b.remove(); }
@@ -845,7 +851,7 @@ var slideshow = (function () {
     resetZoom(false);
     position(0);
   }
-  addEventListener('resize', function () { if (isOpen) relayoutSlides(); });
+  addEventListener('resize', function () { if (isOpen) { relayoutSlides(); renderStrip(); } });
 
   return { open: open };
 })();

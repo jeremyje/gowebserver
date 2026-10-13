@@ -103,6 +103,7 @@ function createGrid(el) {
         a.style.height = r.tileH + 'px';
         a.style.left = (j * (r.tileW + r.gap)) + 'px';
         a._item = it;
+        a._plain = it.video && !CFG.videoThumbs;
         // A video's picture is the server's thumbnail of it when it
         // makes them; the video itself comes on hover (previewVideo).
         a.innerHTML = (!it.video ? '<img alt="" decoding="async" draggable="false">' :
@@ -122,18 +123,29 @@ function createGrid(el) {
     div.remove();
   }
 
-  function loadTile(a) {
+  // Loads tile a's picture; seen is whether the tile is on screen. A
+  // thumbnail loads a little ahead of the screen. A tile that has to
+  // be the video itself (a._plain) waits until it's actually seen,
+  // and gives up its turn if it's scrolled off before then: a video
+  // is too much to fetch and decode on the chance it's looked at.
+  function loadTile(a, seen) {
+    var it = a._item;
+    if (a._plain) {
+      if (seen && !a._loading) { a._loading = true; queueVideo(a); }
+      else if (!seen && unqueueVideo(a)) a._loading = false;
+      return;
+    }
     if (a._loading) return;
     a._loading = true;
-    var it = a._item;
-    if (it.video && !CFG.videoThumbs) { queueVideo(a); return; }
     var img = a.firstChild;
     thumbLoader.load(img, tileThumbURL(it, parseFloat(a.style.width)), function (ok) {
       if (ok || !it.video) { showTile(a, ok ? 'ready' : 'err'); return; }
       // The server couldn't grab a frame of this video: the tile is
       // the video itself, as when the server makes no thumbnails.
       img.remove();
-      queueVideo(a);
+      a._plain = true;
+      a._loading = false;
+      schedule();
     });
   }
 
@@ -141,7 +153,7 @@ function createGrid(el) {
   // queue, so what's on screen now isn't behind what was scrolled
   // past. It queues again when it comes back.
   function unqueueTile(a) {
-    if (a._loading && thumbLoader.unqueue(a.firstChild)) a._loading = false;
+    if (a._loading && (a._plain ? unqueueVideo(a) : thumbLoader.unqueue(a.firstChild))) a._loading = false;
   }
 
   function render() {
@@ -177,8 +189,9 @@ function createGrid(el) {
       var r = rows[i];
       if (r.type !== 'tiles') return;
       var near = !fast && r.y + r.h > loadTop && r.y < loadBottom;
+      var seen = near && r.y + r.h > viewTop && r.y < viewTop + vh;
       for (var c = div.firstChild; c; c = c.nextSibling) {
-        if (near) loadTile(c); else unqueueTile(c);
+        if (near) loadTile(c, seen); else unqueueTile(c);
       }
     });
   }
@@ -331,26 +344,28 @@ function createGrid(el) {
 var SCROLL_SETTLE = 150;
 
 // Shows tile a's picture (cls is ready) or placeholder (err). A
-// picture fades in, except while the page is scrolling: each fade is a
-// layer of its own for the browser to blend on every frame, a screen
-// of them at a time, just when it's busiest. Those tiles appear at
-// once (.snap) instead, and get their fade back shortly after for
-// what else uses it (a video tile's thumbnail fades out and in around
-// its preview).
-var snapped = [], snapTimer = 0;
+// picture fades in, and quickly (.quick) while the page is scrolling:
+// each fade is a layer of its own for the browser to blend on every
+// frame, a screen of them at a time, just when it's busiest, so they
+// are kept short. Not left out, though: pictures arrive a few at a
+// time, and a screen filling in steps with no fade at all flickers.
+// The tile gets its usual fade back once that one is over, for what
+// else uses it (a video tile's thumbnail fades out and in around its
+// preview).
+var QUICK_FADE = 150, quickened = [], quickTimer = 0;
 function showTile(a, cls) {
   if (grid && grid.scrolling()) {
-    a.classList.add('snap');
-    snapped.push(a);
-    if (!snapTimer) snapTimer = setTimeout(unsnap, SCROLL_SETTLE);
+    a.classList.add('quick');
+    quickened.push(a);
+    if (!quickTimer) quickTimer = setTimeout(unquicken, QUICK_FADE * 2);
   }
   a.classList.add(cls);
 }
 
-function unsnap() {
-  snapTimer = 0;
-  snapped.forEach(function (a) { a.classList.remove('snap'); });
-  snapped = [];
+function unquicken() {
+  quickTimer = 0;
+  quickened.forEach(function (a) { a.classList.remove('quick'); });
+  quickened = [];
 }
 
 // ===== Grid video tiles =====
@@ -360,8 +375,9 @@ function unsnap() {
 // buffers, a connection), and a screen of them is a screen of videos
 // being fetched and decoded for a picture each.
 // When the server makes no thumbnails (or can't of this video), the
-// tile has to be the video, paused on a frame. At most a few of those
-// load at once.
+// tile has to be the video, paused on a frame. That one is made when
+// the tile comes on screen, not ahead of it, at most a few loading at
+// once.
 // Either way the video is torn down when its row scrolls away.
 var videoQueue = [], videoActive = 0, VIDEO_CONCURRENCY = 3;
 
@@ -374,6 +390,14 @@ function fmtDuration(sec) {
 function queueVideo(a) {
   videoQueue.push(a);
   pumpVideos();
+}
+
+// Takes tile a out of the queue; false when it wasn't waiting there.
+function unqueueVideo(a) {
+  var i = videoQueue.indexOf(a);
+  if (i < 0) return false;
+  videoQueue.splice(i, 1);
+  return true;
 }
 
 function pumpVideos() {

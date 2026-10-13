@@ -57,6 +57,8 @@ internal/gowebserver/testing/  # Test utilities and embedded test archives
 - **monitoring.go**: Prometheus metrics, OpenTelemetry tracing, pprof endpoints
 - **upload.go**: Multi-file upload with MD5 token validation
 - **richview.go**: Syntax-highlighted text viewer (`?view=rich`)
+- **thumbnail.go**: Resized images and video frames (`?width=`/`?height=`), made once and stored
+- **thumbnail_metrics.go**: Where thumbnail time goes: `thumbnail_*` Prometheus metrics, a span per stage (wait, decode, scale, encode, store), and a `Server-Timing` header on each thumbnail for the browser's network panel
 - **templates.go**: Loads the page templates; see below
 
 ### Page templates (pkg/gowebserver/template/)

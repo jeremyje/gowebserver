@@ -364,7 +364,6 @@ func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				params.HasImage = hasImage
 				params.HasVideo = hasVideo
 
-				slog.Info("Params", "params", params)
 				if err := c.tmpl.Execute(w, params); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
