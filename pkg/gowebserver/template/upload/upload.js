@@ -26,7 +26,9 @@ function resetLabel() {
 
 function triggerSubmit() {
   var ev = document.createEvent('HTMLEvents');
-  ev.initEvent('submit', true, false);
+  // Cancelable: Firefox submits the form for this event as it would for
+  // a real one, unless the submit handler below can prevent that.
+  ev.initEvent('submit', true, true);
   form.dispatchEvent(ev);
 }
 

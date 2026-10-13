@@ -18,8 +18,11 @@ make coverage         # Generate coverage report
 make lint             # Run go fmt and go vet
 make deps             # Download and tidy dependencies
 make run              # Build and run locally on port 8181
-make test-js          # Run the templates' JavaScript tests (needs node)
+make test-js          # Run the templates' JavaScript tests (also part of make test)
 make benchmark-js     # Run the templates' JavaScript benchmarks
+make test-browser     # Run the pages in headless Chromium and Firefox
+make benchmark-browser  # Time the file browser in a headless browser
+make browse TARGET=.  # Open a URL or folder headless: logs, timings, screenshot
 make presubmit        # Run complete CI checks locally
 ```
 
@@ -66,7 +69,14 @@ Each template has a directory, `template/NAME/NAME.html`, with its CSS and JavaS
 - **upload/**: The upload page
 - **template-index/**: The plain directory listing
 
-JavaScript tests are `template/NAME/test/*.test.js` and benchmarks `template/NAME/bench/*.bench.js`. They run on Node alone (`node:test`, no packages) against the stand-in browser in `template/harness.js`, which has no layout: a test sets the sizes it needs. `make test` runs them through `TestTemplateJavaScript` (skipped when node isn't installed); `make test-js` and `make benchmark-js` run them directly. Only `template/*/*.{html,css,js}` is embedded, so keep tests in those subdirectories.
+JavaScript tests come in two kinds, both driven by `Makefile_javascript.mk` (Node and npm are assumed installed; nothing is installed beside the sources):
+
+- `template/NAME/test/*.test.js` and `template/NAME/bench/*.bench.js` run on Node alone (`node:test`, no packages) against the stand-in browser in `template/harness.js`, which has no layout: a test sets the sizes it needs. `make test-js` (part of `make test`, through `TEST_TARGETS`) and `make benchmark-js`.
+- `template/NAME/browser/*.browser.js` run in real headless browsers (Playwright, installed with the browsers under `build/toolchain`) against the real server, through `template/browser.js`. `make test-browser` runs them in each of `HEADLESS_BROWSERS` (chromium and firefox; webkit needs system libraries). It is not part of `make test`.
+
+To see how a page actually behaves, use the browser rather than guessing: `make browse TARGET=<url or folder> [SCREENSHOT=file.png] [BROWSER=firefox]` prints what the page logged, what failed, timings and grid counts and saves a screenshot (read it with the Read tool); `make benchmark-browser [PHOTOS=5000]` times loading and scrolling a generated folder, cold and warm. These rebuild the server first, since the templates are embedded in it.
+
+Only `template/*/*.{html,css,js}` is embedded, so keep tests in those subdirectories.
 
 Filesystem handlers are mounted with `http.StripPrefix`, so `r.URL.Path` lacks the serve path (e.g. `/e`). Build links and redirects relative to the request (`relativeURL`, `redirectRelative`), never from `r.URL.Path`.
 

@@ -73,6 +73,16 @@ test('choosing files names them and uploads at once', () => {
   assert.equal(many.label(), '3 files selected');
 });
 
+test('the browser is kept from submitting the form as well', () => {
+  // Firefox submits a form for a scripted submit event unless it's
+  // prevented, which uploads twice and leaves the page for the JSON.
+  const t = setup();
+  let submit;
+  t.form.addEventListener('submit', (e) => { submit = e; });
+  t.choose('a.txt');
+  assert.equal(submit.defaultPrevented, true);
+});
+
 test('a successful upload shows success', () => {
   const t = setup();
   t.choose('a.txt');

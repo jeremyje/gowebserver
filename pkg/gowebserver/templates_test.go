@@ -16,7 +16,6 @@ package gowebserver
 
 import (
 	"io/fs"
-	"os/exec"
 	"path"
 	"strings"
 	"testing"
@@ -126,19 +125,5 @@ func TestEmbeddedTemplates(t *testing.T) {
 				}
 			}
 		})
-	}
-}
-
-// TestTemplateJavaScript runs the templates' JavaScript tests
-// (template/*/test), which need Node.js and nothing else.
-func TestTemplateJavaScript(t *testing.T) {
-	node, err := exec.LookPath("node")
-	if err != nil {
-		t.Skip("node is not installed; skipping the templates' JavaScript tests")
-	}
-	cmd := exec.Command(node, "--test")
-	cmd.Dir = "template"
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Errorf("node --test in pkg/gowebserver/template: %v\n%s", err, out)
 	}
 }

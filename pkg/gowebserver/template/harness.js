@@ -70,7 +70,7 @@ class Node {
   fire(type, props) {
     const e = Object.assign({
       type, target: this, defaultPrevented: false, stopped: false, button: 0,
-      preventDefault() { this.defaultPrevented = true; },
+      preventDefault() { if (this.cancelable !== false) this.defaultPrevented = true; },
       stopPropagation() { this.stopped = true; },
     }, props);
     for (let n = this; n && !e.stopped; n = n.parentNode || n.defaultView) {
@@ -308,7 +308,9 @@ class Document extends Node {
   }
   createElement(tag) { return new Element(tag, this); }
   createDocumentFragment() { return new Fragment(); }
-  createEvent() { return { initEvent(type) { this.type = type; } }; }
+  createEvent() {
+    return { initEvent(type, bubbles, cancelable) { this.type = type; this.cancelable = !!cancelable; } };
+  }
   getElementById(id) { return this.descendants().find((el) => el.id === id) || null; }
 }
 
