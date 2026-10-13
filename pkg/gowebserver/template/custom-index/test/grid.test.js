@@ -37,7 +37,7 @@ function setup(media, opts) {
   const opened = [];
   const pg = page('<p id="summary"></p><p id="no-match"></p><div id="media"></div>', {
     // A mouse, which is what hovers.
-    media: { '(any-hover: hover) and (any-pointer: fine)': opts.mouse !== false },
+    media: { '(hover: hover) and (pointer: fine), (any-hover: hover) and (any-pointer: fine)': opts.mouse !== false },
     globals: {
       GOWS: { sort: opts.sort, thumbs: opts.thumbs, videoThumbs: opts.videoThumbs, media },
       pageAmbient: { show() { } },
