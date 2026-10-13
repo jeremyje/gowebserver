@@ -39,9 +39,10 @@ func collected(t *testing.T, reader *sdkmetric.ManualReader) map[string]map[stri
 		t.Fatal(err)
 	}
 	key := func(set attribute.Set) string {
-		var parts []string
-		for _, kv := range set.ToSlice() {
-			parts = append(parts, string(kv.Key)+"="+kv.Value.Emit())
+		kvs := set.ToSlice()
+		parts := make([]string, 0, len(kvs))
+		for _, kv := range kvs {
+			parts = append(parts, string(kv.Key)+"="+kv.Value.String())
 		}
 		sort.Strings(parts)
 		return strings.Join(parts, ",")
@@ -94,8 +95,9 @@ func TestThumbnailMetrics(t *testing.T) {
 	rec := thumbGet(t, h, "/photo.jpg?width=64", nil)
 	decodeThumb(t, rec)
 	timing := rec.Header().Get("Server-Timing")
-	var stages []string
-	for _, part := range strings.Split(timing, ", ") {
+	timed := strings.Split(timing, ", ")
+	stages := make([]string, 0, len(timed))
+	for _, part := range timed {
 		name, dur, ok := strings.Cut(part, ";dur=")
 		if !ok || dur == "" {
 			t.Errorf("Server-Timing %q: %q has no duration", timing, part)
@@ -174,7 +176,7 @@ func TestThumbnailMetrics(t *testing.T) {
 	}
 	attrs := map[string]string{}
 	for _, kv := range request.Attributes() {
-		attrs[string(kv.Key)] = kv.Value.Emit()
+		attrs[string(kv.Key)] = kv.Value.String()
 	}
 	if attrs["kind"] != "photo" || attrs["result"] != "made" {
 		t.Errorf("thumbnail span attributes = %v, want kind photo and result made", attrs)
