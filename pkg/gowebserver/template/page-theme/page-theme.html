@@ -1,0 +1,25 @@
+{{/*
+  Shared by the file browser (custom-index.html) and the file viewer
+  (rich-view.html), so the two pages look and behave the same: the design
+  tokens and accent, the header (breadcrumbs, title), the sticky toolbar
+  with its buttons and their hover, the theme switcher, and the title that
+  travels into the toolbar as the page scrolls. Change them here, not in
+  either page.
+
+  page-style goes inside each page's <style>, before its own rules.
+  page-script goes after each page's markup, before its own script; it
+  needs #hero, #title, #crumbs, #toolbar, #tb-title and #theme. A title
+  with data-from-path is named from the URL (the file browser's folder).
+*/}}
+{{define "page-style"}}
+    {{include "page-theme.css"}}
+{{end}}
+
+{{define "page-script"}}
+  <script>
+    (function () {
+      'use strict';
+      {{include "page-theme.js"}}
+    })();
+  </script>
+{{end}}

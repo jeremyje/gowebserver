@@ -1,0 +1,358 @@
+html {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--bg);
+  accent-color: var(--accent);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ===== Header (the shared page-style has the rest) ===== */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin-top: 10px;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.lang {
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: 600 0.75rem/1.6 var(--font-mono);
+}
+
+/* ===== Toolbar (the shared page-style has the rest) ===== */
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--hover);
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.back:hover {
+  color: var(--ink);
+}
+
+.back svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.tb-title {
+  max-width: 40ch;
+  margin-left: 6px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.select {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.select select {
+  appearance: none;
+  height: 38px;
+  padding: 0 30px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--hover);
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.select select:hover {
+  color: var(--ink);
+}
+
+.select option {
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.select svg {
+  position: absolute;
+  right: 10px;
+  width: 12px;
+  height: 12px;
+  stroke: var(--ink-3);
+  stroke-width: 2.4;
+  pointer-events: none;
+}
+
+.icon-btn[aria-pressed="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.icon-btn.done {
+  color: var(--accent);
+}
+
+/* ===== Code ===== */
+main {
+  flex: 1;
+  padding: 8px max(var(--gutter), env(safe-area-inset-right)) 32px max(var(--gutter), env(safe-area-inset-left));
+}
+
+.code {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.code .chroma {
+  margin: 0;
+  padding: 14px 0;
+  overflow-x: auto;
+  font: 0.8125rem/1.65 var(--font-mono);
+  tab-size: 4;
+}
+
+.code .chroma .line {
+  padding-right: 20px;
+}
+
+.code .chroma .ln {
+  flex: none;
+  min-width: 4.5ch;
+  margin-right: 16px;
+  padding: 0 12px 0 16px;
+  text-align: right;
+  opacity: 0.55;
+}
+
+.code .chroma .ln a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.code .chroma .ln a:hover {
+  text-decoration: underline;
+}
+
+.code .chroma .line:has(.ln:target) {
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 var(--accent);
+}
+
+.code .chroma .ln:target {
+  background: none;
+  color: inherit;
+  opacity: 1;
+}
+
+html.wrap .code .chroma .cl {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 72px 24px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 14px;
+  text-align: center;
+  color: var(--ink-2);
+}
+
+.notice strong {
+  display: block;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.notice a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 11px;
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.notice a svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.site-footer {
+  padding: 0 max(var(--gutter), env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left));
+  font-size: 0.75rem;
+  color: var(--ink-3);
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .tb-title {
+    display: none;
+  }
+
+  .back span {
+    display: none;
+  }
+
+  .back {
+    width: 38px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .code {
+    margin: 0 calc(-1 * max(var(--gutter), env(safe-area-inset-left)));
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+}
+
+/* ===== Button hover (this page's own) =====
+ * The ring and squash every button gets are in the shared page-style;
+ * these are the icons with their own move. Each plays once. */
+svg * {
+  transform-box: view-box;
+}
+
+:is(.icon-btn, .back, .select):is(:hover, :focus-visible, :focus-within) .i-back {
+  animation: ic-nudge-back 1s var(--ease);
+}
+
+.select:is(:hover, :focus-within) .i-caret {
+  animation: ic-bob-down 0.8s var(--ease);
+}
+
+.icon-btn:is(:hover, :focus-visible) .i-wrap {
+  animation: ic-wrap 1s var(--ease);
+}
+
+.icon-btn:is(:hover, :focus-visible) .i-sheet {
+  animation: ic-copy 0.8s var(--ease-out);
+}
+
+.icon-btn:is(:hover, :focus-visible) .i-launch {
+  animation: ic-launch 0.9s var(--ease);
+}
+
+.i-gl {
+  transform-origin: 5px 20px;
+}
+
+.i-gr {
+  transform-origin: 19px 20px;
+}
+
+.icon-btn:is(:hover, :focus-visible) .i-drop {
+  animation: ic-drop 1.2s var(--ease);
+}
+
+.icon-btn:is(:hover, :focus-visible) .i-gl {
+  animation: ic-cave 1.2s var(--ease);
+}
+
+.icon-btn:is(:hover, :focus-visible) .i-gr {
+  animation: ic-cave-r 1.2s var(--ease);
+}
+
+@keyframes ic-nudge-back {
+  30% {
+    transform: translateX(-3px);
+  }
+
+  55% {
+    transform: translateX(1px);
+  }
+}
+
+/* The return arrow runs down to the next line and back. */
+@keyframes ic-wrap {
+  40% {
+    transform: translateX(-2px);
+  }
+
+  70% {
+    transform: translateX(1px);
+  }
+}
+
+/* The front sheet peels off as a copy and settles back. */
+@keyframes ic-copy {
+  35% {
+    transform: translate(-3px, -3px) rotate(-6deg);
+  }
+
+  65% {
+    transform: translate(0.5px, 0.5px);
+  }
+}
+
+/* The caret's bob, the launch and the download (ic-bob-down, ic-launch,
+ * ic-drop, ic-cave) are in the shared page-style. The download arrow is
+ * clipped at the bottom of the caved-in ground and at the icon's top
+ * edge, so it sinks into the hole and drops back in from above. */

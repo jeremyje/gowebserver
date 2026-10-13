@@ -47,7 +47,15 @@ install/kubernetes.yaml:
 
 template: install/kubernetes.yaml
 
+# The templates' JavaScript tests, which `make test` also runs (through
+# TestTemplateJavaScript), and their benchmarks. Both need only Node.js.
+test-js:
+	cd pkg/gowebserver/template && node --test
+
+benchmark-js:
+	cd pkg/gowebserver/template && node bench.js
+
 test-codecov:
 	curl -X POST --data-binary @codecov.yml https://codecov.io/validate
 
-.PHONY : run multirun run-wasm kind-create kind-delete template test-codecov
+.PHONY : run multirun run-wasm kind-create kind-delete template test-js benchmark-js test-codecov

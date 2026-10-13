@@ -33,7 +33,7 @@ import (
 
 func TestUploadHTML(t *testing.T) {
 	if len(uploadHTML) < 50 {
-		t.Errorf("data/upload.html was not stored")
+		t.Errorf("template/upload/upload.html was not stored")
 	}
 }
 

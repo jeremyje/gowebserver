@@ -1,0 +1,2883 @@
+html {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--bg);
+  scrollbar-gutter: stable;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+html.ss-lock {
+  overflow: hidden;
+  background: #060607;
+}
+
+/* Large media folders get the scrubber instead of the native bar. */
+html.has-scrub {
+  scrollbar-width: none;
+}
+
+html.has-scrub::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  min-height: 100vh;
+  background: transparent;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ===== Ambient backdrop =====
+ * A 24x16 canvas holding the photo nearest the middle of the screen,
+ * stretched to the viewport and blurred. The canvas is tiny, so the
+ * backdrop costs almost no memory however many photos the page has. */
+.ambient {
+  position: fixed;
+  inset: -12%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s var(--ease-out);
+  -webkit-mask-image: radial-gradient(120% 75% at 50% 0%, #000 25%, transparent 80%);
+  mask-image: radial-gradient(120% 75% at 50% 0%, #000 25%, transparent 80%);
+}
+
+.ambient.on {
+  opacity: var(--ambient-opacity);
+}
+
+.ambient canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  filter: blur(36px) saturate(1.5);
+  transition: opacity 1.2s var(--ease-out);
+}
+
+.ambient canvas.on {
+  opacity: 1;
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+}
+
+.summary {
+  margin-top: 8px;
+  font-size: 0.9375rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  min-height: 1.5em;
+}
+
+.search {
+  position: relative;
+  flex: 1 1 140px;
+  max-width: 420px;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.search svg {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--ink-3);
+  stroke-width: 2;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.search input {
+  width: 100%;
+  height: 38px;
+  padding: 0 34px 0 36px;
+  border: 1px solid var(--line-strong);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9375rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+}
+
+.search input::placeholder {
+  color: var(--ink-3);
+}
+
+.search input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.search input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+.search kbd {
+  position: absolute;
+  right: 10px;
+  min-width: 20px;
+  padding: 1px 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  font: 500 0.6875rem/1.4 var(--font-ui);
+  color: var(--ink-3);
+  text-align: center;
+  pointer-events: none;
+}
+
+.search input:focus~kbd,
+.search input:not(:placeholder-shown)~kbd {
+  display: none;
+}
+
+.seg {
+  display: flex;
+  flex: none;
+  padding: 3px;
+  border-radius: 11px;
+  background: var(--hover);
+  border: 1px solid var(--line);
+}
+
+.seg a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--ink-2);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.seg a:hover {
+  color: var(--ink);
+}
+
+.seg a[aria-current] {
+  background: var(--raised);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.seg svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 640px) {
+  .tb-title {
+    display: none;
+  }
+
+  .toolbar {
+    gap: 8px;
+  }
+
+  .seg a {
+    padding: 0 8px;
+  }
+
+  .search kbd {
+    display: none;
+  }
+}
+
+/* ===== Content ===== */
+main {
+  padding: 12px max(var(--gutter), env(safe-area-inset-right)) 48px max(var(--gutter), env(safe-area-inset-left));
+}
+
+.files {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.files-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px 10px 72px;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.files-head span:first-child {
+  flex: 1;
+}
+
+.files-head .col-size {
+  width: 84px;
+  text-align: right;
+}
+
+.files-head .col-date {
+  width: 168px;
+  text-align: right;
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  /* Rows off screen skip layout and paint, so a folder with tens of
+   * thousands of files stays responsive. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 60px;
+  transition: background-color 0.12s;
+}
+
+.row+.row {
+  border-top: 1px solid var(--line);
+}
+
+.row:hover {
+  background: var(--hover);
+}
+
+.row[hidden] {
+  display: none;
+}
+
+.row-icon {
+  flex: none;
+  align-self: stretch;
+  width: 72px;
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+  touch-action: manipulation;
+}
+
+.chip {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--c, var(--ink-2));
+  background: color-mix(in srgb, var(--c, var(--ink-2)) 13%, transparent);
+  transition: transform 0.3s var(--ease), background-color 0.2s;
+}
+
+.row:hover .chip {
+  background: color-mix(in srgb, var(--c, var(--ink-2)) 22%, transparent);
+}
+
+.row-icon:active .chip {
+  transform: scale(0.92);
+}
+
+.chip svg {
+  --stroke: 1.6;
+  width: 20px;
+  height: 20px;
+  /* Hover animations move parts past the 24x24 icon box. */
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px 16px 0;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.row-main:focus-visible {
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+
+.row .name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row .meta {
+  display: flex;
+  gap: 16px;
+  flex: none;
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.row .size {
+  width: 84px;
+  text-align: right;
+}
+
+.row[data-dir] .size {
+  color: var(--ink-3);
+}
+
+.row .date {
+  width: 168px;
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .files {
+    border-radius: 14px;
+  }
+
+  .files-head {
+    display: none;
+  }
+
+  .row-icon {
+    width: 60px;
+  }
+
+  .row-main {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1px;
+    padding: 11px 16px 11px 0;
+  }
+
+  .row .meta {
+    gap: 12px;
+    font-size: 0.75rem;
+  }
+
+  .row .size,
+  .row .date {
+    width: auto;
+    text-align: left;
+  }
+}
+
+.icon-folder { --c: var(--icon-folder); }
+.icon-text { --c: var(--icon-text); }
+.icon-pdf { --c: var(--icon-pdf); }
+.icon-doc { --c: var(--icon-doc); }
+.icon-spreadsheet { --c: var(--icon-spreadsheet); }
+.icon-presentation { --c: var(--icon-presentation); }
+.icon-image { --c: var(--icon-image); }
+.icon-video { --c: var(--icon-video); }
+.icon-audio { --c: var(--icon-audio); }
+.icon-archive { --c: var(--icon-archive); }
+.icon-code { --c: var(--icon-code); }
+.icon-terminal { --c: var(--icon-terminal); }
+.icon-disc { --c: var(--icon-disc); }
+.icon-config { --c: var(--icon-config); }
+.icon-font { --c: var(--icon-font); }
+.icon-download { --c: var(--icon-download); }
+.icon-database { --c: var(--icon-database); }
+.icon-ebook { --c: var(--icon-ebook); }
+.icon-cad { --c: var(--icon-cad); }
+.icon-vector { --c: var(--icon-vector); }
+.icon-photoshop { --c: var(--icon-photoshop); }
+.icon-markup { --c: var(--icon-markup); }
+.icon-stylesheet { --c: var(--icon-stylesheet); }
+.icon-script { --c: var(--icon-script); }
+.icon-data { --c: var(--icon-data); }
+.icon-certificate { --c: var(--icon-certificate); }
+.icon-key { --c: var(--icon-key); }
+.icon-log { --c: var(--icon-log); }
+.icon-backup { --c: var(--icon-backup); }
+.icon-binary { --c: var(--icon-binary); }
+.icon-package { --c: var(--icon-package); }
+.icon-unknown { --c: var(--icon-text); }
+
+/* Icons whose shapes aren't 20 units at their widest, or aren't
+ * centered, are wrapped in a .ic-fit group that scales and centers them
+ * so every icon reads the same size. The stroke is divided by the same
+ * factor (--k) so line weight matches. */
+.ic-fit {
+  stroke-width: calc(var(--stroke) / var(--k));
+}
+
+/* The terminal cursor sits on the chip so it can blink; its offsets
+ * place it after the prompt glyph of the centered 20px icon. */
+.icon-terminal::after {
+  content: '';
+  position: absolute;
+  left: 18.83px;
+  top: 19.88px;
+  width: 3.33px;
+  height: 1.25px;
+  background: currentColor;
+}
+
+.row:hover .icon-terminal::after {
+  animation: cursor-blink 0.8s step-end infinite;
+}
+
+/* ===== Icon hover animations =====
+ * Icons are drawn with <use href="#icon-x">, and selectors can't reach
+ * into a <use> copy: styles for its parts are matched against the
+ * original <symbol>, which isn't inside the row. Custom properties do
+ * inherit into the copy, so hovering a row sets --hov to empty on the
+ * chip and each part's animation is written as "var(--hov) name ...".
+ * Outside a hover --hov is unset, the declaration is invalid, and the
+ * part has no animation, which also restarts it on the next hover.
+ *
+ * Part transforms use icon units (the icons are 24x24), except where a
+ * part scales around its own box (transform-box: fill-box).
+ */
+.row:hover .chip,
+.row:has(:focus-visible) .chip {
+  --hov: ;
+}
+
+[class^="p-"],
+[class*=" p-"] {
+  transform-box: view-box;
+}
+
+/* Folder: the front opens, a couple of papers peek out, and it closes
+ * again. The papers are clipped at the front's top edge so they never
+ * show through it, and filled with a tint of the folder's color so the
+ * back's outline doesn't show through them. */
+.p-folder-front {
+  transform-origin: 12px 20px;
+  animation: var(--hov) ic-folder-front 1.8s var(--ease);
+}
+
+.p-folder-paper1,
+.p-folder-paper2 {
+  fill: color-mix(in srgb, var(--c) 30%, var(--bg));
+  transform: translateY(5px);
+  animation: var(--hov) ic-folder-paper 1.8s var(--ease);
+}
+
+.p-folder-paper1 {
+  transform-origin: 10px 13px;
+  --tilt: -7deg;
+}
+
+.p-folder-paper2 {
+  transform-origin: 14px 13px;
+  --tilt: 6deg;
+  animation-delay: 0.1s;
+}
+
+@keyframes ic-folder-front {
+  18%,
+  68% {
+    transform: scaleY(0.8) skewX(-12deg);
+  }
+
+  86% {
+    transform: scaleY(1.04);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+@keyframes ic-folder-paper {
+
+  0%,
+  15% {
+    transform: translateY(5px);
+  }
+
+  40% {
+    transform: translateY(-4px) rotate(var(--tilt));
+  }
+
+  52% {
+    transform: translateY(-2.5px) rotate(calc(var(--tilt) * -0.4));
+  }
+
+  62% {
+    transform: translateY(-3px) rotate(0);
+  }
+
+  82%,
+  100% {
+    transform: translateY(5px);
+  }
+}
+
+/* Shared squash-and-stretch, anchored at the part's transform-origin. */
+@keyframes ic-squash {
+  25% {
+    transform: scale(1.1, 0.86);
+  }
+
+  50% {
+    transform: scale(0.94, 1.08);
+  }
+
+  75% {
+    transform: scale(1.03, 0.97);
+  }
+}
+
+/* Text: the page hops and its lines retype. */
+.p-text-hop {
+  transform-origin: 12px 22px;
+  animation: var(--hov) ic-hop 0.7s var(--ease-out);
+}
+
+.p-text-l1,
+.p-text-l2 {
+  stroke-dasharray: 8;
+  animation: var(--hov) ic-type 0.5s 0.15s steps(4) backwards;
+}
+
+.p-text-l2 {
+  animation-delay: 0.4s;
+}
+
+
+@keyframes ic-type {
+  from {
+    stroke-dashoffset: 8;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* PDF: the page prints: it rises out of a printer's slot top edge
+ * first, a line at a time, the P already on it, and the slot goes once
+ * the page is out. The page is clipped at the slot, so it's hidden
+ * until it emerges. */
+.p-pdf-slot {
+  opacity: 0;
+  animation: var(--hov) ic-pdf-slot 1.2s linear;
+}
+
+.p-pdf-page {
+  animation: var(--hov) ic-pdf-print 1.2s linear;
+}
+
+@keyframes ic-pdf-slot {
+  0% {
+    opacity: 0;
+  }
+
+  8%,
+  78% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Four feeds, each easing in and out like a printer's rollers. */
+@keyframes ic-pdf-print {
+  0%,
+  8% {
+    transform: translateY(21px);
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+
+  24% {
+    transform: translateY(15.75px);
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+
+  40% {
+    transform: translateY(10.5px);
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+
+  56% {
+    transform: translateY(5.25px);
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  }
+
+  72%,
+  100% {
+    transform: none;
+  }
+}
+
+/* Doc: the page swings like it's being turned, lines slide back in. */
+.p-doc-turn {
+  transform-origin: 4px 22px;
+  animation: var(--hov) ic-turn 0.8s var(--ease-out);
+}
+
+:is(.p-doc-l1, .p-doc-l2, .p-doc-l3) {
+  animation: var(--hov) ic-slide-in 0.45s var(--ease-out) backwards;
+}
+
+.p-doc-l1 {
+  animation-delay: 0.2s;
+}
+
+.p-doc-l2 {
+  animation-delay: 0.3s;
+}
+
+.p-doc-l3 {
+  animation-delay: 0.4s;
+}
+
+@keyframes ic-turn {
+  30% {
+    transform: rotate(-12deg);
+  }
+
+  60% {
+    transform: rotate(5deg);
+  }
+
+  80% {
+    transform: rotate(-2deg);
+  }
+}
+
+@keyframes ic-slide-in {
+  from {
+    transform: translateX(-4px);
+    opacity: 0;
+  }
+}
+
+/* Spreadsheet: cells light up and go out in a busy, irregular
+ * pattern, like a computer working something out, then all go dark.
+ * Plays once. */
+:is(.p-spreadsheet-c1, .p-spreadsheet-c2, .p-spreadsheet-c3, .p-spreadsheet-c4) {
+  opacity: 0;
+}
+
+.p-spreadsheet-c1 {
+  animation: var(--hov) ic-calc-1 1.2s linear;
+}
+
+.p-spreadsheet-c2 {
+  animation: var(--hov) ic-calc-2 1.2s linear;
+}
+
+.p-spreadsheet-c3 {
+  animation: var(--hov) ic-calc-3 1.2s linear;
+}
+
+.p-spreadsheet-c4 {
+  animation: var(--hov) ic-calc-4 1.2s linear;
+}
+
+@keyframes ic-calc-1 {
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  2% {
+    opacity: 0.6;
+  }
+
+  9% {
+    opacity: 0.6;
+  }
+
+  11% {
+    opacity: 0;
+  }
+
+  34% {
+    opacity: 0;
+  }
+
+  36% {
+    opacity: 0.6;
+  }
+
+  44% {
+    opacity: 0.6;
+  }
+
+  46% {
+    opacity: 0;
+  }
+
+  72% {
+    opacity: 0;
+  }
+
+  74% {
+    opacity: 0.6;
+  }
+
+  80% {
+    opacity: 0.6;
+  }
+
+  82% {
+    opacity: 0;
+  }
+}
+
+@keyframes ic-calc-2 {
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 0;
+  }
+
+  14% {
+    opacity: 0.6;
+  }
+
+  20% {
+    opacity: 0.6;
+  }
+
+  22% {
+    opacity: 0;
+  }
+
+  46% {
+    opacity: 0;
+  }
+
+  48% {
+    opacity: 0.6;
+  }
+
+  58% {
+    opacity: 0.6;
+  }
+
+  60% {
+    opacity: 0;
+  }
+}
+
+@keyframes ic-calc-3 {
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  6% {
+    opacity: 0;
+  }
+
+  8% {
+    opacity: 0.6;
+  }
+
+  14% {
+    opacity: 0.6;
+  }
+
+  16% {
+    opacity: 0;
+  }
+
+  24% {
+    opacity: 0;
+  }
+
+  26% {
+    opacity: 0.6;
+  }
+
+  32% {
+    opacity: 0.6;
+  }
+
+  34% {
+    opacity: 0;
+  }
+
+  60% {
+    opacity: 0;
+  }
+
+  62% {
+    opacity: 0.6;
+  }
+
+  70% {
+    opacity: 0.6;
+  }
+
+  72% {
+    opacity: 0;
+  }
+}
+
+@keyframes ic-calc-4 {
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  18% {
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 0.6;
+  }
+
+  28% {
+    opacity: 0.6;
+  }
+
+  30% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 0;
+  }
+
+  52% {
+    opacity: 0.6;
+  }
+
+  56% {
+    opacity: 0.6;
+  }
+
+  58% {
+    opacity: 0;
+  }
+
+  82% {
+    opacity: 0;
+  }
+
+  84% {
+    opacity: 0.6;
+  }
+
+  90% {
+    opacity: 0.6;
+  }
+
+  92% {
+    opacity: 0;
+  }
+}
+
+/* Presentation: the chart's bars grow in with a bounce. */
+:is(.p-presentation-b1, .p-presentation-b2, .p-presentation-b3) {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: var(--hov) ic-grow 0.7s var(--ease-out) backwards;
+}
+
+.p-presentation-b2 {
+  animation-delay: 0.1s;
+}
+
+.p-presentation-b3 {
+  animation-delay: 0.2s;
+}
+
+@keyframes ic-grow {
+  0% {
+    transform: scaleY(0);
+  }
+
+  55% {
+    transform: scaleY(1.35);
+  }
+
+  80% {
+    transform: scaleY(0.9);
+  }
+}
+
+/* Image: the sun sets and rises again, the hills redraw. */
+.p-image-sun {
+  transform-origin: 8.5px 8.5px;
+  animation: var(--hov) ic-sunrise 1s var(--ease-out);
+}
+
+.p-image-land {
+  stroke-dasharray: 24;
+  animation: var(--hov) ic-draw-24 0.7s 0.2s var(--ease-out) backwards;
+}
+
+@keyframes ic-sunrise {
+  30% {
+    transform: translate(1px, 6px) scale(0.6);
+    opacity: 0;
+  }
+
+  65% {
+    transform: translate(0, -1.5px) scale(1.5);
+    opacity: 1;
+  }
+}
+
+@keyframes ic-draw-24 {
+  from {
+    stroke-dashoffset: 24;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Video: the lens zooms in and out while the record light blinks. */
+.p-video-lens {
+  transform-origin: 16px 12px;
+  animation: var(--hov) ic-zoom 1.2s var(--ease) infinite;
+}
+
+.p-video-rec {
+  opacity: 0;
+  animation: var(--hov) ic-blink 1.2s step-end infinite;
+}
+
+@keyframes ic-zoom {
+  30% {
+    transform: scaleX(0.55);
+  }
+
+  60% {
+    transform: scaleX(1.15);
+  }
+}
+
+@keyframes ic-blink {
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Audio: the whole note sways and bounces to the beat, stems and beam
+ * moving together. */
+.p-audio-note {
+  transform-origin: 13.5px 21px;
+  animation: var(--hov) ic-sway 1.2s var(--ease) infinite;
+}
+
+@keyframes ic-sway {
+
+  0%,
+  50%,
+  100% {
+    transform: none;
+  }
+
+  25% {
+    transform: translateY(-2px) rotate(-7deg);
+  }
+
+  37% {
+    transform: scale(1.06, 0.94);
+  }
+
+  75% {
+    transform: translateY(-2px) rotate(7deg);
+  }
+
+  87% {
+    transform: scale(1.06, 0.94);
+  }
+}
+
+/* Archive: the lid pops off and the box bounces. */
+.p-archive-lid {
+  transform-origin: 1px 8px;
+  animation: var(--hov) ic-lid 0.9s var(--ease-out);
+}
+
+.p-archive-box {
+  transform-origin: 12px 21px;
+  animation: var(--hov) ic-squash 0.6s 0.35s var(--ease-out);
+}
+
+@keyframes ic-lid {
+  30% {
+    transform: translateY(-5px) rotate(-14deg);
+  }
+
+  55% {
+    transform: translateY(-3px) rotate(-6deg);
+  }
+
+  75% {
+    transform: translateY(0.5px);
+  }
+}
+
+/* Download: the arrow dives into the ground, which caves in under it,
+ * then drops back in from above. Same motion as the slideshow's
+ * download button. */
+.p-download-arrow {
+  animation: var(--hov) ic-drop 1.4s var(--ease) infinite;
+}
+
+.p-download-gl {
+  transform-origin: 4px 21px;
+  animation: var(--hov) ic-cave 1.4s var(--ease) infinite;
+}
+
+.p-download-gr {
+  transform-origin: 20px 21px;
+  animation: var(--hov) ic-cave-r 1.4s var(--ease) infinite;
+}
+
+/* Code: the brackets spring apart and a slash flips in: <> to </>. */
+.p-code-lt {
+  animation: var(--hov) ic-apart-l 0.7s var(--ease-out) forwards;
+}
+
+.p-code-gt {
+  animation: var(--hov) ic-apart-r 0.7s var(--ease-out) forwards;
+}
+
+.p-code-slash {
+  transform-origin: 12px 12px;
+  opacity: 0;
+  transform: scale(0);
+  animation: var(--hov) ic-slash-in 0.6s 0.15s var(--ease-out) forwards;
+}
+
+@keyframes ic-apart-l {
+  40% {
+    transform: translateX(-2.5px);
+  }
+
+  to {
+    transform: translateX(-1px);
+  }
+}
+
+@keyframes ic-apart-r {
+  40% {
+    transform: translateX(2.5px);
+  }
+
+  to {
+    transform: translateX(1px);
+  }
+}
+
+@keyframes ic-slash-in {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(-180deg);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.2) rotate(10deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Terminal: the cursor blinks after the prompt. */
+@keyframes cursor-blink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Disc: spins up and slows to a stop after one turn, like it's being
+ * read. Gear: two turns the same way. Both play once and end on a
+ * whole turn, which looks just like the start, so nothing snaps back. */
+.p-disc-disc {
+  transform-origin: 12px 12px;
+  animation: var(--hov) ic-spin-1 1.2s cubic-bezier(0.45, 0, 0.25, 1);
+}
+
+.p-config-gear {
+  transform-origin: 12px 12px;
+  animation: var(--hov) ic-spin-2 1.8s cubic-bezier(0.45, 0, 0.25, 1);
+}
+
+@keyframes ic-spin-1 {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ic-spin-2 {
+  to {
+    transform: rotate(720deg);
+  }
+}
+
+/* Font: the T jumps and lands with a squash. */
+.p-font-letter {
+  transform-origin: 12px 20px;
+  animation: var(--hov) ic-jump 0.8s var(--ease-out);
+}
+
+@keyframes ic-jump {
+  15% {
+    transform: scale(1.1, 0.88);
+  }
+
+  40% {
+    transform: translateY(-4px) scale(0.92, 1.1);
+  }
+
+  65% {
+    transform: scale(1.14, 0.86);
+  }
+
+  82% {
+    transform: scale(0.97, 1.03);
+  }
+}
+
+/* Database: the whole cylinder jumps and lands with a squash. */
+.p-database-db {
+  transform-origin: 12px 22px;
+  animation: var(--hov) ic-jump 0.8s var(--ease-out);
+}
+
+/* Ebook: the book tips back and a bookmark ribbon slides down out of
+ * its top edge (clipped there, so it appears to come from inside). The
+ * ribbon is part of the book, so it tips with it. */
+.p-ebook-book {
+  transform-origin: 4px 22px;
+  animation: var(--hov) ic-tip 0.9s var(--ease-out);
+}
+
+.p-ebook-ribbon {
+  transform: translateY(-8px);
+  animation: var(--hov) ic-ribbon 0.9s 0.1s var(--ease-out) forwards;
+}
+
+@keyframes ic-tip {
+  30% {
+    transform: rotate(-7deg);
+  }
+
+  60% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes ic-ribbon {
+  0% {
+    transform: translateY(-8px);
+  }
+
+  55% {
+    transform: translateY(1.2px);
+  }
+
+  75% {
+    transform: translateY(-0.6px);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+/* CAD: the cube spins round once and hops. It's symmetric, so a
+ * horizontal flip reads as a half turn. */
+.p-cad-cube {
+  transform-origin: 12px 12px;
+  animation: var(--hov) ic-cube-spin 0.9s var(--ease);
+}
+
+@keyframes ic-cube-spin {
+  50% {
+    transform: translateY(-1.5px) scaleX(0.05);
+  }
+
+  to {
+    transform: scaleX(-1);
+  }
+}
+
+/* Vector: the pen scribbles back and forth on its nib. */
+.p-vector-pen {
+  transform-origin: 2px 2px;
+  animation: var(--hov) ic-scribble 0.8s var(--ease) infinite;
+}
+
+@keyframes ic-scribble {
+  25% {
+    transform: rotate(-7deg);
+  }
+
+  75% {
+    transform: rotate(6deg);
+  }
+}
+
+/* Layers: front and back layers swap places. */
+.p-photoshop-back {
+  animation: var(--hov) ic-swap-back 0.9s var(--ease-out);
+}
+
+.p-photoshop-front {
+  animation: var(--hov) ic-swap-front 0.9s var(--ease-out);
+}
+
+@keyframes ic-swap-back {
+  50% {
+    transform: translate(4px, -4px);
+  }
+
+  75% {
+    transform: translate(-0.8px, 0.8px);
+  }
+}
+
+@keyframes ic-swap-front {
+  50% {
+    transform: translate(-4px, 4px);
+  }
+
+  75% {
+    transform: translate(0.8px, -0.8px);
+  }
+}
+
+/* Markup: the tags clap together and the slash flips. */
+.p-markup-lt {
+  animation: var(--hov) ic-clap-l 0.8s var(--ease-out);
+}
+
+.p-markup-gt {
+  animation: var(--hov) ic-clap-r 0.8s var(--ease-out);
+}
+
+.p-markup-slash {
+  transform-origin: 12px 12px;
+  animation: var(--hov) ic-flip 0.8s var(--ease-out);
+}
+
+@keyframes ic-clap-l {
+  30% {
+    transform: translateX(4px);
+  }
+
+  60% {
+    transform: translateX(-1.5px);
+  }
+}
+
+@keyframes ic-clap-r {
+  30% {
+    transform: translateX(-4px);
+  }
+
+  60% {
+    transform: translateX(1.5px);
+  }
+}
+
+@keyframes ic-flip {
+  30% {
+    transform: scale(0.6);
+  }
+
+  to {
+    transform: rotate(180deg);
+  }
+}
+
+/* Stylesheet: each line is painted back in with a brush stroke. */
+:is(.p-stylesheet-s1, .p-stylesheet-s2, .p-stylesheet-s3) {
+  stroke-dasharray: 10;
+  animation: var(--hov) ic-paint 0.45s var(--ease-out) backwards;
+}
+
+.p-stylesheet-s2 {
+  animation-delay: 0.15s;
+}
+
+.p-stylesheet-s3 {
+  animation-delay: 0.3s;
+}
+
+@keyframes ic-paint {
+  from {
+    stroke-dashoffset: 10;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Script: the braces squeeze in and three dots bounce between them. */
+.p-script-lb {
+  animation: var(--hov) ic-squeeze-l 1.2s var(--ease) infinite;
+}
+
+.p-script-rb {
+  animation: var(--hov) ic-squeeze-r 1.2s var(--ease) infinite;
+}
+
+:is(.p-script-d1, .p-script-d2, .p-script-d3) {
+  opacity: 0;
+  animation: var(--hov) ic-dots 1.2s var(--ease) infinite;
+}
+
+.p-script-d2 {
+  animation-delay: 0.12s;
+}
+
+.p-script-d3 {
+  animation-delay: 0.24s;
+}
+
+@keyframes ic-squeeze-l {
+  50% {
+    transform: translateX(-1.5px);
+  }
+}
+
+@keyframes ic-squeeze-r {
+  50% {
+    transform: translateX(1.5px);
+  }
+}
+
+@keyframes ic-dots {
+
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  20%,
+  70% {
+    opacity: 1;
+    transform: none;
+  }
+
+  35% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+/* Data: the bullets hop and their rows stretch out. */
+:is(.p-data-d1, .p-data-d2) {
+  animation: var(--hov) ic-bullet 0.6s var(--ease-out);
+}
+
+:is(.p-data-r1, .p-data-r2) {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: var(--hov) ic-stretch 0.6s var(--ease-out);
+}
+
+:is(.p-data-d2, .p-data-r2) {
+  animation-delay: 0.15s;
+}
+
+@keyframes ic-bullet {
+  35% {
+    transform: translateY(-2.5px);
+  }
+
+  65% {
+    transform: translateY(0.5px);
+  }
+}
+
+@keyframes ic-stretch {
+  0% {
+    transform: scaleX(0.2);
+  }
+
+  60% {
+    transform: scaleX(1.15);
+  }
+}
+
+/* Certificate: the shield bumps and the check is signed again. */
+.p-certificate-shield {
+  transform-origin: 12px 12px;
+  animation: var(--hov) ic-bump 0.6s var(--ease-out);
+}
+
+.p-certificate-check {
+  stroke-dasharray: 10;
+  animation: var(--hov) ic-check 0.45s 0.2s var(--ease-out) backwards;
+}
+
+@keyframes ic-bump {
+  35% {
+    transform: scale(1.14);
+  }
+
+  65% {
+    transform: scale(0.95);
+  }
+}
+
+@keyframes ic-check {
+  from {
+    stroke-dashoffset: 10;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Key: the key slides into the padlock (it's clipped at the lock's
+ * edge, so it goes in rather than across), turns, which shows as its
+ * head squashing edge-on and the keyhole rotating a quarter turn,
+ * and the shackle springs open. It stays unlocked while hovered. */
+.p-key-key {
+  transform-origin: 0 15.5px;
+  animation: var(--hov) ic-key-turn 1.6s var(--ease) forwards;
+}
+
+.p-key-hole {
+  transform-origin: 17px 15.5px;
+  animation: var(--hov) ic-key-hole 1.6s var(--ease) forwards;
+}
+
+.p-key-shackle {
+  transform-origin: 20px 10.5px;
+  animation: var(--hov) ic-key-shackle 1.6s var(--ease-out) forwards;
+}
+
+@keyframes ic-key-turn {
+  0% {
+    transform: none;
+  }
+
+  25%,
+  30% {
+    transform: translateX(5px);
+  }
+
+  40% {
+    transform: translateX(5px) scaleY(0.15);
+  }
+
+  50%,
+  100% {
+    transform: translateX(5px) scaleY(-1);
+  }
+}
+
+@keyframes ic-key-hole {
+
+  0%,
+  30% {
+    transform: none;
+  }
+
+  50%,
+  100% {
+    transform: rotate(90deg);
+  }
+}
+
+@keyframes ic-key-shackle {
+
+  0%,
+  52% {
+    transform: none;
+  }
+
+  68% {
+    transform: translateY(-3px) rotate(-22deg);
+  }
+
+  80% {
+    transform: translateY(-2px) rotate(-14deg);
+  }
+
+  to {
+    transform: translateY(-2.5px) rotate(-18deg);
+  }
+}
+
+/* Log: new lines keep being written, like tail -f. */
+:is(.p-log-l1, .p-log-l2, .p-log-l3) {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: var(--hov) ic-write 1.8s var(--ease) infinite;
+}
+
+.p-log-l2 {
+  animation-delay: 0.2s;
+}
+
+.p-log-l3 {
+  animation-delay: 0.4s;
+}
+
+@keyframes ic-write {
+  0% {
+    transform: scaleX(0);
+  }
+
+  20%,
+  80% {
+    transform: none;
+    opacity: 1;
+  }
+
+  100% {
+    transform: none;
+    opacity: 0;
+  }
+}
+
+/* Backup: the clock rewinds. */
+.p-backup-hand {
+  transform-origin: 12px 12px;
+  animation: var(--hov) ic-rewind 1.1s cubic-bezier(0.6, 0, 0.3, 1) infinite;
+}
+
+@keyframes ic-rewind {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+/* Binary: the digits flip over like a split-flap display. */
+:is(.p-binary-b1, .p-binary-b2, .p-binary-b3, .p-binary-b4) {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: var(--hov) ic-flap 1.2s var(--ease) infinite;
+}
+
+.p-binary-b2 {
+  animation-delay: 0.15s;
+}
+
+.p-binary-b3 {
+  animation-delay: 0.3s;
+}
+
+.p-binary-b4 {
+  animation-delay: 0.45s;
+}
+
+@keyframes ic-flap {
+
+  0%,
+  40%,
+  100% {
+    transform: none;
+  }
+
+  20% {
+    transform: scaleY(0);
+  }
+}
+
+/* Package: the box hops and lands with a squash. */
+.p-package-pkg {
+  transform-origin: 12px 22px;
+  animation: var(--hov) ic-jump 0.8s var(--ease-out);
+}
+
+/* Unknown: the question mark wobbles, puzzled. */
+.p-unknown-q {
+  transform-origin: 12px 16px;
+  animation: var(--hov) ic-puzzled 1s var(--ease-out);
+}
+
+@keyframes ic-puzzled {
+  20% {
+    transform: rotate(-16deg);
+  }
+
+  40% {
+    transform: rotate(12deg);
+  }
+
+  60% {
+    transform: rotate(-7deg) translateY(-1px);
+  }
+
+  80% {
+    transform: rotate(3deg);
+  }
+}
+
+/* ===== Media grid =====
+ * Rows are absolutely positioned inside a container as tall as the
+ * whole grid, and only rows near the viewport exist in the DOM. */
+.media {
+  position: relative;
+  overflow-anchor: none;
+}
+
+.files+.media {
+  margin-top: 28px;
+}
+
+.m-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.m-head {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding-bottom: 14px;
+}
+
+.m-head h2 {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+.m-count {
+  font-size: 0.875rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.9;
+}
+
+.pill {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 14px 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, transform 0.2s var(--ease);
+}
+
+.pill:hover {
+  border-color: var(--accent);
+}
+
+.pill:active {
+  transform: scale(0.96);
+}
+
+.pill svg {
+  width: 14px;
+  height: 14px;
+  fill: var(--accent);
+}
+
+.m-group {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding-bottom: 10px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.tile {
+  position: absolute;
+  top: 0;
+  display: block;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--tile);
+  contain: strict;
+  cursor: zoom-in;
+  -webkit-touch-callout: none;
+}
+
+.tile img,
+.tile video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out), transform 0.7s var(--ease);
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.tile.ready img,
+.tile.ready video {
+  opacity: 1;
+}
+
+/* A video tile's server thumbnail sits over the video and fades out
+   while the hover preview plays: slowly the first time, quickly once
+   the video is buffered. It fades back in at the usual speed. */
+.tile.vid.vplay .vthumb {
+  opacity: 0;
+  transition-duration: 0.6s;
+}
+
+.tile.vid.vwarm.vplay .vthumb {
+  transition-duration: 0.15s;
+}
+
+.tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  pointer-events: none;
+}
+
+/* The placeholder for a picture that didn't load. */
+.tile.err::before,
+.ss-strip button.err::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 26px;
+  height: 26px;
+  opacity: 0.35;
+  background: currentColor;
+  color: var(--ink-3);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.ss-strip button.err {
+  position: relative;
+}
+
+.ss-strip button.err::before {
+  width: 20px;
+  height: 20px;
+  opacity: 0.6;
+  color: #fff;
+}
+
+.tile:focus-visible {
+  outline-offset: 2px;
+  z-index: 1;
+}
+
+.tile.flying {
+  visibility: hidden;
+}
+
+.cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 28px 10px 8px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.62), transparent);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+}
+
+.tile.vid .cap {
+  opacity: 1;
+  padding-right: 72px;
+  font-size: 0.8125rem;
+}
+
+.badge {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px 0 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.badge svg {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  /* The video too, so a video tile's thumbnail fades into the
+     playing video in place. */
+  .tile:hover img,
+  .tile:hover video {
+    transform: scale(1.035);
+  }
+
+  .tile:hover .cap,
+  .tile:focus-visible .cap {
+    opacity: 1;
+  }
+}
+
+.empty {
+  padding: 64px 16px;
+  text-align: center;
+  color: var(--ink-2);
+}
+
+.empty strong {
+  display: block;
+  margin-bottom: 4px;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.footer {
+  padding: 20px var(--gutter) calc(28px + env(safe-area-inset-bottom));
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--ink-3);
+}
+
+/* ===== Fast-scroll scrubber ===== */
+.scrub {
+  position: fixed;
+  top: calc(var(--toolbar-h) + 8px);
+  bottom: 8px;
+  right: 0;
+  z-index: 25;
+  width: 36px;
+  touch-action: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.scrub.on {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.scrub-thumb {
+  position: absolute;
+  top: 0;
+  right: 5px;
+  width: 6px;
+  height: 48px;
+  border-radius: 3px;
+  background: var(--ink-3);
+  cursor: grab;
+  transition: width 0.2s var(--ease), background-color 0.2s;
+}
+
+.scrub:hover .scrub-thumb,
+.scrub.drag .scrub-thumb {
+  width: 8px;
+  background: var(--accent);
+}
+
+.scrub.drag .scrub-thumb {
+  cursor: grabbing;
+}
+
+.scrub-label {
+  position: absolute;
+  top: 0;
+  right: 24px;
+  translate: 0 -50%;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--raised);
+  box-shadow: var(--shadow-pop);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 0.2s, transform 0.25s var(--ease);
+  pointer-events: none;
+}
+
+.scrub.drag .scrub-label:not(:empty),
+.scrub:hover .scrub-label:not(:empty) {
+  opacity: 1;
+  transform: none;
+}
+
+/* ===== Slideshow ===== */
+.ss {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  overflow: hidden;
+  outline: none;
+}
+
+.ss::backdrop {
+  background: transparent;
+}
+
+.ss-bg {
+  position: absolute;
+  inset: 0;
+  background: #060607;
+  opacity: 0;
+  transition: opacity 0.35s var(--ease-out);
+}
+
+.ss.open .ss-bg {
+  opacity: 1;
+}
+
+.ss-ambient {
+  position: absolute;
+  inset: -15%;
+  opacity: 0;
+  transition: opacity 0.6s var(--ease-out);
+  pointer-events: none;
+}
+
+.ss.open .ss-ambient {
+  opacity: 0.7;
+}
+
+.ss-ambient canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  filter: blur(56px) saturate(1.6) brightness(0.75);
+  transition: opacity 0.9s var(--ease-out);
+}
+
+.ss-ambient canvas.on {
+  opacity: 1;
+}
+
+.ss-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.6) 100%);
+  pointer-events: none;
+}
+
+.ss-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ===== Full screen =====
+ * The media takes the whole screen, edge to edge: slides lose their
+ * padding (see insets()), corners and shadow, and each clips its media
+ * so an oversized photo never reaches its neighbors mid-swipe. The
+ * controls float over it, darkened behind by this shade while they
+ * show. The full-screen button picks how the media fills the screen
+ * (fitMode): inner fits it inside, outer fills the screen and crops
+ * the longer side. */
+.ss-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent 24%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.5), transparent 28%);
+  transition: opacity 0.3s var(--ease-out);
+}
+
+.ss.is-fs:not(.chrome-off) .ss-shade {
+  opacity: 1;
+}
+
+.ss.is-fs .slide {
+  overflow: hidden;
+}
+
+.ss.is-fs .slide :is(img, video) {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.ss-stage,
+.ss:not(.open) .ss-top,
+.ss:not(.open) .ss-bottom,
+.ss:not(.open) .ss-nav {
+  transition: opacity 0.25s var(--ease-out);
+}
+
+.ss:not(.open) .ss-stage,
+.ss:not(.open) .ss-top,
+.ss:not(.open) .ss-bottom,
+.ss:not(.open) .ss-nav {
+  opacity: 0;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  will-change: transform;
+}
+
+.slide img,
+.slide video {
+  display: block;
+  max-width: none;
+  border-radius: 3px;
+  box-shadow: 0 30px 90px -20px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  transition: opacity 0.3s var(--ease-out);
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.slide video {
+  background: #000;
+  opacity: 1;
+}
+
+.slide .ready {
+  opacity: 1;
+}
+
+.slide.zoomed img {
+  cursor: grab;
+}
+
+.ss-fly {
+  position: fixed;
+  z-index: 5;
+  object-fit: cover;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  will-change: transform, clip-path;
+}
+
+.ss-top,
+.ss-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  transition: opacity 0.3s var(--ease-out), transform 0.4s var(--ease);
+}
+
+.ss-top {
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 28px max(20px, env(safe-area-inset-left));
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent);
+}
+
+.ss-info {
+  flex: 1;
+  min-width: 0;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.4);
+}
+
+.ss-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ss-sub {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 14px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-variant-numeric: tabular-nums;
+}
+
+.ss-btn {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 13px;
+  background: rgba(20, 21, 26, 0.42);
+  --btn-inset: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: var(--btn-inset);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, transform 0.2s var(--ease), opacity 0.2s;
+}
+
+.ss-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.ss-btn:active {
+  transform: scale(0.9);
+}
+
+.ss-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ss-btn[aria-pressed="true"] {
+  background: var(--accent);
+  color: #0e0f12;
+}
+
+.ss-btn[hidden] {
+  display: none;
+}
+
+.ss-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.ss-frame:fullscreen {
+  background: #060607;
+}
+
+/* ===== Slideshow button tooltips =====
+ * The button's aria-label plus its keyboard shortcut. Hover devices
+ * only; touch has no hover to reveal them. */
+@media (hover: hover) {
+  .ss-top .ss-btn {
+    position: relative;
+  }
+
+  .ss-btn::after {
+    content: attr(aria-label);
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    z-index: 1;
+    padding: 5px 9px;
+    border-radius: 7px;
+    background: rgba(18, 19, 24, 0.94);
+    box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font: 500 0.75rem/1.3 var(--font-ui);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -4px);
+    transition: opacity 0.15s, transform 0.2s var(--ease);
+  }
+
+  .ss-btn[data-key]::after {
+    content: attr(aria-label) "  " attr(data-key);
+  }
+
+  .ss-btn:hover::after {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    transition-delay: 0.35s;
+  }
+
+  /* The last button sits at the screen edge: align its tip to it. */
+  .ss-top .ss-btn:last-child::after {
+    left: auto;
+    right: 0;
+    transform: translateY(-4px);
+  }
+
+  .ss-top .ss-btn:last-child:hover::after {
+    transform: none;
+  }
+
+  .ss-prev::after {
+    top: 50%;
+    left: calc(100% + 10px);
+    transform: translate(-4px, -50%);
+  }
+
+  .ss-next::after {
+    top: 50%;
+    left: auto;
+    right: calc(100% + 10px);
+    transform: translate(4px, -50%);
+  }
+
+  .ss-prev:hover::after,
+  .ss-next:hover::after {
+    transform: translate(0, -50%);
+  }
+}
+
+/* ===== Slideshow button hover animations =====
+ * Each icon is split into parts that animate on hover or keyboard
+ * focus. Transforms use view-box coordinates so origins are in icon
+ * units (the icons are 24x24). */
+.ss-btn svg * {
+  transform-box: view-box;
+}
+
+/* Play hops forward; pause bars bob out of step. */
+.ss-btn .i-play {
+  transform-origin: 7px 12px;
+}
+
+.ss-btn:is(:hover, :focus-visible) .i-play {
+  animation: ss-hop 0.7s var(--ease-out);
+}
+
+@keyframes ss-hop {
+  30% {
+    transform: translateX(2.5px) scale(1.14, 0.86);
+  }
+
+  60% {
+    transform: translateX(-1px) scale(0.94, 1.06);
+  }
+}
+
+/* Once, like the other hover animations: the pointer often rests on
+   this button, or focus stays on it, while a slideshow or video plays. */
+.ss-btn:is(:hover, :focus-visible) .i-bar {
+  animation: ss-bob 0.8s ease-in-out;
+}
+
+.ss-btn:is(:hover, :focus-visible) .i-bar2 {
+  animation-direction: reverse;
+}
+
+@keyframes ss-bob {
+  25% {
+    transform: translateY(-2px);
+  }
+
+  75% {
+    transform: translateY(2px);
+  }
+}
+
+/* Full screen (entering it, and outer mode): the corners burst
+ * outward and settle. */
+.ss-btn .i-tl {
+  --dx: -2.5px;
+  --dy: -2.5px;
+}
+
+.ss-btn .i-tr {
+  --dx: 2.5px;
+  --dy: -2.5px;
+}
+
+.ss-btn .i-bl {
+  --dx: -2.5px;
+  --dy: 2.5px;
+}
+
+.ss-btn .i-br {
+  --dx: 2.5px;
+  --dy: 2.5px;
+}
+
+.ss-btn:is(:hover, :focus-visible) :is(.i-tl, .i-tr, .i-bl, .i-br) {
+  animation: ss-burst 0.9s var(--ease-out);
+}
+
+@keyframes ss-burst {
+  35% {
+    transform: translate(var(--dx), var(--dy));
+  }
+
+  60% {
+    transform: translate(calc(var(--dx) * -0.3), calc(var(--dy) * -0.3));
+  }
+
+  80% {
+    transform: translate(calc(var(--dx) * 0.4), calc(var(--dy) * 0.4));
+  }
+}
+
+/* Full screen, inner (fitted): the four inward corners come in, then
+ * pop out into a wide rectangle and settle back. */
+.ss-btn .i-in {
+  transform-origin: 12px 12px;
+}
+
+.ss-btn:is(:hover, :focus-visible) .i-in {
+  animation: ss-inner 0.9s var(--ease-out);
+}
+
+@keyframes ss-inner {
+  30% {
+    transform: scale(0.72);
+  }
+
+  62% {
+    transform: scale(1.3, 1.08);
+  }
+
+  82% {
+    transform: scale(0.96, 1);
+  }
+}
+
+/* Full screen, outer (fill): a square's sides break out, left and
+ * right pushing apart and the top and bottom stretching with them,
+ * into the wide rectangle the icon rests as. */
+.ss-btn .i-fill :is(.i-t, .i-b) {
+  transform-origin: 12px 12px;
+}
+
+.ss-btn:is(:hover, :focus-visible) .i-fill .i-l {
+  animation: ss-fill-l 0.8s var(--ease-out);
+}
+
+.ss-btn:is(:hover, :focus-visible) .i-fill .i-r {
+  animation: ss-fill-r 0.8s var(--ease-out);
+}
+
+.ss-btn:is(:hover, :focus-visible) .i-fill :is(.i-t, .i-b) {
+  animation: ss-fill-w 0.8s var(--ease-out);
+}
+
+@keyframes ss-fill-l {
+  from {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes ss-fill-r {
+  from {
+    transform: translateX(-3px);
+  }
+}
+
+@keyframes ss-fill-w {
+  from {
+    transform: scaleX(0.67);
+  }
+}
+
+/* Open original: the arrow launches out of the box and slides back in. */
+.ss-btn:is(:hover, :focus-visible) .i-launch {
+  animation: ic-launch 0.9s var(--ease);
+}
+
+/* Download: the arrow dives into the ground, which caves in under it,
+ * then drops back in from above as the ground springs flat. The arrow
+ * is clipped at ground level so it disappears into it. */
+.ss-btn .i-gl {
+  transform-origin: 5px 20px;
+}
+
+.ss-btn .i-gr {
+  transform-origin: 19px 20px;
+}
+
+.ss-btn:is(:hover, :focus-visible) .i-drop {
+  animation: ic-drop 1.2s var(--ease);
+}
+
+.ss-btn:is(:hover, :focus-visible) .i-gl {
+  animation: ic-cave 1.2s var(--ease);
+}
+
+.ss-btn:is(:hover, :focus-visible) .i-gr {
+  animation: ic-cave-r 1.2s var(--ease);
+}
+
+/* The arrow is clipped at the bottom of the caved-in ground and at
+ * the icon's top edge, so it sinks into the hole, fading as it goes,
+ * and drops back in from the top. The keyframes (ic-launch, ic-drop,
+ * ic-cave) are in the shared page template, which the file viewer's
+ * buttons use too. */
+
+/* Close: an old TV switching off. The X's strokes fold flat into one
+ * line while the button squeezes, the line carries straight on into a
+ * dot, the dot fades to nothing, then the X comes back and settles.
+ * Once per hover, so it ends at rest. The strokes don't scale with
+ * their transform, so the shrunk line stays a round dot, not a
+ * squashed sliver. */
+.ss-btn :is(.i-x1, .i-x2) {
+  transform-origin: 12px 12px;
+  vector-effect: non-scaling-stroke;
+}
+
+.ss-btn:is(:hover, :focus-visible) .i-x1 {
+  animation: ss-tv-off-1 1.5s linear;
+}
+
+.ss-btn:is(:hover, :focus-visible) .i-x2 {
+  animation: ss-tv-off-2 1.5s linear;
+}
+
+/* The strokes are diagonals: -45deg and 45deg lay them flat. Transforms
+   apply right to left, so each is rotated flat first and then scaled
+   along its length; the other way round squashes it sideways. Each
+   segment sets its own easing, and nothing overshoots or holds still. */
+@keyframes ss-tv-off-1 {
+  0% {
+    transform: none;
+    animation-timing-function: cubic-bezier(0.5, 0, 0.8, 0.6);
+  }
+
+  /* Flat, and still moving: the shrink carries straight on. */
+  16% {
+    transform: scaleX(0.9) rotate(-45deg);
+    animation-timing-function: cubic-bezier(0.3, 0.45, 0.55, 1);
+  }
+
+  /* The dot keeps its size and fades out. */
+  36% {
+    transform: scaleX(0.02) rotate(-45deg);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.7, 1);
+  }
+
+  58% {
+    transform: scaleX(0.02) rotate(-45deg);
+    opacity: 0;
+  }
+
+  66% {
+    transform: scale(0.7);
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes ss-tv-off-2 {
+  0% {
+    transform: none;
+    animation-timing-function: cubic-bezier(0.5, 0, 0.8, 0.6);
+  }
+
+  /* Flat, and still moving: the shrink carries straight on. */
+  16% {
+    transform: scaleX(0.9) rotate(45deg);
+    animation-timing-function: cubic-bezier(0.3, 0.45, 0.55, 1);
+  }
+
+  /* The dot keeps its size and fades out. */
+  36% {
+    transform: scaleX(0.02) rotate(45deg);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.7, 1);
+  }
+
+  58% {
+    transform: scaleX(0.02) rotate(45deg);
+    opacity: 0;
+  }
+
+  66% {
+    transform: scale(0.7);
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ===== Button hover (this page's own) =====
+ * The ring and squash every button gets are in the shared page
+ * template (page-theme.html); these are the icons with their own
+ * move. */
+@media (hover: hover) {
+
+  /* Close: the icon squeezes as its strokes fold into a line. */
+  #ss-close:hover > svg {
+    animation: btn-shut 1.5s linear;
+  }
+
+  /* Slideshow pill: the play triangle hops forward. */
+  .pill:hover svg {
+    transform-origin: 30% 50%;
+    animation: ss-hop 0.7s var(--ease-out);
+  }
+
+  /* Sort: the direction arrow bobs the way it points, once. */
+  .seg a:hover use[href="#ui-up"] {
+    animation: ic-bob-up 0.8s var(--ease);
+  }
+
+  .seg a:hover use[href="#ui-down"] {
+    animation: ic-bob-down 0.8s var(--ease);
+  }
+
+  /* Search: the glass swings like it's looking around. */
+  .search:hover svg {
+    transform-origin: 70% 70%;
+    animation: ic-look 0.8s var(--ease-out);
+  }
+}
+
+.search:focus-within svg {
+  transform-origin: 70% 70%;
+  animation: ic-look 0.8s var(--ease-out);
+}
+
+/* Shadows the shared hover ring keeps while it ripples. */
+.seg a[aria-current] {
+  --btn-inset: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.search input:focus {
+  --btn-inset: 0 0 0 3px var(--accent-soft);
+}
+
+@keyframes btn-shut {
+  0% {
+    scale: 1;
+    animation-timing-function: cubic-bezier(0.5, 0, 0.8, 0.6);
+  }
+
+  16% {
+    scale: 1.04 0.86;
+    animation-timing-function: cubic-bezier(0.3, 0.45, 0.55, 1);
+  }
+
+  36%,
+  100% {
+    scale: 1;
+  }
+}
+
+
+@keyframes ic-bob-up {
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes ic-look {
+  25% {
+    transform: rotate(-18deg);
+  }
+
+  55% {
+    transform: rotate(12deg) translateX(1px);
+  }
+
+  80% {
+    transform: rotate(-4deg);
+  }
+}
+
+/* Previous and next keep nudging the way they go. */
+.ss-btn:is(:hover, :focus-visible) .i-back {
+  animation: ss-nudge 1s var(--ease) infinite;
+  --nx: -1;
+}
+
+.ss-btn:is(:hover, :focus-visible) .i-fwd {
+  animation: ss-nudge 1s var(--ease) infinite;
+  --nx: 1;
+}
+
+@keyframes ss-nudge {
+  30% {
+    transform: translateX(calc(var(--nx) * 4px));
+  }
+
+  55% {
+    transform: translateX(calc(var(--nx) * -1px));
+  }
+
+  75% {
+    transform: translateX(calc(var(--nx) * 1.5px));
+  }
+}
+
+.ss-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 6;
+  width: 52px;
+  height: 52px;
+  margin-top: -26px;
+  transition: opacity 0.3s var(--ease-out), background-color 0.2s, transform 0.2s var(--ease);
+}
+
+.ss-prev {
+  left: max(20px, env(safe-area-inset-left));
+}
+
+.ss-next {
+  right: max(20px, env(safe-area-inset-right));
+}
+
+.ss-nav:disabled {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+.ss-bottom {
+  bottom: 0;
+  padding: 28px max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.45), transparent);
+  pointer-events: none;
+}
+
+.ss-strip {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  height: 52px;
+  pointer-events: auto;
+}
+
+.ss-strip[hidden] {
+  display: none;
+}
+
+.ss-strip button {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  opacity: 0.55;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.3s var(--ease), box-shadow 0.2s;
+}
+
+.ss-strip button:hover {
+  opacity: 0.9;
+}
+
+.ss-strip button[aria-current] {
+  opacity: 1;
+  transform: translateY(-4px);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.ss-strip img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Dock-style magnification under the mouse: the script sets each
+   button's transform from the pointer's distance, growing upward, and
+   eases it itself, so there's no transform transition meanwhile. */
+.ss-strip button {
+  transform-origin: 50% 100%;
+}
+
+.ss-strip.docking button {
+  transition: opacity 0.2s, box-shadow 0.2s;
+}
+
+/* In full screen the strip stays out of the way, even while the other
+   controls show, until the pointer or a finger comes near the bottom
+   edge (strip-on) or keyboard focus reaches it. */
+.ss.is-fs:not(.strip-on) .ss-bottom:not(:focus-within) {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.ss.is-fs.strip-on .ss-bottom {
+  opacity: 1;
+  transform: none;
+}
+
+.ss.chrome-off:not(.strip-on) .ss-bottom:not(:focus-within) .ss-strip,
+.ss.is-fs:not(.strip-on) .ss-bottom:not(:focus-within) .ss-strip {
+  pointer-events: none;
+}
+
+.ss.strip-on {
+  cursor: auto;
+}
+
+.ss.chrome-off .ss-top,
+.ss.chrome-off .ss-nav,
+.ss.chrome-off .ss-bottom {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ss.chrome-off .ss-top {
+  transform: translateY(-8px);
+}
+
+.ss.chrome-off .ss-bottom {
+  transform: translateY(8px);
+}
+
+.ss.chrome-off {
+  cursor: none;
+}
+
+/* A pointer left resting on a button keeps it :hover after the
+   controls fade out; nothing should keep moving there unseen. */
+.ss.chrome-off .ss-btn,
+.ss.chrome-off .ss-btn * {
+  animation: none !important;
+}
+
+@media (hover: none), (pointer: coarse), (max-width: 700px) {
+  .ss-nav {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .ss-top {
+    gap: 4px;
+    padding-left: max(16px, env(safe-area-inset-left));
+  }
+
+  .ss-btn {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .ss-btn.opt {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -16,7 +16,6 @@ package gowebserver
 
 import (
 	"bytes"
-	_ "embed"
 	"fmt"
 	"html/template"
 	"io"
@@ -45,8 +44,7 @@ const (
 )
 
 var (
-	//go:embed rich-view.html
-	richViewHTML []byte
+	richViewHTML = mustLoadTemplate("rich-view")
 
 	// richViewThemes is the ordered list of themes shown in the picker.
 	richViewThemes = func() []string {
