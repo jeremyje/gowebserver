@@ -141,12 +141,26 @@ test('a large photo is read from a small bitmap, not decoded on the spot', async
   assert.deepEqual(a.bitmaps.map((b) => [b.w, b.h, b.closed]), [[16, 12, true]]);
 });
 
-test('a large photo the browser did not keep is drawn as before', async () => {
-  const a = accent({ bitmaps: true, uncached: ['red.jpg'] });
-  const photo = big('red.jpg', RED);
-  assert.ok(isRed(await a.vividColor([{ el: photo, w: 1 }])));
-  assert.deepEqual(a.drawn, [photo]);
-  assert.equal(a.bitmaps.length, 0);
+test('a large photo the browser did not keep is left out, and asked for once', async () => {
+  const a = accent({ bitmaps: true, uncached: ['gone.jpg'] });
+  const gone = big('gone.jpg', RED);
+  // Never decoded on the spot: the color comes from the others.
+  assert.ok(isBlue(await a.vividColor([{ el: gone, w: 1 }, { el: big('blue.jpg', BLUE), w: 1 }])));
+  assert.equal(await a.vividColor([{ el: gone, w: 1 }]), null);
+  assert.equal(a.drawn.length, 0);
+  assert.equal(a.fetched.filter((f) => f[0] === 'gone.jpg').length, 1);
+});
+
+test('a browser that never finds one in its cache draws them as before', async () => {
+  const names = ['a.jpg', 'b.jpg', 'c.jpg', 'd.jpg', 'e.jpg'];
+  const a = accent({ bitmaps: true, uncached: names });
+  const photos = names.map((n) => big(n, RED));
+  assert.equal(await a.vividColor(photos.slice(0, 3).map((el) => ({ el, w: 1 }))), null);
+  // The fourth miss in a row with nothing ever found: it can't be asked.
+  assert.ok(isRed(await a.vividColor([{ el: photos[3], w: 1 }])));
+  assert.ok(isRed(await a.vividColor([{ el: photos[4], w: 1 }])));
+  assert.deepEqual(a.drawn, [photos[3], photos[4]]);
+  assert.equal(a.fetched.length, 4);
 });
 
 test('large photos are decoded a couple at a time', async () => {
@@ -169,7 +183,10 @@ test('large photos are decoded a couple at a time', async () => {
 });
 
 test('a photo that went away while its bitmap was made is not read', async () => {
-  const a = accent({ bitmaps: true, uncached: ['red.jpg'] });
+  const names = ['a.jpg', 'b.jpg', 'c.jpg', 'red.jpg'];
+  const a = accent({ bitmaps: true, uncached: names });
+  await a.vividColor(names.slice(0, 3).map((n) => ({ el: big(n, RED), w: 1 })));
+  // This one would be drawn directly, were it still there.
   const gone = big('red.jpg', RED);
   const pending = a.vividColor([{ el: gone, w: 1 }]);
   gone.currentSrc = '';

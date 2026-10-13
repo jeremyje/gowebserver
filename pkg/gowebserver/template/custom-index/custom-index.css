@@ -1799,10 +1799,11 @@ main {
   opacity: 1;
 }
 
-/* Shown while the page was scrolling: no fade (see showTile). */
-.tile.snap img,
-.tile.snap video {
-  transition-property: transform;
+/* Shown while the page was scrolling: a short fade (see showTile,
+   whose QUICK_FADE this is). */
+.tile.quick img,
+.tile.quick video {
+  transition-duration: 0.15s;
 }
 
 /* A video tile's server thumbnail sits over the video and fades out
@@ -2763,8 +2764,8 @@ main {
 .ss-strip {
   display: flex;
   justify-content: center;
-  gap: 4px;
-  height: 52px;
+  gap: 5px;
+  height: 63px;
   pointer-events: auto;
 }
 
@@ -2774,8 +2775,8 @@ main {
 
 .ss-strip button {
   flex: none;
-  width: 44px;
-  height: 44px;
+  width: 55px;
+  height: 55px;
   margin-top: 4px;
   padding: 0;
   border: 0;
@@ -2802,17 +2803,6 @@ main {
   height: 100%;
   object-fit: cover;
   display: block;
-}
-
-/* Dock-style magnification under the mouse: the script sets each
-   button's transform from the pointer's distance, growing upward, and
-   eases it itself, so there's no transform transition meanwhile. */
-.ss-strip button {
-  transform-origin: 50% 100%;
-}
-
-.ss-strip.docking button {
-  transition: opacity 0.2s, box-shadow 0.2s;
 }
 
 /* In full screen the strip stays out of the way, even while the other

@@ -337,10 +337,16 @@ var slideshow = (function () {
     };
   }
 
+  // A filmstrip thumbnail with the gap to the next (.ss-strip in the
+  // stylesheet), and the padding either side of the strip.
+  var STRIP_STEP = 60, STRIP_MARGIN = 28;
   function renderStrip() {
     if (!CFG.thumbs) return;
     strip.hidden = list.length < 2;
-    var lo = Math.max(0, idx - STRIP_RADIUS), hi = Math.min(list.length - 1, idx + STRIP_RADIUS);
+    // As many either side of the current one as fit across the
+    // window, up to STRIP_RADIUS.
+    var radius = Math.max(1, Math.min(STRIP_RADIUS, Math.floor(((innerWidth - STRIP_MARGIN) / STRIP_STEP - 1) / 2)));
+    var lo = Math.max(0, idx - radius), hi = Math.min(list.length - 1, idx + radius);
     var keep = {};
     Array.prototype.slice.call(strip.children).forEach(function (b) {
       if (b._k < lo || b._k > hi) { if (b._img) thumbLoader.cancel(b._img); b.remove(); }
@@ -366,8 +372,6 @@ var slideshow = (function () {
       if (b !== before) strip.insertBefore(b, before); else before = before.nextSibling;
       if (k === idx) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
     }
-    // Clicking a thumbnail re-centers the row under a still pointer.
-    if (dockGeo) { dockMeasure(); dock(); }
   }
 
   strip.addEventListener('click', function (e) {
@@ -403,85 +407,6 @@ var slideshow = (function () {
   }
   dlg.addEventListener('pointermove', stripZone);
   dlg.addEventListener('pointerdown', stripZone);
-
-  // ---- Dock magnification ----
-  // Under the mouse, each thumbnail grows with its closeness to the
-  // pointer, up to DOCK_MAX times at DOCK_REACH px or nearer, and the
-  // row spreads so they don't overlap, like the macOS dock. Scale is
-  // worked out from the unmagnified layout (transforms don't move it)
-  // so the row doesn't shift under the pointer and jitter.
-  //
-  // It runs at most once per frame, however fast pointer events come
-  // (an iPad with a mouse sends up to 120 a second), from layout
-  // measured once when the pointer arrives or the strip changes, so
-  // a frame only writes transforms. Each frame eases the scales toward
-  // their targets in script instead of restarting CSS transitions,
-  // which is smooth at any event rate.
-  var DOCK_MAX = 1.9, DOCK_REACH = 130, DOCK_EASE = 0.35;
-  var dockX = null, dockGeo = null, dockLeft = 0, dockFrame = 0;
-  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  function dockMeasure() {
-    dockGeo = Array.prototype.map.call(strip.children, function (b) {
-      return { el: b, c: b.offsetLeft + b.offsetWidth / 2, w: b.offsetWidth };
-    });
-    // offsetLeft is relative to the strip's offset parent.
-    dockLeft = strip.offsetParent ? strip.offsetParent.getBoundingClientRect().left : 0;
-  }
-  function dockTick() {
-    dockFrame = 0;
-    if (!dockGeo) return;
-    var moving = false, extra = 0;
-    for (var i = 0; i < dockGeo.length; i++) {
-      var d = dockX === null ? Infinity : Math.abs(dockX - dockGeo[i].c);
-      var target = d < DOCK_REACH ? 1 + (DOCK_MAX - 1) * (1 + Math.cos(Math.PI * d / DOCK_REACH)) / 2 : 1;
-      // Scales live on the buttons, which survive the strip
-      // re-rendering around a newly current photo.
-      var el = dockGeo[i].el, cur = el._dockS || 1;
-      var s = cur + (target - cur) * DOCK_EASE;
-      if (Math.abs(target - s) < 0.002) s = target; else moving = true;
-      el._dockS = s;
-      extra += dockGeo[i].w * (s - 1);
-    }
-    if (!moving && dockX === null) {
-      undock();
-      return;
-    }
-    // Each button moves right by the growth of those before it, the
-    // whole row staying centered.
-    var before = 0;
-    for (var j = 0; j < dockGeo.length; j++) {
-      var grow = dockGeo[j].w * (dockGeo[j].el._dockS - 1);
-      var shift = before + grow / 2 - extra / 2;
-      before += grow;
-      var lift = dockGeo[j].el.hasAttribute('aria-current') ? ' translateY(-4px)' : '';
-      dockGeo[j].el.style.transform = 'translateX(' + shift.toFixed(1) + 'px)' + lift + ' scale(' + dockGeo[j].el._dockS.toFixed(3) + ')';
-    }
-    if (moving) dockFrame = requestAnimationFrame(dockTick);
-  }
-  function dock() {
-    if (!dockFrame) dockFrame = requestAnimationFrame(dockTick);
-  }
-  function undock() {
-    cancelAnimationFrame(dockFrame);
-    dockFrame = 0;
-    dockX = null;
-    dockGeo = null;
-    strip.classList.remove('docking');
-    Array.prototype.forEach.call(strip.children, function (b) { b.style.transform = ''; b._dockS = 1; });
-  }
-  strip.addEventListener('pointermove', function (e) {
-    if (e.pointerType !== 'mouse' || reduceMotion.matches) return;
-    if (!dockGeo) dockMeasure();
-    dockX = e.clientX - dockLeft;
-    strip.classList.add('docking');
-    dock();
-  });
-  // Leaving eases the row back to rest the same way.
-  strip.addEventListener('pointerleave', function () {
-    if (!dockGeo) return;
-    dockX = null;
-    dock();
-  });
 
   function durationFor(v) {
     return Math.round(420 - Math.min(Math.abs(v || 0), 2) * 110);
@@ -838,7 +763,6 @@ var slideshow = (function () {
     dx = 0;
     zoom = { z: 1, x: 0, y: 0 };
     ambient.reset();
-    undock();
     hideStrip();
     strip.innerHTML = '';
     dlg.querySelector('.ss-bg').style.opacity = '';
@@ -927,7 +851,7 @@ var slideshow = (function () {
     resetZoom(false);
     position(0);
   }
-  addEventListener('resize', function () { if (isOpen) relayoutSlides(); });
+  addEventListener('resize', function () { if (isOpen) { relayoutSlides(); renderStrip(); } });
 
   return { open: open };
 })();

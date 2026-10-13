@@ -48,6 +48,7 @@ import (
 	// Registers the bolt: filesystem that stores thumbnails.
 	_ "github.com/cloudfra/ufs/drivers/boltfs"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/image/draw"
 
@@ -214,8 +215,9 @@ type thumbnailer struct {
 	ffmpeg *ffmpeg.FFmpeg // nil when video thumbnails are unavailable
 	// Decoding a large photo takes a lot of memory, so at most one
 	// thumbnail per CPU is made at a time.
-	sem chan struct{}
-	tp  trace.TracerProvider
+	sem     chan struct{}
+	tp      trace.TracerProvider
+	metrics *thumbnailMetrics
 
 	mu      sync.Mutex
 	renders map[string]*render // by store key, while being made
@@ -260,6 +262,7 @@ func (t *thumbnailer) shared(ctx context.Context, key string, mk func(context.Co
 			default:
 				r.abandoned = true
 				r.cancel()
+				t.metrics.abandoned.Add(context.WithoutCancel(ctx), 1)
 			}
 		}
 		t.mu.Unlock()
@@ -273,9 +276,12 @@ func (t *thumbnailer) run(ctx context.Context, key string, r *render, mk func(co
 	defer r.cancel()
 	r.th, r.err = mk(ctx)
 	if r.err == nil {
+		_, span, end := t.metrics.stage(ctx, r.th.kind, thumbnailStageStore, &r.th.timing)
+		span.SetAttributes(attribute.Int("bytes", len(r.th.data)))
 		if err := t.store.put(key, r.th); err != nil {
 			slog.Warn("failed to store thumbnail", "path", key, "error", err)
 		}
+		end()
 	}
 	close(r.done)
 	t.mu.Lock()
@@ -292,7 +298,7 @@ const thumbnailCacheMemory = "memory:"
 // newThumbnailer makes thumbnails and keeps them in the bolt database at
 // conf.CachePath (see Thumbnails), or in memory when that's
 // thumbnailCacheMemory or can't be opened.
-func newThumbnailer(conf Thumbnails, ff *ffmpeg.FFmpeg, tp trace.TracerProvider) (*thumbnailer, error) {
+func newThumbnailer(conf Thumbnails, ff *ffmpeg.FFmpeg, mc *monitoringContext) (*thumbnailer, error) {
 	if !conf.Enabled {
 		return nil, nil
 	}
@@ -306,6 +312,10 @@ func newThumbnailer(conf Thumbnails, ff *ffmpeg.FFmpeg, tp trace.TracerProvider)
 	case thumbnailCacheMemory:
 		cachePath = ""
 	}
+	metrics, err := newThumbnailMetrics(mc)
+	if err != nil {
+		return nil, err
+	}
 	store, err := newThumbnailStore(cachePath)
 	if err != nil {
 		return nil, err
@@ -314,7 +324,8 @@ func newThumbnailer(conf Thumbnails, ff *ffmpeg.FFmpeg, tp trace.TracerProvider)
 		store:   store,
 		ffmpeg:  ff,
 		sem:     make(chan struct{}, runtime.NumCPU()),
-		tp:      tp,
+		tp:      mc.getTraceProvider(),
+		metrics: metrics,
 		renders: map[string]*render{},
 	}, nil
 }
@@ -352,6 +363,11 @@ type thumbnailHandler struct {
 type thumbnail struct {
 	data        []byte
 	contentType string
+	// How it was made, when it was made in this process and not read
+	// back from the store: of a photo or a video, and the time each
+	// stage took.
+	kind   string
+	timing thumbnailTiming
 }
 
 func (h *thumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -376,11 +392,18 @@ func (h *thumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	start := time.Now()
+	kind := thumbnailKind(video)
 	ctx, span := h.t.tp.Tracer("thumbnail").Start(r.Context(), "thumbnail")
 	defer span.End()
-	span.SetAttributes(attribute.String("path", name), attribute.String("spec", spec.key()))
+	span.SetAttributes(attribute.String("path", name), attribute.String("spec", spec.key()), attribute.String("kind", kind))
+	result := thumbnailCached
+	defer func() {
+		span.SetAttributes(attribute.String("result", result))
+		h.t.metrics.request(ctx, kind, result, start)
+	}()
 
-	key := path.Join(h.source, thumbnailPath(name, info, spec))
+	key := path.Join(h.source, thumbnailPath(name, info, spec, video))
 	sum := sha256.Sum256([]byte(key))
 	etag := `"` + hex.EncodeToString(sum[:12]) + `"`
 
@@ -393,11 +416,15 @@ func (h *thumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		})
 		switch {
 		case err == nil:
+			result = thumbnailMade
 		case r.Context().Err() != nil:
+			result = thumbnailCanceled
 			return // the client went away
 		case errors.Is(err, errThumbnailUnsupported):
+			result = thumbnailUnsupported
 			th = &thumbnail{}
 		default:
+			result = thumbnailFailed
 			slog.Warn("thumbnail failed", "path", name, "error", err)
 			th = &thumbnail{}
 		}
@@ -412,6 +439,12 @@ func (h *thumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.base.ServeHTTP(w, r)
 		return
 	}
+	// Where the time went, for the browser's network panel.
+	if timing := th.timing.header(); timing != "" {
+		w.Header().Set("Server-Timing", timing)
+	} else {
+		w.Header().Set("Server-Timing", "cache;desc=hit")
+	}
 	w.Header().Set("Content-Type", th.contentType)
 	w.Header().Set("ETag", etag)
 	w.Header().Set("Cache-Control", "public, max-age=3600")
@@ -420,17 +453,30 @@ func (h *thumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // thumbnailPath is where the thumbnail of the file name (with info) for
 // spec lives in the store. The version, from the file's size and
-// modification time, gives an edited file a new thumbnail and ETag.
-func thumbnailPath(name string, info fs.FileInfo, spec *thumbnailSpec) string {
-	v := sha256.Sum256([]byte(fmt.Sprintf("%d/%d", info.Size(), info.ModTime().UnixNano())))
+// modification time, gives an edited file a new thumbnail and ETag. A
+// video's also has where its frame is taken from, so thumbnails stored
+// when that was elsewhere aren't served.
+func thumbnailPath(name string, info fs.FileInfo, spec *thumbnailSpec, video bool) string {
+	version := fmt.Sprintf("%d/%d", info.Size(), info.ModTime().UnixNano())
+	if video {
+		version += "/frame@" + thumbnailVideoFrameAt.String()
+	}
+	v := sha256.Sum256([]byte(version))
 	return path.Join(name, spec.key()+"@"+hex.EncodeToString(v[:6]))
 }
 
-// make decodes the file (or a frame of the video) and renders spec.
+// make decodes the file (or a frame of the video) and renders spec. Each
+// stage is a span and is timed (see thumbnailMetrics).
 func (h *thumbnailHandler) make(ctx context.Context, name string, video bool, spec *thumbnailSpec) (*thumbnail, error) {
+	m, kind := h.t.metrics, thumbnailKind(video)
+	var timing thumbnailTiming
+
+	_, _, waited := m.stage(ctx, kind, thumbnailStageWait, &timing)
 	select {
 	case h.t.sem <- struct{}{}:
+		waited()
 	case <-ctx.Done():
+		waited()
 		return nil, ctx.Err()
 	}
 	defer func() { <-h.t.sem }()
@@ -440,11 +486,18 @@ func (h *thumbnailHandler) make(ctx context.Context, name string, video bool, sp
 		orientation = 1
 		err         error
 	)
+	dctx, span, decoded := m.stage(ctx, kind, thumbnailStageDecode, &timing)
 	if video {
-		src, err = h.videoFrame(ctx, name)
+		src, err = h.videoFrame(dctx, name)
 	} else {
 		src, orientation, err = h.decodeImage(name)
 	}
+	if err == nil {
+		b := src.Bounds()
+		span.SetAttributes(attribute.Int("width", b.Dx()), attribute.Int("height", b.Dy()))
+		m.sourceSize.Record(context.WithoutCancel(ctx), float64(b.Dx())*float64(b.Dy())/1e6, metric.WithAttributes(kindAttr(kind)))
+	}
+	decoded()
 	if err != nil {
 		return nil, err
 	}
@@ -463,8 +516,20 @@ func (h *thumbnailHandler) make(ctx context.Context, name string, video bool, sp
 		}
 		spec = &s
 	}
+	_, _, scaled := m.stage(ctx, kind, thumbnailStageScale, &timing)
 	out := renderThumbnail(src, orientation, spec)
-	return encodeThumbnail(out, spec)
+	scaled()
+	_, span, encoded := m.stage(ctx, kind, thumbnailStageEncode, &timing)
+	th, err := encodeThumbnail(out, spec)
+	if err == nil {
+		span.SetAttributes(attribute.Int("bytes", len(th.data)), attribute.String("format", spec.format))
+	}
+	encoded()
+	if err != nil {
+		return nil, err
+	}
+	th.kind, th.timing = kind, timing
+	return th, nil
 }
 
 func (h *thumbnailHandler) decodeImage(name string) (image.Image, int, error) {
@@ -499,8 +564,13 @@ func (h *thumbnailHandler) decodeImage(name string) (image.Image, int, error) {
 	return img, orientation, nil
 }
 
-// videoFrame grabs a frame 10% of the way through the video (or the first
-// frame, for very short videos) with ffmpeg, which also applies the
+// thumbnailVideoFrameAt is how far into a video its thumbnail is taken
+// from: far enough to be past titles and fades from black. A video no
+// longer than that gives the frame 10% of the way through instead.
+const thumbnailVideoFrameAt = 5 * time.Second
+
+// videoFrame grabs the frame thumbnailVideoFrameAt into the video (see
+// ffmpegFrames for shorter ones) with ffmpeg, which also applies the
 // video's rotation. Files on local disk are passed by path so ffmpeg can seek.
 // Others, inside archives, are piped in, which works for streamable
 // containers; when it doesn't (an MP4 with its index at the end, the
@@ -566,11 +636,29 @@ func (h *thumbnailHandler) copyToTemp(name string) (string, error) {
 	return tmp.Name(), nil
 }
 
-// ffmpegFrames returns the frame 10% of the way through the video, or
-// the first frame when that fails (a clip too short for ffmpeg to seek
-// in). When pipe is set, input is "pipe:0" and the file pipe (in h.fsys)
-// is opened afresh for each run of ffmpeg and fed to its stdin.
+// ffmpegFrames returns the frame thumbnailVideoFrameAt into the video,
+// which for most is the one run of ffmpeg. Only when there is no frame
+// there is the video's length asked for: one no longer than that gives
+// the frame 10% of the way through, or its first frame when that fails
+// too (a clip too short for ffmpeg to seek in). When pipe is set, input
+// is "pipe:0" and the file pipe (in h.fsys) is opened afresh for each
+// run of ffmpeg and fed to its stdin.
 func (h *thumbnailHandler) ffmpegFrames(ctx context.Context, input, pipe string) (image.Image, error) {
+	frame := func(at time.Duration) (img image.Image, err error) {
+		err = h.withVideo(ctx, pipe, func(ctx context.Context, stdin io.Reader) (err error) {
+			img, err = h.t.ffmpeg.Frame(ctx, input, stdin, at)
+			return err
+		})
+		return img, err
+	}
+	img, last := frame(thumbnailVideoFrameAt)
+	if last == nil {
+		return img, nil
+	}
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+
 	var times []time.Duration
 	var dur time.Duration
 	err := h.withVideo(ctx, pipe, func(ctx context.Context, stdin io.Reader) (err error) {
@@ -580,23 +668,19 @@ func (h *thumbnailHandler) ffmpegFrames(ctx context.Context, input, pipe string)
 	switch {
 	case ctx.Err() != nil:
 		return nil, ctx.Err()
-	case err == nil:
+	case err == nil && dur <= thumbnailVideoFrameAt:
 		times = []time.Duration{dur / 10, 0}
+	case err == nil:
+		times = []time.Duration{0}
 	case pipe != "":
 		// Unknown through a pipe usually means ffmpeg can't read the file
-		// that way at all (an MP4 with its index at the end), so make one
-		// attempt, not several, before the caller copies the file.
-		times = []time.Duration{0}
+		// that way at all (an MP4 with its index at the end), so that's
+		// enough attempts before the caller copies the file.
 	default:
 		times = []time.Duration{time.Second, 0}
 	}
-	var last error
 	for _, at := range times {
-		var img image.Image
-		err := h.withVideo(ctx, pipe, func(ctx context.Context, stdin io.Reader) (err error) {
-			img, err = h.t.ffmpeg.Frame(ctx, input, stdin, at)
-			return err
-		})
+		img, err := frame(at)
 		if err == nil {
 			return img, nil
 		}
