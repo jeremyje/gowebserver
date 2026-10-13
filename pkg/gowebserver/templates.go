@@ -31,7 +31,8 @@ import (
 var templateFS embed.FS
 
 // templateInclude matches a line that includes a file: {{include "NAME"}}.
-var templateInclude = regexp.MustCompile(`(?m)^([ \t]*)\{\{include "([^"]+)"\}\}$`)
+// The line may end in CRLF, as the files do in a checkout on Windows.
+var templateInclude = regexp.MustCompile(`(?m)^([ \t]*)\{\{include "([^"]+)"\}\}(\r?)$`)
 
 // mustLoadTemplate is loadTemplate for the embedded templates, which are
 // known to load (TestLoadTemplate).
@@ -61,7 +62,7 @@ func loadTemplate(fsys fs.FS, name string) ([]byte, error) {
 	var firstErr error
 	out := templateInclude.ReplaceAllFunc(page, func(line []byte) []byte {
 		m := templateInclude.FindSubmatch(line)
-		indent, file := string(m[1]), string(m[2])
+		indent, file, eol := string(m[1]), string(m[2]), string(m[3])
 		text, err := fs.ReadFile(fsys, path.Join(dir, file))
 		if err == nil && strings.Contains(string(text), "{{") {
 			err = fmt.Errorf("%s holds a template action; keep that part in %s.html", path.Join(dir, file), name)
@@ -72,13 +73,13 @@ func loadTemplate(fsys fs.FS, name string) ([]byte, error) {
 			}
 			return line
 		}
-		lines := strings.Split(strings.TrimRight(string(text), "\n"), "\n")
+		lines := strings.Split(strings.TrimRight(string(text), "\r\n"), "\n")
 		for i, l := range lines {
-			if l != "" {
+			if l != "" && l != "\r" {
 				lines[i] = indent + l
 			}
 		}
-		return []byte(strings.Join(lines, "\n"))
+		return []byte(strings.Join(lines, "\n") + eol)
 	})
 	if firstErr != nil {
 		return nil, firstErr

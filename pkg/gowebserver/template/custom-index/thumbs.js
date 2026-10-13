@@ -71,9 +71,9 @@ var thumbLoader = (function () {
   }
 
   // Ends the batch: shows what arrived, in one frame, and starts the
-  // next one. That waits for whatever is cancelling images to finish:
+  // next one. That waits for whatever is canceling images to finish:
   // a row scrolled away cancels its tiles one by one, and starting the
-  // next batch in the middle would fetch tiles about to be cancelled.
+  // next batch in the middle would fetch tiles about to be canceled.
   function close() {
     clearTimeout(timer);
     timer = 0;
@@ -82,7 +82,7 @@ var thumbLoader = (function () {
       arrived = [];
       requestAnimationFrame(function () {
         batch.forEach(function (img) {
-          // Cancelled since it arrived.
+          // Canceled since it arrived.
           if (img._thumb !== 'arrived') return;
           img._thumb = '';
           img._thumbDone(img._thumbOK);

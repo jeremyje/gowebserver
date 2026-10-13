@@ -132,7 +132,7 @@ async function serve(opts) {
 // and resolves to {browser, page, problems, name, close}. problems
 // collects what a healthy page doesn't do: script errors, console
 // errors, failed requests and error responses. Requests the page itself
-// cancelled (a thumbnail scrolled away) aren't problems.
+// canceled (a thumbnail scrolled away) aren't problems.
 async function open(opts) {
   opts = opts || {};
   const name = process.env.BROWSER || 'chromium';
@@ -146,7 +146,7 @@ async function open(opts) {
   page.on('console', (m) => { if (m.type() === 'error') problems.push('console: ' + m.text()); });
   page.on('requestfailed', (r) => {
     const why = (r.failure() || {}).errorText || '';
-    if (!/ABORTED|cancell?ed/i.test(why)) problems.push('failed: ' + r.url() + ' ' + why);
+    if (!/ABORTED|cancel+ed/i.test(why)) problems.push('failed: ' + r.url() + ' ' + why);
   });
   page.on('response', (r) => { if (r.status() >= 400) problems.push(r.status() + ': ' + r.url()); });
   return { browser, page, problems, name, close: () => browser.close() };

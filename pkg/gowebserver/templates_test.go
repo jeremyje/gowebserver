@@ -15,6 +15,7 @@
 package gowebserver
 
 import (
+	"fmt"
 	"io/fs"
 	"path"
 	"strings"
@@ -34,12 +35,22 @@ func TestLoadTemplateInclude(t *testing.T) {
 	// A file goes in at the indent of the line that includes it, with no
 	// trailing space on its empty lines; only a whole line includes.
 	want := "<style>\n  {{template \"shared\"}}\n  a {\n    color: red;\n  }\n\n  b {\n    color: blue;\n  }\n</style>\n<script>\n  (function () {\n    var a = 1;\n\n    function b() {\n    \treturn a;\n    }\n  })();\n</script>\n{{.Name}} {{include \"inline.css\"}}\n"
-	got, err := loadTemplate(fsys, "page")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if diff := cmp.Diff(want, string(got)); diff != "" {
-		t.Errorf("loadTemplate() mismatch (-want +got):\n%s", diff)
+	// A checkout on Windows has CRLF line endings throughout, and the page
+	// keeps them.
+	for _, eol := range []string{"\n", "\r\n"} {
+		t.Run(fmt.Sprintf("eol=%q", eol), func(t *testing.T) {
+			files := fstest.MapFS{}
+			for name, file := range fsys {
+				files[name] = &fstest.MapFile{Data: []byte(strings.ReplaceAll(string(file.Data), "\n", eol))}
+			}
+			got, err := loadTemplate(files, "page")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if diff := cmp.Diff(strings.ReplaceAll(want, "\n", eol), string(got)); diff != "" {
+				t.Errorf("loadTemplate() mismatch (-want +got):\n%s", diff)
+			}
+		})
 	}
 }
 
