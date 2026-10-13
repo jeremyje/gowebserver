@@ -8,7 +8,7 @@ function createGrid(el) {
   var mounted = new Map(); // row index -> element
   var width = 0;
   var fast = false, pinned = false, lastY = scrollY, lastT = performance.now(), velocity = 0;
-  var idleTimer = 0, ambientTimer = 0, frame = 0;
+  var idleTimer = 0, ambientTimer = 0, frame = 0, scrolledAt = -Infinity;
   var byDate = CFG.sort.indexOf('date') === 0;
 
   function groupLabel(it) {
@@ -126,7 +126,7 @@ function createGrid(el) {
     if (it.video) { queueVideo(a); return; }
     var img = a.firstChild;
     thumbLoader.load(img, tileThumbURL(it, parseFloat(a.style.width)), function (ok) {
-      a.classList.add(ok ? 'ready' : 'err');
+      showTile(a, ok ? 'ready' : 'err');
     });
   }
 
@@ -187,7 +187,7 @@ function createGrid(el) {
     var now = performance.now();
     var dt = Math.max(1, now - lastT);
     velocity = velocity * 0.5 + (Math.abs(scrollY - lastY) / dt) * 0.5;
-    lastY = scrollY; lastT = now;
+    lastY = scrollY; lastT = scrolledAt = now;
     fast = pinned || (fast ? velocity > 1.2 : velocity > 2.5);
     schedule();
     clearTimeout(idleTimer);
@@ -213,7 +213,7 @@ function createGrid(el) {
     });
     if (!best) return;
     pageAmbient.show(best);
-    accent.set('page', vividColor(onScreen.map(function (el) { return { el: el, w: el === best ? 2 : 1 }; })));
+    accent.from('page', onScreen.map(function (el) { return { el: el, w: el === best ? 2 : 1 }; }));
   }
 
   function relayout(keepAnchor) {
@@ -302,14 +302,47 @@ function createGrid(el) {
     render: render,
     reveal: reveal,
     labelAt: labelAt,
-    setFast: function (v) { pinned = fast = v; if (!v) schedule(); }
+    setFast: function (v) { pinned = fast = v; if (!v) schedule(); },
+    // Whether the page is on the move: it scrolled within the last
+    // few frames.
+    scrolling: function () { return performance.now() - scrolledAt < SCROLL_SETTLE; }
   };
+}
+
+// How long after a scroll event the page still counts as scrolling.
+var SCROLL_SETTLE = 150;
+
+// Shows tile a's picture (cls is ready) or placeholder (err). A
+// picture fades in, except while the page is scrolling: each fade is a
+// layer of its own for the browser to blend on every frame, a screen
+// of them at a time, just when it's busiest. Those tiles appear at
+// once (.snap) instead, and get their fade back shortly after for
+// what else uses it (a video tile's thumbnail fades out and in around
+// its preview).
+var snapped = [], snapTimer = 0;
+function showTile(a, cls) {
+  if (grid && grid.scrolling()) {
+    a.classList.add('snap');
+    snapped.push(a);
+    if (!snapTimer) snapTimer = setTimeout(unsnap, SCROLL_SETTLE);
+  }
+  a.classList.add(cls);
+}
+
+function unsnap() {
+  snapTimer = 0;
+  snapped.forEach(function (a) { a.classList.remove('snap'); });
+  snapped = [];
 }
 
 // ===== Grid video previews =====
 // Video elements are expensive (decoders, buffers), so at most a few
 // load at once and every one is torn down when its row scrolls away.
 var videoQueue = [], videoActive = 0, VIDEO_CONCURRENCY = 3;
+// Where in a video, in seconds, its tile's picture comes from when the
+// server makes no thumbnails: far enough in to be past titles and
+// fades from black.
+var VIDEO_FRAME_AT = 5;
 
 function fmtDuration(sec) {
   var t = Math.floor(sec), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
@@ -351,17 +384,20 @@ function mountVideo(a) {
     it.dur = v.duration;
     var d = a.querySelector('.dur');
     if (d && isFinite(v.duration)) d.textContent = fmtDuration(v.duration);
-    a.classList.add('ready');
+    // The page asked for the frame at VIDEO_FRAME_AT; in a video that
+    // ends before then, take one from early on instead of its last.
+    if (!CFG.videoThumbs && isFinite(v.duration) && v.duration <= VIDEO_FRAME_AT) v.currentTime = v.duration * 0.1;
+    showTile(a, 'ready');
     release();
   }, { once: true });
-  v.addEventListener('error', function () { a.classList.add('err'); release(); }, { once: true });
+  v.addEventListener('error', function () { showTile(a, 'err'); release(); }, { once: true });
   setTimeout(release, 10000);
   v.addEventListener('playing', function () { if (a._hovering) revealVideo(a); });
   // With a thumbnail from the server the tile shows it, above the
   // video, rather than as the video's poster: a poster vanishes the
   // moment playback starts and never comes back, so it can't fade.
-  // Without one, the fragment asks the browser for a frame from
-  // just after the start instead of a (often black) first frame.
+  // Without one, the fragment asks the browser for the frame
+  // VIDEO_FRAME_AT seconds in instead of a (often black) first frame.
   if (CFG.videoThumbs) {
     var th = doc.createElement('img');
     th.className = 'vthumb';
@@ -373,12 +409,12 @@ function mountVideo(a) {
     // Without one (the server couldn't grab a frame), the tile is the
     // video alone, as when the server makes no thumbnails.
     thumbLoader.load(th, tileThumbURL(it, parseFloat(a.style.width)), function (ok) {
-      if (ok) a.classList.add('ready'); else th.remove();
+      if (ok) showTile(a, 'ready'); else th.remove();
     });
     a.insertBefore(th, a.firstChild);
     v.src = it.url;
   } else {
-    v.src = it.url + '#t=0.5';
+    v.src = it.url + '#t=' + VIDEO_FRAME_AT;
   }
   a.insertBefore(v, a.firstChild);
 }

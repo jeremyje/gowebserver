@@ -613,6 +613,8 @@
 
      
     .ambient {
+      --backdrop-blur: 36px;
+      --backdrop-tone: saturate(1.5);
       position: fixed;
       inset: -12%;
       z-index: 0;
@@ -633,8 +635,13 @@
       width: 100%;
       height: 100%;
       opacity: 0;
-      filter: blur(36px) saturate(1.5);
       transition: opacity 1.2s var(--ease-out);
+    }
+
+     
+    .ambient.css-blur canvas,
+    .ss-ambient.css-blur canvas {
+      filter: blur(var(--backdrop-blur)) var(--backdrop-tone);
     }
 
     .ambient canvas.on {
@@ -2307,6 +2314,12 @@
     }
 
      
+    .tile.snap img,
+    .tile.snap video {
+      transition-property: transform;
+    }
+
+     
     .tile.vid.vplay .vthumb {
       opacity: 0;
       transition-duration: 0.6s;
@@ -2545,6 +2558,8 @@
     }
 
     .ss-ambient {
+      --backdrop-blur: 56px;
+      --backdrop-tone: saturate(1.6) brightness(0.75);
       position: absolute;
       inset: -15%;
       opacity: 0;
@@ -2562,7 +2577,6 @@
       width: 100%;
       height: 100%;
       opacity: 0;
-      filter: blur(56px) saturate(1.6) brightness(0.75);
       transition: opacity 0.9s var(--ease-out);
     }
 
@@ -3360,7 +3374,7 @@
 </head>
 
 <body>
-  <div class="ambient" id="ambient" aria-hidden="true"><canvas width="24" height="16"></canvas><canvas width="24" height="16"></canvas></div>
+  <div class="ambient" id="ambient" aria-hidden="true"><canvas width="192" height="128"></canvas><canvas width="192" height="128"></canvas></div>
 
   
   <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -3729,7 +3743,7 @@
     
     <div class="ss-frame" id="ss-frame">
       <div class="ss-bg"></div>
-      <div class="ss-ambient" id="ss-ambient"><canvas width="24" height="16"></canvas><canvas width="24" height="16"></canvas></div>
+      <div class="ss-ambient" id="ss-ambient"><canvas width="192" height="128"></canvas><canvas width="192" height="128"></canvas></div>
       <div class="ss-vignette"></div>
       <div class="ss-stage" id="ss-stage"></div>
       <div class="ss-shade"></div>
@@ -4202,14 +4216,69 @@
       
       var vividCanvas = null, vividLin = null;
       var VIVID_BINS = 24;
+
       
       
       
       
       
+      
+      
+      
+      
+      
+      
+      var SMALL_PICTURE_OVER = 2e6, smallQueue = [], smallActive = 0, SMALL_CONCURRENCY = 2;
+      function smallPicture(el, w, h) {
+        if (el.tagName !== 'IMG' || !window.createImageBitmap || !window.fetch ||
+          !(el.naturalWidth * el.naturalHeight > SMALL_PICTURE_OVER)) return Promise.resolve(el);
+        var src = el.currentSrc;
+        return new Promise(function (resolve) {
+          smallQueue.push(function () {
+            return fetch(src, { cache: 'only-if-cached', mode: 'same-origin' }).then(function (res) {
+              if (!res.ok) throw new Error('not cached');
+              return res.blob();
+            }).then(function (blob) {
+              return createImageBitmap(blob, { resizeWidth: w, resizeHeight: h, resizeQuality: 'low' });
+            }).catch(function () {
+              
+              return el.currentSrc === src ? el : null;
+            }).then(resolve);
+          });
+          pumpSmall();
+        });
+      }
+
+      function pumpSmall() {
+        while (smallActive < SMALL_CONCURRENCY && smallQueue.length) {
+          smallActive++;
+          smallQueue.shift()().then(function () { smallActive--; pumpSmall(); });
+        }
+      }
+
+      
+      
+      
+      
+      
+      
+      var vividSeen = new Map(), VIVID_SEEN_MAX = 4000;
       function vividTally(el) {
         var still = el.tagName === 'IMG' && el.complete && el.currentSrc;
-        if (still && el._vivid && el._vividSrc === el.currentSrc) return el._vivid;
+        if (still && vividSeen.has(still)) return Promise.resolve(vividSeen.get(still));
+        return smallPicture(el, 16, 12).then(function (pic) {
+          var t = pic && vividCount(pic);
+          if (pic && pic.close) pic.close();
+          if (t && still) {
+            
+            if (vividSeen.size >= VIVID_SEEN_MAX) vividSeen.delete(vividSeen.keys().next().value);
+            vividSeen.set(still, t);
+          }
+          return t || null;
+        });
+      }
+
+      function vividCount(pic) {
         if (!vividCanvas) {
           vividCanvas = doc.createElement('canvas');
           vividCanvas.width = 16;
@@ -4224,7 +4293,8 @@
         var ctx = vividCanvas.getContext('2d', { willReadFrequently: true });
         var BINS = VIVID_BINS, MIN_C = 0.08, px;
         try {
-          ctx.drawImage(el, 0, 0, vividCanvas.width, vividCanvas.height);
+          ctx.clearRect(0, 0, vividCanvas.width, vividCanvas.height);
+          ctx.drawImage(pic, 0, 0, vividCanvas.width, vividCanvas.height);
           px = ctx.getImageData(0, 0, vividCanvas.width, vividCanvas.height).data;
         } catch (e) { return null; }
         var t = new Float64Array(BINS * 4);
@@ -4244,16 +4314,22 @@
           var wt = c * c * c;
           t[bin] += wt; t[BINS + bin] += wt * Math.cos(hue); t[2 * BINS + bin] += wt * Math.sin(hue); t[3 * BINS + bin] += wt * c;
         }
-        if (still) { el._vivid = t; el._vividSrc = el.currentSrc; }
         return t;
       }
 
+      
       function vividColor(sources) {
+        return Promise.all(sources.map(function (src) { return vividTally(src.el); })).then(function (tallies) {
+          return vividPick(sources, tallies);
+        });
+      }
+
+      function vividPick(sources, tallies) {
         var BINS = VIVID_BINS;
         var w = new Float64Array(BINS), sx = new Float64Array(BINS),
           sy = new Float64Array(BINS), sc = new Float64Array(BINS);
-        sources.forEach(function (src) {
-          var t = vividTally(src.el);
+        sources.forEach(function (src, i) {
+          var t = tallies[i];
           if (!t) return;
           for (var k = 0; k < BINS; k++) {
             w[k] += t[k] * src.w; sx[k] += t[BINS + k] * src.w;
@@ -4276,7 +4352,7 @@
       
       
       var accent = (function () {
-        var src = {}, lastH = null, shownH = '', shownC = '', on = false;
+        var src = {}, asked = {}, lastH = null, shownH = '', shownC = '', on = false;
         
         
         function apply() {
@@ -4295,30 +4371,90 @@
           if (!on) { on = true; root.classList.add('amb-accent'); }
         }
         return {
-          set: function (key, col) { src[key] = col; apply(); },
-          clear: function (key) { delete src[key]; apply(); }
+          
+          
+          from: function (key, sources) {
+            var n = asked[key] = (asked[key] || 0) + 1;
+            vividColor(sources).then(function (col) {
+              if (asked[key] !== n) return;
+              src[key] = col;
+              apply();
+            });
+          },
+          clear: function (key) {
+            asked[key] = (asked[key] || 0) + 1;
+            delete src[key];
+            apply();
+          }
         };
       })();
 
       
       
       
+      
+      
+      
+      
+      
+      
+      
+      var ambientTiny = null;
       function Ambient(el, onColor) {
         var canvases = el ? el.querySelectorAll('canvas') : [];
-        var cur = 0, last = null;
+        var cur = 0, last = null, blur = 0, tone = '', filters = null;
+
+        function setUp() {
+          filters = 'filter' in canvases[0].getContext('2d');
+          if (!filters) { el.classList.add('css-blur'); return; }
+          var css = getComputedStyle(el);
+          blur = parseFloat(css.getPropertyValue('--backdrop-blur')) || 0;
+          tone = css.getPropertyValue('--backdrop-tone').trim();
+        }
+
+        function draw(pic, canvas) {
+          if (!ambientTiny) {
+            ambientTiny = doc.createElement('canvas');
+            ambientTiny.width = 24;
+            ambientTiny.height = 16;
+          }
+          var tiny = ambientTiny.getContext('2d'), ctx = canvas.getContext('2d');
+          tiny.clearRect(0, 0, ambientTiny.width, ambientTiny.height);
+          tiny.drawImage(pic, 0, 0, ambientTiny.width, ambientTiny.height);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          if (filters) {
+            
+            
+            var shown = el.offsetWidth || innerWidth;
+            ctx.filter = ('blur(' + (blur * canvas.width / shown).toFixed(2) + 'px) ' + tone).trim();
+          }
+          ctx.drawImage(ambientTiny, 0, 0, canvas.width, canvas.height);
+        }
+
         return {
           show: function (src) {
             if (!el || !src || src === last) return;
-            var next = canvases[1 - cur];
-            try {
-              next.getContext('2d').drawImage(src, 0, 0, next.width, next.height);
-            } catch (e) { return; }
             last = src;
-            if (onColor) onColor(src);
-            next.classList.add('on');
-            canvases[cur].classList.remove('on');
-            cur = 1 - cur;
-            el.classList.add('on');
+            smallPicture(src, 24, 16).then(function (pic) {
+              
+              if (last !== src) { if (pic && pic.close) pic.close(); return; }
+              var next = canvases[1 - cur];
+              try {
+                if (!pic) throw new Error('nothing to draw');
+                if (filters === null) setUp();
+                draw(pic, next);
+              } catch (e) {
+                last = null;
+                return;
+              } finally {
+                if (pic && pic.close) pic.close();
+              }
+              if (onColor) onColor(src);
+              next.classList.add('on');
+              canvases[cur].classList.remove('on');
+              cur = 1 - cur;
+              el.classList.add('on');
+            });
           },
           reset: function () { last = null; }
         };
@@ -4335,7 +4471,7 @@
         var mounted = new Map(); 
         var width = 0;
         var fast = false, pinned = false, lastY = scrollY, lastT = performance.now(), velocity = 0;
-        var idleTimer = 0, ambientTimer = 0, frame = 0;
+        var idleTimer = 0, ambientTimer = 0, frame = 0, scrolledAt = -Infinity;
         var byDate = CFG.sort.indexOf('date') === 0;
 
         function groupLabel(it) {
@@ -4453,7 +4589,7 @@
           if (it.video) { queueVideo(a); return; }
           var img = a.firstChild;
           thumbLoader.load(img, tileThumbURL(it, parseFloat(a.style.width)), function (ok) {
-            a.classList.add(ok ? 'ready' : 'err');
+            showTile(a, ok ? 'ready' : 'err');
           });
         }
 
@@ -4514,7 +4650,7 @@
           var now = performance.now();
           var dt = Math.max(1, now - lastT);
           velocity = velocity * 0.5 + (Math.abs(scrollY - lastY) / dt) * 0.5;
-          lastY = scrollY; lastT = now;
+          lastY = scrollY; lastT = scrolledAt = now;
           fast = pinned || (fast ? velocity > 1.2 : velocity > 2.5);
           schedule();
           clearTimeout(idleTimer);
@@ -4540,7 +4676,7 @@
           });
           if (!best) return;
           pageAmbient.show(best);
-          accent.set('page', vividColor(onScreen.map(function (el) { return { el: el, w: el === best ? 2 : 1 }; })));
+          accent.from('page', onScreen.map(function (el) { return { el: el, w: el === best ? 2 : 1 }; }));
         }
 
         function relayout(keepAnchor) {
@@ -4629,14 +4765,47 @@
           render: render,
           reveal: reveal,
           labelAt: labelAt,
-          setFast: function (v) { pinned = fast = v; if (!v) schedule(); }
+          setFast: function (v) { pinned = fast = v; if (!v) schedule(); },
+          
+          
+          scrolling: function () { return performance.now() - scrolledAt < SCROLL_SETTLE; }
         };
+      }
+
+      
+      var SCROLL_SETTLE = 150;
+
+      
+      
+      
+      
+      
+      
+      
+      var snapped = [], snapTimer = 0;
+      function showTile(a, cls) {
+        if (grid && grid.scrolling()) {
+          a.classList.add('snap');
+          snapped.push(a);
+          if (!snapTimer) snapTimer = setTimeout(unsnap, SCROLL_SETTLE);
+        }
+        a.classList.add(cls);
+      }
+
+      function unsnap() {
+        snapTimer = 0;
+        snapped.forEach(function (a) { a.classList.remove('snap'); });
+        snapped = [];
       }
 
       
       
       
       var videoQueue = [], videoActive = 0, VIDEO_CONCURRENCY = 3;
+      
+      
+      
+      var VIDEO_FRAME_AT = 5;
 
       function fmtDuration(sec) {
         var t = Math.floor(sec), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
@@ -4678,10 +4847,13 @@
           it.dur = v.duration;
           var d = a.querySelector('.dur');
           if (d && isFinite(v.duration)) d.textContent = fmtDuration(v.duration);
-          a.classList.add('ready');
+          
+          
+          if (!CFG.videoThumbs && isFinite(v.duration) && v.duration <= VIDEO_FRAME_AT) v.currentTime = v.duration * 0.1;
+          showTile(a, 'ready');
           release();
         }, { once: true });
-        v.addEventListener('error', function () { a.classList.add('err'); release(); }, { once: true });
+        v.addEventListener('error', function () { showTile(a, 'err'); release(); }, { once: true });
         setTimeout(release, 10000);
         v.addEventListener('playing', function () { if (a._hovering) revealVideo(a); });
         
@@ -4700,12 +4872,12 @@
           
           
           thumbLoader.load(th, tileThumbURL(it, parseFloat(a.style.width)), function (ok) {
-            if (ok) a.classList.add('ready'); else th.remove();
+            if (ok) showTile(a, 'ready'); else th.remove();
           });
           a.insertBefore(th, a.firstChild);
           v.src = it.url;
         } else {
-          v.src = it.url + '#t=0.5';
+          v.src = it.url + '#t=' + VIDEO_FRAME_AT;
         }
         a.insertBefore(v, a.firstChild);
       }
@@ -4858,7 +5030,7 @@
         var dlg = $('ss'), stage = $('ss-stage');
         var frame = $('ss-frame'), btnAuto = $('ss-auto'), btnFull = $('ss-full'), btnOpen = $('ss-open'), btnDl = $('ss-dl');
         var btnPrev = $('ss-prev'), btnNext = $('ss-next'), strip = $('ss-strip');
-        var ambient = Ambient($('ss-ambient'), function (src) { accent.set('ss', vividColor([{ el: src, w: 1 }])); });
+        var ambient = Ambient($('ss-ambient'), function (src) { accent.from('ss', [{ el: src, w: 1 }]); });
         var RADIUS = 1, GAP = 24, AUTO_MS = 5000, STRIP_RADIUS = 12;
 
         var list = [], idx = 0, slides = new Map(), isOpen = false, closing = false;

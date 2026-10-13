@@ -55,10 +55,15 @@ button {
 }
 
 /* ===== Ambient backdrop =====
- * A 24x16 canvas holding the photo nearest the middle of the screen,
- * stretched to the viewport and blurred. The canvas is tiny, so the
- * backdrop costs almost no memory however many photos the page has. */
+ * A small canvas holding the photo nearest the middle of the screen,
+ * already blurred (see Ambient in the script: --backdrop-blur, in
+ * pixels of the backdrop as shown, and --backdrop-tone), stretched to
+ * the viewport. The canvas is tiny, so the backdrop costs almost no
+ * memory however many photos the page has, and nothing is filtered
+ * while the page scrolls. */
 .ambient {
+  --backdrop-blur: 36px;
+  --backdrop-tone: saturate(1.5);
   position: fixed;
   inset: -12%;
   z-index: 0;
@@ -79,8 +84,13 @@ button {
   width: 100%;
   height: 100%;
   opacity: 0;
-  filter: blur(36px) saturate(1.5);
   transition: opacity 1.2s var(--ease-out);
+}
+
+/* For a browser whose canvas can't filter. */
+.ambient.css-blur canvas,
+.ss-ambient.css-blur canvas {
+  filter: blur(var(--backdrop-blur)) var(--backdrop-tone);
 }
 
 .ambient canvas.on {
@@ -1789,6 +1799,12 @@ main {
   opacity: 1;
 }
 
+/* Shown while the page was scrolling: no fade (see showTile). */
+.tile.snap img,
+.tile.snap video {
+  transition-property: transform;
+}
+
 /* A video tile's server thumbnail sits over the video and fades out
    while the hover preview plays: slowly the first time, quickly once
    the video is buffered. It fades back in at the usual speed. */
@@ -2031,6 +2047,8 @@ main {
 }
 
 .ss-ambient {
+  --backdrop-blur: 56px;
+  --backdrop-tone: saturate(1.6) brightness(0.75);
   position: absolute;
   inset: -15%;
   opacity: 0;
@@ -2048,7 +2066,6 @@ main {
   width: 100%;
   height: 100%;
   opacity: 0;
-  filter: blur(56px) saturate(1.6) brightness(0.75);
   transition: opacity 0.9s var(--ease-out);
 }
 

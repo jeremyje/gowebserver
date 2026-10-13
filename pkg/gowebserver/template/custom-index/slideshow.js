@@ -3,7 +3,7 @@ var slideshow = (function () {
   var dlg = $('ss'), stage = $('ss-stage');
   var frame = $('ss-frame'), btnAuto = $('ss-auto'), btnFull = $('ss-full'), btnOpen = $('ss-open'), btnDl = $('ss-dl');
   var btnPrev = $('ss-prev'), btnNext = $('ss-next'), strip = $('ss-strip');
-  var ambient = Ambient($('ss-ambient'), function (src) { accent.set('ss', vividColor([{ el: src, w: 1 }])); });
+  var ambient = Ambient($('ss-ambient'), function (src) { accent.from('ss', [{ el: src, w: 1 }]); });
   var RADIUS = 1, GAP = 24, AUTO_MS = 5000, STRIP_RADIUS = 12;
 
   var list = [], idx = 0, slides = new Map(), isOpen = false, closing = false;
