@@ -280,6 +280,8 @@ func (t *thumbnailer) run(ctx context.Context, key string, r *render, mk func(co
 		span.SetAttributes(attribute.Int("bytes", len(r.th.data)))
 		if err := t.store.put(key, r.th); err != nil {
 			slog.Warn("failed to store thumbnail", "path", key, "error", err)
+		} else {
+			t.metrics.storedBytes.Add(ctx, int64(len(r.th.data)), metric.WithAttributes(kindAttr(r.th.kind)))
 		}
 		end()
 	}
@@ -320,10 +322,14 @@ func newThumbnailer(conf Thumbnails, ff *ffmpeg.FFmpeg, mc *monitoringContext) (
 	if err != nil {
 		return nil, err
 	}
+	slots := runtime.NumCPU()
+	if err := metrics.observe(store, slots); err != nil {
+		return nil, errors.Join(err, store.close())
+	}
 	return &thumbnailer{
 		store:   store,
 		ffmpeg:  ff,
-		sem:     make(chan struct{}, runtime.NumCPU()),
+		sem:     make(chan struct{}, slots),
 		tp:      mc.getTraceProvider(),
 		metrics: metrics,
 		renders: map[string]*render{},
@@ -392,6 +398,7 @@ func (h *thumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	setRequestHandler(r, handlerThumbnail)
 	start := time.Now()
 	kind := thumbnailKind(video)
 	ctx, span := h.t.tp.Tracer("thumbnail").Start(r.Context(), "thumbnail")
@@ -407,7 +414,9 @@ func (h *thumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sum := sha256.Sum256([]byte(key))
 	etag := `"` + hex.EncodeToString(sum[:12]) + `"`
 
+	lookedUp := h.t.metrics.lookup(ctx)
 	th, cached := h.t.store.get(key)
+	lookedUp(cached)
 	span.SetAttributes(attribute.Bool("cached", cached))
 	if !cached {
 		var err error
@@ -600,7 +609,7 @@ func (h *thumbnailHandler) videoFrame(ctx context.Context, name string) (image.I
 	if statErr != nil || info.Size() > thumbnailMaxVideoCopy {
 		return nil, errThumbnailUnsupported
 	}
-	tmp, err := h.copyToTemp(name)
+	tmp, err := h.copyToTemp(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -613,8 +622,10 @@ func (h *thumbnailHandler) videoFrame(ctx context.Context, name string) (image.I
 }
 
 // copyToTemp copies the file name to a new temporary file and returns its
-// path.
-func (h *thumbnailHandler) copyToTemp(name string) (string, error) {
+// path. The copy is a span, thumbnail.copy, and its size is counted.
+func (h *thumbnailHandler) copyToTemp(ctx context.Context, name string) (string, error) {
+	ctx, span := h.t.metrics.tracer.Start(ctx, "thumbnail.copy")
+	defer span.End()
 	src, err := h.fsys.Open(name)
 	if err != nil {
 		return "", err
@@ -628,7 +639,9 @@ func (h *thumbnailHandler) copyToTemp(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	_, err = io.Copy(tmp, src)
+	n, err := io.Copy(tmp, src)
+	span.SetAttributes(attribute.Int64("bytes", n))
+	h.t.metrics.videoCopyBytes.Add(context.WithoutCancel(ctx), n)
 	err = errors.Join(err, tmp.Close())
 	if err != nil {
 		return "", errors.Join(err, os.Remove(tmp.Name()))
@@ -645,7 +658,8 @@ func (h *thumbnailHandler) copyToTemp(name string) (string, error) {
 // run of ffmpeg and fed to its stdin.
 func (h *thumbnailHandler) ffmpegFrames(ctx context.Context, input, pipe string) (image.Image, error) {
 	frame := func(at time.Duration) (img image.Image, err error) {
-		err = h.withVideo(ctx, pipe, func(ctx context.Context, stdin io.Reader) (err error) {
+		err = h.withVideo(ctx, ffmpegFrame, pipe, func(ctx context.Context, stdin io.Reader) (err error) {
+			trace.SpanFromContext(ctx).SetAttributes(attribute.Float64("at_seconds", at.Seconds()))
 			img, err = h.t.ffmpeg.Frame(ctx, input, stdin, at)
 			return err
 		})
@@ -661,7 +675,7 @@ func (h *thumbnailHandler) ffmpegFrames(ctx context.Context, input, pipe string)
 
 	var times []time.Duration
 	var dur time.Duration
-	err := h.withVideo(ctx, pipe, func(ctx context.Context, stdin io.Reader) (err error) {
+	err := h.withVideo(ctx, ffmpegDuration, pipe, func(ctx context.Context, stdin io.Reader) (err error) {
 		dur, err = h.t.ffmpeg.Duration(ctx, input, stdin)
 		return err
 	})
@@ -694,10 +708,14 @@ func (h *thumbnailHandler) ffmpegFrames(ctx context.Context, input, pipe string)
 }
 
 // withVideo runs one ffmpeg call, fn, with a timeout, and with the file
-// pipe opened as its stdin when pipe is set.
-func (h *thumbnailHandler) withVideo(ctx context.Context, pipe string, fn func(context.Context, io.Reader) error) error {
+// pipe opened as its stdin when pipe is set. The run is a span,
+// ffmpeg.OPERATION, and is timed with how it ended.
+func (h *thumbnailHandler) withVideo(ctx context.Context, operation, pipe string, fn func(context.Context, io.Reader) error) (err error) {
+	parent := ctx
+	ran := h.t.metrics.ffmpegRun(&ctx, operation, pipe != "")
 	ctx, cancel := context.WithTimeout(ctx, thumbnailVideoTimeout)
 	defer cancel()
+	defer func() { ran(ffmpegOutcome(parent, ctx, err)) }()
 	if pipe == "" {
 		return fn(ctx, nil)
 	}
@@ -1044,6 +1062,21 @@ func exifOrientation(t []byte) int {
 // distinct thumbnails made.
 type thumbnailStore struct {
 	fsys ufs.WriteFS
+	// The bolt database's file, or empty when thumbnails are in memory.
+	dbPath string
+}
+
+// size is how large the bolt database's file is; false when thumbnails
+// are kept in memory.
+func (s *thumbnailStore) size() (int64, bool) {
+	if s.dbPath == "" {
+		return 0, false
+	}
+	info, err := os.Stat(s.dbPath)
+	if err != nil {
+		return 0, false
+	}
+	return info.Size(), true
 }
 
 // defaultThumbnailCachePath is where thumbnails are kept between runs.
@@ -1093,6 +1126,7 @@ func openBoltThumbnailStore(dbPath string) (*thumbnailStore, error) {
 	if _, err := os.Stat(dbPath); err != nil {
 		return nil, errors.Join(fmt.Errorf("the database wasn't created at %s: %w", dbPath, err), s.close())
 	}
+	s.dbPath = dbPath
 	return s, nil
 }
 

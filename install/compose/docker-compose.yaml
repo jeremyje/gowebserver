@@ -43,6 +43,7 @@ services:
     #restart: on-failure
     volumes:
       - ./prometheus:/etc/prometheus:ro
+      - ../prometheus/rules:/etc/prometheus/rules:ro
       - prom_data:/prometheus
   grafana:
     image: grafana/grafana
@@ -59,6 +60,8 @@ services:
     volumes:
       - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ../grafana/provisioning/dashboards/gowebserver.yaml:/etc/grafana/provisioning/dashboards/gowebserver.yaml:ro
+      - ../grafana/dashboards:/var/lib/grafana/dashboards/gowebserver:ro
   jaeger:
     image: jaegertracing/all-in-one:latest
     container_name: jaeger

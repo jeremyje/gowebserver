@@ -1,0 +1,148 @@
+# Copyright 2026 Cloudfra
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Unit tests for ../rules/gowebserver-alerts.yaml:
+#   promtool test rules install/prometheus/tests/gowebserver-alerts.test.yaml
+
+rule_files:
+  - ../rules/gowebserver-alerts.yaml
+
+evaluation_interval: 1m
+
+tests:
+  - name: a server that can't be scraped is down after two minutes
+    interval: 1m
+    input_series:
+      - series: up{job="gowebserver", instance="a:8080"}
+        values: 1 1 0 0 0 0
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: GowebserverDown
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: GowebserverDown
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: gowebserver
+              instance: a:8080
+            exp_annotations:
+              summary: gowebserver a:8080 is down
+              description: Prometheus has not been able to scrape a:8080 for 2 minutes.
+
+  - name: one request in ten failing is an alert, one in a hundred is not
+    interval: 1m
+    input_series:
+      - series: http_server_request_duration_seconds_count{job="gowebserver", instance="a:8080", handler="file", http_response_status_code="200"}
+        values: 0+90x30
+      - series: http_server_request_duration_seconds_count{job="gowebserver", instance="a:8080", handler="listing", http_response_status_code="500"}
+        values: 0+10x30
+      - series: http_server_request_duration_seconds_count{job="gowebserver", instance="b:8080", handler="file", http_response_status_code="200"}
+        values: 0+99x30
+      - series: http_server_request_duration_seconds_count{job="gowebserver", instance="b:8080", handler="listing", http_response_status_code="500"}
+        values: 0+1x30
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: GowebserverServerErrors
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              instance: a:8080
+            exp_annotations:
+              summary: gowebserver a:8080 is answering with errors
+              description: 10% of requests to a:8080 got a 5xx response over 10 minutes.
+
+  - name: slow listings are an alert, slow thumbnails are the backlog alert's
+    interval: 1m
+    input_series:
+      # Every listing and thumbnail takes between 2.5 and 5 seconds to start.
+      - series: http_server_time_to_first_byte_seconds_bucket{job="gowebserver", instance="a:8080", handler="listing", le="2.5"}
+        values: 0+0x30
+      - series: http_server_time_to_first_byte_seconds_bucket{job="gowebserver", instance="a:8080", handler="listing", le="5"}
+        values: 0+10x30
+      - series: http_server_time_to_first_byte_seconds_bucket{job="gowebserver", instance="a:8080", handler="listing", le="+Inf"}
+        values: 0+10x30
+      - series: http_server_time_to_first_byte_seconds_bucket{job="gowebserver", instance="a:8080", handler="thumbnail", le="2.5"}
+        values: 0+0x30
+      - series: http_server_time_to_first_byte_seconds_bucket{job="gowebserver", instance="a:8080", handler="thumbnail", le="5"}
+        values: 0+10x30
+      - series: http_server_time_to_first_byte_seconds_bucket{job="gowebserver", instance="a:8080", handler="thumbnail", le="+Inf"}
+        values: 0+10x30
+      # Files start at once.
+      - series: http_server_time_to_first_byte_seconds_bucket{job="gowebserver", instance="a:8080", handler="file", le="0.001"}
+        values: 0+10x30
+      - series: http_server_time_to_first_byte_seconds_bucket{job="gowebserver", instance="a:8080", handler="file", le="+Inf"}
+        values: 0+10x30
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: GowebserverSlowResponses
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              instance: a:8080
+              handler: listing
+            exp_annotations:
+              summary: gowebserver a:8080 is slow to answer listing requests
+              description: >-
+                The slowest 5% of listing requests to a:8080 waited more than
+                4.875s for the response to start. For listing, the Directory listings
+                row of the dashboard says which stage the time is in.
+
+  - name: thumbnails waiting more than five seconds for a slot are a backlog
+    interval: 1m
+    input_series:
+      - series: thumbnail_stage_duration_seconds_bucket{job="gowebserver", instance="a:8080", kind="photo", stage="wait", le="5"}
+        values: 0+0x30
+      - series: thumbnail_stage_duration_seconds_bucket{job="gowebserver", instance="a:8080", kind="photo", stage="wait", le="10"}
+        values: 0+10x30
+      - series: thumbnail_stage_duration_seconds_bucket{job="gowebserver", instance="a:8080", kind="photo", stage="wait", le="+Inf"}
+        values: 0+10x30
+      # Decoding is slow too, which is not this alert's business.
+      - series: thumbnail_stage_duration_seconds_bucket{job="gowebserver", instance="b:8080", kind="photo", stage="decode", le="10"}
+        values: 0+10x30
+      - series: thumbnail_stage_duration_seconds_bucket{job="gowebserver", instance="b:8080", kind="photo", stage="decode", le="+Inf"}
+        values: 0+10x30
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: GowebserverThumbnailBacklog
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              instance: a:8080
+            exp_annotations:
+              summary: Thumbnails on gowebserver a:8080 are queueing
+              description: >-
+                The slowest 5% of thumbnails waited more than 9.75s for a render
+                slot. More are being asked for than the CPUs can make.
+
+  - name: a failed upload is an alert
+    interval: 1m
+    input_series:
+      - series: upload_request_duration_seconds_count{job="gowebserver", instance="a:8080", result="ok"}
+        values: 0+1x30
+      - series: upload_request_duration_seconds_count{job="gowebserver", instance="a:8080", result="failed"}
+        values: 0 0 0 0 0 1 2 2 2 2 2 2 2 2 2
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: GowebserverUploadFailures
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: GowebserverUploadFailures
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              instance: a:8080
+            exp_annotations:
+              summary: Uploads to gowebserver a:8080 are failing
+              description: 2 uploads could not be stored in 15 minutes. Check the space and permissions of the upload directory.
