@@ -37,7 +37,7 @@ function setup(media, opts) {
   const opened = [];
   const pg = page('<p id="summary"></p><p id="no-match"></p><div id="media"></div>', {
     // A mouse, which is what hovers.
-    media: { '(hover: hover) and (pointer: fine)': opts.mouse !== false },
+    media: { '(hover: hover) and (pointer: fine), (any-hover: hover) and (any-pointer: fine)': opts.mouse !== false },
     globals: {
       GOWS: { sort: opts.sort, thumbs: opts.thumbs, videoThumbs: opts.videoThumbs, media },
       pageAmbient: { show() { } },
@@ -218,7 +218,12 @@ test('a video tile is the server\'s thumbnail; the video comes on hover', async 
   g.arrive();
   assert.equal(tile.classList.contains('ready'), true);
 
-  tile.fire('pointerover');
+  // A finger doesn't preview, even where a trackpad is attached too
+  // (an iPad): its tap opens the video.
+  tile.fire('pointerover', { pointerType: 'touch' });
+  assert.equal(tile.querySelector('video'), null);
+
+  tile.fire('pointerover', { pointerType: 'mouse' });
   const v = tile.querySelector('video');
   assert.equal(v.src, 'v0.mp4');
   assert.equal(v.paused, false);

@@ -3,7 +3,12 @@ var doc = document;
 var root = doc.documentElement;
 var $ = function (id) { return doc.getElementById(id); };
 var reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-var finePointer = matchMedia('(hover: hover) and (pointer: fine)');
+// Whether a mouse or trackpad is in use: either it's the main input, or
+// (the "any-" half) it's attached to a device whose main input is touch,
+// like an iPad with a trackpad. Both are asked, since a browser can get
+// either one wrong or not know "any-" at all. The CSS hover rules ask
+// the same way.
+var finePointer = matchMedia('(hover: hover) and (pointer: fine), (any-hover: hover) and (any-pointer: fine)');
 var numFmt = new Intl.NumberFormat();
 var dateFmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 var monthFmt = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' });
