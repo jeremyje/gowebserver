@@ -16,6 +16,7 @@ package gowebserver
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"io"
@@ -24,6 +25,7 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/alecthomas/chroma/v2"
 	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
@@ -31,6 +33,8 @@ import (
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/cloudfra/gowebserver/internal"
 	"github.com/dustin/go-humanize"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -82,19 +86,74 @@ type RichViewReport struct {
 type richViewHandler struct {
 	baseHandler http.Handler
 	baseFS      fs.FS
-	tp          trace.TracerProvider
+	metrics     *richViewMetrics
 	tmpl        *template.Template
 }
 
-func newRichViewHandler(baseHandler http.Handler, baseFS fs.FS, tp trace.TracerProvider) (*richViewHandler, error) {
+// The stages of showing a file in the text viewer, the "stage" of
+// richview_stage_duration_seconds and the names of the spans under a
+// request's "richview" span (as richview.read and so on).
+const (
+	richViewStageRead      = "read"      // the file, into memory
+	richViewStageHighlight = "highlight" // finding its language and coloring it
+	richViewStageRender    = "render"    // the page, written to the client
+)
+
+// What a text viewer request came to, the "result" of
+// richview_requests_total.
+const (
+	richViewHighlighted = "highlighted"
+	richViewOversized   = "oversized" // too large to show
+	richViewBinary      = "binary"    // not text; served as the file
+	richViewDirectory   = "directory" // redirected to its listing
+	richViewFailed      = "failed"
+)
+
+// richViewBytes are the histogram buckets for the size of the files
+// highlighted, which is what highlighting time follows.
+var richViewBytes = []float64{1 << 10, 4 << 10, 16 << 10, 64 << 10, 256 << 10, 1 << 20, 4 << 20, richViewMaxFileSize}
+
+// richViewMetrics says where the text viewer's time goes. Nothing it
+// makes is kept, so every view of a file is read and highlighted again.
+type richViewMetrics struct {
+	*stageMetrics
+	requests metric.Int64Counter
+	// Size of the files highlighted.
+	sourceSize metric.Int64Histogram
+}
+
+func newRichViewMetrics(mc *monitoringContext) (*richViewMetrics, error) {
+	stages, m, err := newStageMetrics(mc, "richview",
+		"How long each stage of showing a file in the text viewer took: read, highlight, render (the page).")
+	if err != nil {
+		return nil, err
+	}
+	rm := &richViewMetrics{stageMetrics: stages}
+	if rm.requests, err = m.Int64Counter("richview_requests_total",
+		metric.WithDescription("Text viewer requests, by result (highlighted, oversized, binary, directory, failed).")); err != nil {
+		return nil, err
+	}
+	if rm.sourceSize, err = m.Int64Histogram("richview_source_bytes",
+		metric.WithDescription("Size of the files the text viewer highlighted, in bytes."),
+		metric.WithExplicitBucketBoundaries(richViewBytes...)); err != nil {
+		return nil, err
+	}
+	return rm, nil
+}
+
+func newRichViewHandler(baseHandler http.Handler, baseFS fs.FS, mc *monitoringContext) (*richViewHandler, error) {
 	tmpl, err := createTemplate(richViewHTML)
+	if err != nil {
+		return nil, err
+	}
+	metrics, err := newRichViewMetrics(mc)
 	if err != nil {
 		return nil, err
 	}
 	return &richViewHandler{
 		baseHandler: baseHandler,
 		baseFS:      baseFS,
-		tp:          tp,
+		metrics:     metrics,
 		tmpl:        tmpl,
 	}, nil
 }
@@ -106,6 +165,20 @@ func (h *richViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fsPath := cleanPath(strings.TrimPrefix(r.URL.Path, "/"))
+
+	setRequestHandler(r, handlerRichView)
+	ctx, span := h.metrics.tracer.Start(r.Context(), "richview", trace.WithAttributes(attribute.String("path", fsPath)))
+	defer span.End()
+	result := richViewFailed
+	defer func() {
+		span.SetAttributes(attribute.String("result", result))
+		h.metrics.requests.Add(context.WithoutCancel(ctx), 1, metric.WithAttributes(attribute.String("result", result)))
+	}()
+
+	_, _, read := h.metrics.stage(ctx, richViewStageRead)
+	// The stage ends once, wherever reading stops.
+	read = sync.OnceFunc(read)
+	defer read()
 
 	f, err := h.baseFS.Open(fsPath)
 	if err != nil {
@@ -129,6 +202,7 @@ func (h *richViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if !strings.HasSuffix(r.URL.Path, "/") {
 			target = relativeURL(path.Base(r.URL.Path)) + "/"
 		}
+		result = richViewDirectory
 		redirectRelative(w, target, http.StatusFound)
 		return
 	}
@@ -139,12 +213,16 @@ func (h *richViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	read()
+	span.SetAttributes(attribute.Int64("bytes", stat.Size()))
+
 	fileName := path.Base(r.URL.Path)
 	rawURL := relativeURL(fileName)
 	parentPath := "./"
 	size := humanize.Bytes(uint64(stat.Size()))
 
 	if len(content) > richViewMaxFileSize {
+		result = richViewOversized
 		report := &RichViewReport{
 			FileName:           fileName,
 			ParentPath:         parentPath,
@@ -166,6 +244,8 @@ func (h *richViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		sniff = sniff[:512]
 	}
 	if ct := http.DetectContentType(sniff); !strings.HasPrefix(ct, "text/") {
+		result = richViewBinary
+		setRequestHandler(r, handlerFile)
 		h.baseHandler.ServeHTTP(w, r)
 		return
 	}
@@ -175,6 +255,11 @@ func (h *richViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if themeName != defaultChromaTheme && styles.Registry[themeName] == nil {
 		themeName = defaultChromaTheme
 	}
+
+	h.metrics.sourceSize.Record(context.WithoutCancel(ctx), int64(len(content)))
+	_, highlightSpan, highlighted := h.metrics.stage(ctx, richViewStageHighlight)
+	highlighted = sync.OnceFunc(highlighted)
+	defer highlighted()
 
 	// Detect language.
 	contentStr := string(content)
@@ -216,6 +301,8 @@ func (h *richViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if cfg := lexer.Config(); cfg != nil {
 		language = cfg.Name
 	}
+	highlightSpan.SetAttributes(attribute.String("language", language), attribute.Int("html_bytes", htmlBuf.Len()))
+	highlighted()
 
 	report := &RichViewReport{
 		FileName:           fileName,
@@ -231,6 +318,9 @@ func (h *richViewHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ApplicationVersion: internal.Version(),
 	}
 
+	result = richViewHighlighted
+	_, _, rendered := h.metrics.stage(ctx, richViewStageRender)
+	defer rendered()
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := h.tmpl.Execute(w, report); err != nil {
 		slog.Error("failed to execute rich view template", "path", fsPath, "error", err)

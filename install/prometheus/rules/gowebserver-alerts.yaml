@@ -1,0 +1,203 @@
+# Copyright 2026 Cloudfra
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Alerts for gowebserver. Thresholds are starting points: see ../README.md
+# for what each means and which to tune.
+
+groups:
+  - name: gowebserver-availability
+    rules:
+      - alert: GowebserverDown
+        expr: up{job="gowebserver"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: gowebserver {{ $labels.instance }} is down
+          description: Prometheus has not been able to scrape {{ $labels.instance }} for 2 minutes.
+
+      - alert: GowebserverRestarting
+        expr: changes(process_start_time_seconds{job="gowebserver"}[30m]) > 2
+        labels:
+          severity: warning
+        annotations:
+          summary: gowebserver {{ $labels.instance }} keeps restarting
+          description: '{{ $labels.instance }} has restarted {{ $value }} times in 30 minutes.'
+
+      - alert: GowebserverServerErrors
+        expr: |
+          sum by (instance) (rate(http_server_request_duration_seconds_count{job="gowebserver", http_response_status_code=~"5.."}[5m]))
+            /
+          sum by (instance) (rate(http_server_request_duration_seconds_count{job="gowebserver"}[5m]))
+            > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: gowebserver {{ $labels.instance }} is answering with errors
+          description: '{{ $value | humanizePercentage }} of requests to {{ $labels.instance }} got a 5xx response over 10 minutes.'
+
+  - name: gowebserver-latency
+    rules:
+      # Time to first byte is the server's own work; the request's
+      # duration also has the client's download in it. Thumbnails, uploads
+      # and proxied requests wait on other things and have their own
+      # alerts.
+      - alert: GowebserverSlowResponses
+        expr: |
+          histogram_quantile(0.95, sum by (instance, handler, le) (
+            rate(http_server_time_to_first_byte_seconds_bucket{job="gowebserver", handler!~"thumbnail|upload|proxy"}[5m])
+          )) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: gowebserver {{ $labels.instance }} is slow to answer {{ $labels.handler }} requests
+          description: >-
+            The slowest 5% of {{ $labels.handler }} requests to {{ $labels.instance }} waited more than
+            {{ $value | humanizeDuration }} for the response to start. For listing, the Directory listings
+            row of the dashboard says which stage the time is in.
+
+      - alert: GowebserverSlowProxyUpstream
+        expr: |
+          histogram_quantile(0.95, sum by (instance, server_address, le) (
+            rate(http_client_request_duration_seconds_bucket{job="gowebserver"}[5m])
+          )) > 5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: The server gowebserver {{ $labels.instance }} proxies to is slow
+          description: The slowest 5% of requests passed on to {{ $labels.server_address }} took more than {{ $value | humanizeDuration }}.
+
+      - alert: GowebserverProxyUpstreamErrors
+        expr: |
+          sum by (instance, server_address) (rate(http_client_request_duration_seconds_count{job="gowebserver", http_response_status_code=~"5..|"}[5m]))
+            /
+          sum by (instance, server_address) (rate(http_client_request_duration_seconds_count{job="gowebserver"}[5m]))
+            > 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: The server gowebserver {{ $labels.instance }} proxies to is failing
+          description: '{{ $value | humanizePercentage }} of requests passed on to {{ $labels.server_address }} failed or got a 5xx response.'
+
+  - name: gowebserver-thumbnails
+    rules:
+      # Thumbnails are made one per CPU at a time; the rest wait.
+      - alert: GowebserverThumbnailBacklog
+        expr: |
+          histogram_quantile(0.95, sum by (instance, le) (
+            rate(thumbnail_stage_duration_seconds_bucket{job="gowebserver", stage="wait"}[5m])
+          )) > 5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Thumbnails on gowebserver {{ $labels.instance }} are queueing
+          description: >-
+            The slowest 5% of thumbnails waited more than {{ $value | humanizeDuration }} for a render
+            slot. More are being asked for than the CPUs can make.
+
+      - alert: GowebserverThumbnailFailures
+        expr: |
+          sum by (instance, kind) (rate(thumbnail_requests_total{job="gowebserver", result="failed"}[10m]))
+            /
+          sum by (instance, kind) (rate(thumbnail_requests_total{job="gowebserver"}[10m]))
+            > 0.1
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: '{{ $labels.kind }} thumbnails are failing on gowebserver {{ $labels.instance }}'
+          description: '{{ $value | humanizePercentage }} of {{ $labels.kind }} thumbnail requests failed. The server log has the reason for each.'
+
+      # A run of ffmpeg is stopped after 30 seconds.
+      - alert: GowebserverFFmpegTimeouts
+        expr: sum by (instance) (increase(thumbnail_ffmpeg_duration_seconds_count{job="gowebserver", outcome="timeout"}[15m])) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: ffmpeg is timing out on gowebserver {{ $labels.instance }}
+          description: '{{ $value | humanize }} runs of ffmpeg were stopped for taking too long in 15 minutes: a slow disk, very large videos, or ffmpeg still being downloaded.'
+
+      # Every thumbnail request starts by asking the store.
+      - alert: GowebserverSlowThumbnailStore
+        expr: |
+          histogram_quantile(0.95, sum by (instance, le) (
+            rate(thumbnail_store_lookup_duration_seconds_bucket{job="gowebserver"}[5m])
+          )) > 0.25
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: The thumbnail store of gowebserver {{ $labels.instance }} is slow
+          description: The slowest 5% of lookups in the thumbnail store took more than {{ $value | humanizeDuration }}. Check the disk under -thumbnails.cachepath.
+
+      # Nothing is evicted from the store. Set the size to what its disk
+      # can spare.
+      - alert: GowebserverThumbnailStoreLarge
+        expr: thumbnail_store_size_bytes{job="gowebserver"} > 20 * 1024 * 1024 * 1024
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: The thumbnail store of gowebserver {{ $labels.instance }} is large
+          description: The thumbnail database is {{ $value | humanize1024 }}B and only grows. Stop the server and delete the file at -thumbnails.cachepath to start again.
+
+  - name: gowebserver-uploads
+    rules:
+      - alert: GowebserverUploadFailures
+        expr: sum by (instance) (increase(upload_request_duration_seconds_count{job="gowebserver", result="failed"}[15m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Uploads to gowebserver {{ $labels.instance }} are failing
+          description: '{{ $value | humanize }} uploads could not be stored in 15 minutes. Check the space and permissions of the upload directory.'
+
+  - name: gowebserver-resources
+    rules:
+      - alert: GowebserverHighMemory
+        expr: |
+          process_resident_memory_bytes{job="gowebserver"}
+            / on (instance)
+          sum by (instance) (system_memory_usage_bytes{job="gowebserver"})
+            > 0.8
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: gowebserver {{ $labels.instance }} is using most of the machine's memory
+          description: '{{ $labels.instance }} holds {{ $value | humanizePercentage }} of the memory. Decoding large photos is the usual cause: each render slot can hold one.'
+
+      - alert: GowebserverFileDescriptors
+        expr: process_open_fds{job="gowebserver"} / process_max_fds{job="gowebserver"} > 0.8
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: gowebserver {{ $labels.instance }} is running out of file descriptors
+          description: '{{ $labels.instance }} has {{ $value | humanizePercentage }} of its file descriptors open.'
+
+      - alert: GowebserverGoroutines
+        expr: go_goroutines{job="gowebserver"} > 10000
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: gowebserver {{ $labels.instance }} has a lot of goroutines
+          description: '{{ $labels.instance }} has had {{ $value }} goroutines for 15 minutes: very many connections, or requests that never finish.'
