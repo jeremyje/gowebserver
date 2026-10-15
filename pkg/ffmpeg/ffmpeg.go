@@ -29,7 +29,6 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"image/png"
 	"io"
 	"log/slog"
 	"net/http"
@@ -195,24 +194,94 @@ func (f *FFmpeg) run(ctx context.Context, stdin io.Reader, args ...string) (stdo
 	return out.Bytes(), errOut.Bytes(), err
 }
 
-// Frame returns the frame shown at time at in the video input, a file path
-// or URL. For input "pipe:0" the video is read from stdin, which works for
-// streamable containers only, since ffmpeg can't seek a pipe. ffmpeg
-// applies the video's rotation, so the frame is the right way up.
+// Frame returns the frame shown at time at in the video input, at its full
+// size. See FrameWith.
 func (f *FFmpeg) Frame(ctx context.Context, input string, stdin io.Reader, at time.Duration) (image.Image, error) {
-	out, err := f.Run(ctx, stdin,
-		// -nostdin only stops ffmpeg reading commands from stdin; an input
-		// of "pipe:0" is still read from it.
-		"-hide_banner", "-loglevel", "error", "-nostdin",
-		"-ss", strconv.FormatFloat(at.Seconds(), 'f', 3, 64), "-i", input,
-		"-frames:v", "1", "-f", "image2pipe", "-c:v", "png", "pipe:1")
+	return f.FrameWith(ctx, input, stdin, FrameOptions{At: at})
+}
+
+// FrameOptions chooses the frame FrameWith returns and its size.
+type FrameOptions struct {
+	// At is the time in the video to take the frame from.
+	At time.Duration
+	// Keyframe takes the first keyframe at or after At instead of the
+	// frame shown at exactly At. That decodes one frame instead of every
+	// frame since the keyframe before At, which in a video with keyframes
+	// far apart is hundreds.
+	Keyframe bool
+	// Width and Height, when either is set, shrink the frame at its own
+	// ratio to the smallest size that covers Width x Height (a 0 leaves
+	// that side to the other). A frame already that small is left as it
+	// is: it's never enlarged.
+	Width, Height int
+}
+
+// FrameWith returns a frame of the video input, a file path or URL, as o
+// describes. For input "pipe:0" the video is read from stdin, which works
+// for streamable containers only, since ffmpeg can't seek a pipe. ffmpeg
+// applies the video's rotation, so the frame is the right way up.
+//
+// ffmpeg runs on one thread: decoding a single frame gains little from
+// more, and starting a pool per core costs more than it saves, especially
+// when several frames are being made at once.
+func (f *FFmpeg) FrameWith(ctx context.Context, input string, stdin io.Reader, o FrameOptions) (*image.RGBA, error) {
+	// -nostdin only stops ffmpeg reading commands from stdin; an input of
+	// "pipe:0" is still read from it.
+	args := []string{"-hide_banner", "-loglevel", "error", "-nostdin", "-threads", "1", "-filter_threads", "1"}
+	if o.Keyframe {
+		args = append(args, "-skip_frame", "nokey")
+	}
+	args = append(args, "-ss", strconv.FormatFloat(o.At.Seconds(), 'f', 3, 64), "-i", input, "-frames:v", "1")
+	if o.Width > 0 || o.Height > 0 {
+		args = append(args, "-vf", coverScale(o.Width, o.Height))
+	}
+	// PAM is the frame's pixels after a short header giving its size.
+	args = append(args, "-f", "image2pipe", "-c:v", "pam", "-pix_fmt", "rgba", "pipe:1")
+	out, err := f.Run(ctx, stdin, args...)
 	if err != nil {
 		return nil, err
 	}
 	if len(out) == 0 {
 		return nil, ErrNoFrame
 	}
-	return png.Decode(bytes.NewReader(out))
+	return decodePAM(out)
+}
+
+// coverScale is the filter that shrinks a frame to cover w x h, as
+// FrameOptions describes.
+func coverScale(w, h int) string {
+	scale := fmt.Sprintf("min(1,max(%d/iw,%d/ih))", w, h)
+	return fmt.Sprintf("scale=w='max(1,round(iw*%[1]s))':h='max(1,round(ih*%[1]s))':flags=area", scale)
+}
+
+// decodePAM decodes the RGB_ALPHA PAM image that ffmpeg writes for
+// -c:v pam -pix_fmt rgba.
+func decodePAM(data []byte) (*image.RGBA, error) {
+	header, pix, ok := bytes.Cut(data, []byte("ENDHDR\n"))
+	if !ok {
+		return nil, errors.New("ffmpeg: frame has no PAM header")
+	}
+	lines := strings.Split(string(header), "\n")
+	if lines[0] != "P7" {
+		return nil, errors.New("ffmpeg: frame is not a PAM image")
+	}
+	fields := map[string]string{}
+	for _, line := range lines[1:] {
+		if k, v, ok := strings.Cut(line, " "); ok {
+			fields[k] = v
+		}
+	}
+	w, werr := strconv.Atoi(fields["WIDTH"])
+	h, herr := strconv.Atoi(fields["HEIGHT"])
+	switch {
+	case werr != nil || herr != nil || w < 1 || h < 1:
+		return nil, fmt.Errorf("ffmpeg: frame has no size: %q", header)
+	case fields["DEPTH"] != "4" || fields["MAXVAL"] != "255":
+		return nil, fmt.Errorf("ffmpeg: frame is not 8-bit RGBA: %q", header)
+	case len(pix) != w*h*4:
+		return nil, fmt.Errorf("ffmpeg: frame is %d bytes, want %d for %dx%d", len(pix), w*h*4, w, h)
+	}
+	return &image.RGBA{Pix: pix, Stride: w * 4, Rect: image.Rect(0, 0, w, h)}, nil
 }
 
 var durationLine = regexp.MustCompile(`Duration: (\d+):(\d{2}):(\d{2}(?:\.\d+)?)`)

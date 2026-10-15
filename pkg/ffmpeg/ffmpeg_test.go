@@ -15,11 +15,10 @@
 package ffmpeg
 
 import (
-	"bytes"
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
-	"image/png"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -45,16 +44,19 @@ func script(t *testing.T, body string) (bin, argsFile string) {
 	return bin, argsFile
 }
 
-func pngFile(t *testing.T, w, h int) string {
+// pamImage is a w x h frame as ffmpeg writes it for -c:v pam
+// -pix_fmt rgba, red at its top left.
+func pamImage(w, h int) []byte {
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	img.SetRGBA(0, 0, color.RGBA{R: 255, A: 255})
+	header := fmt.Sprintf("P7\nWIDTH %d\nHEIGHT %d\nDEPTH 4\nMAXVAL 255\nTUPLTYPE RGB_ALPHA\nENDHDR\n", w, h)
+	return append([]byte(header), img.Pix...)
+}
+
+func pamFile(t *testing.T, w, h int) string {
 	t.Helper()
-	img := image.NewNRGBA(image.Rect(0, 0, w, h))
-	img.SetNRGBA(0, 0, color.NRGBA{R: 255, A: 255})
-	var b bytes.Buffer
-	if err := png.Encode(&b, img); err != nil {
-		t.Fatal(err)
-	}
-	p := filepath.Join(t.TempDir(), "frame.png")
-	if err := os.WriteFile(p, b.Bytes(), 0o600); err != nil {
+	p := filepath.Join(t.TempDir(), "frame.pam")
+	if err := os.WriteFile(p, pamImage(w, h), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	return p
@@ -112,7 +114,7 @@ func TestRunError(t *testing.T) {
 }
 
 func TestFrame(t *testing.T) {
-	frame := pngFile(t, 16, 9)
+	frame := pamFile(t, 16, 9)
 	bin, argsFile := script(t, "cat > /dev/null; cat '"+frame+"'")
 	f, err := Find(bin)
 	if err != nil {
@@ -125,14 +127,119 @@ func TestFrame(t *testing.T) {
 	if b := img.Bounds(); b.Dx() != 16 || b.Dy() != 9 {
 		t.Errorf("frame is %dx%d, want 16x9", b.Dx(), b.Dy())
 	}
+	if r, _, _, a := img.At(0, 0).RGBA(); r != 0xffff || a != 0xffff {
+		t.Errorf("top left pixel = %v, want red", img.At(0, 0))
+	}
 	args, err := os.ReadFile(argsFile)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"-ss 1.500 -i pipe:0", "-frames:v 1", "-c:v png pipe:1"} {
+	for _, want := range []string{"-threads 1 ", "-ss 1.500 -i pipe:0", "-frames:v 1", "-c:v pam -pix_fmt rgba pipe:1"} {
 		if !strings.Contains(string(args), want) {
 			t.Errorf("args %q missing %q", args, want)
 		}
+	}
+	// The exact frame at its full size.
+	for _, unwanted := range []string{"-skip_frame", "-vf"} {
+		if strings.Contains(string(args), unwanted) {
+			t.Errorf("args %q have %q", args, unwanted)
+		}
+	}
+}
+
+func TestFrameWith(t *testing.T) {
+	bin, argsFile := script(t, "cat '"+pamFile(t, 8, 8)+"'")
+	f, err := Find(bin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.FrameWith(t.Context(), "clip.mp4", nil, FrameOptions{At: 10 * time.Second, Keyframe: true, Width: 512, Height: 288}); err != nil {
+		t.Fatal(err)
+	}
+	args, err := os.ReadFile(argsFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		// Keyframes only is a decoder option, so it comes before the input.
+		"-skip_frame nokey -ss 10.000 -i clip.mp4",
+		"-vf scale=w='max(1,round(iw*min(1,max(512/iw,288/ih))))':h='max(1,round(ih*min(1,max(512/iw,288/ih))))':flags=area",
+	} {
+		if !strings.Contains(string(args), want) {
+			t.Errorf("args %q missing %q", args, want)
+		}
+	}
+}
+
+func TestDecodePAM(t *testing.T) {
+	img, err := decodePAM(pamImage(3, 2))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if b := img.Bounds(); b.Dx() != 3 || b.Dy() != 2 || img.Stride != 12 {
+		t.Errorf("image is %dx%d with stride %d, want 3x2 with stride 12", b.Dx(), b.Dy(), img.Stride)
+	}
+	for name, data := range map[string][]byte{
+		"png":       {0x89, 'P', 'N', 'G'},
+		"no header": []byte("P7\nWIDTH 1\n"),
+		"not P7":    []byte("P6\nENDHDR\n"),
+		"no size":   []byte("P7\nDEPTH 4\nMAXVAL 255\nENDHDR\n"),
+		"rgb":       []byte("P7\nWIDTH 1\nHEIGHT 1\nDEPTH 3\nMAXVAL 255\nTUPLTYPE RGB\nENDHDR\nabc"),
+		"truncated": pamImage(3, 2)[:40],
+	} {
+		if _, err := decodePAM(data); err == nil {
+			t.Errorf("%s: decoded, want an error", name)
+		}
+	}
+}
+
+// TestFrameWithFFmpeg runs the ffmpeg installed on PATH, when there is
+// one, on a video with a keyframe every 3 seconds.
+func TestFrameWithFFmpeg(t *testing.T) {
+	f, err := Find("")
+	if err != nil {
+		t.Skip("ffmpeg is not installed")
+	}
+	// 12 seconds at 10 frames a second, each frame's number in its blue,
+	// keyframes at 0, 3, 6 and 9 seconds.
+	video := filepath.Join(t.TempDir(), "clip.mp4")
+	if _, err := f.Run(t.Context(), nil, "-hide_banner", "-loglevel", "error", "-nostdin",
+		"-f", "lavfi", "-i", "color=c=black:size=320x180:rate=10:duration=12,geq=r=0:g=0:b='N*2'",
+		"-c:v", "libx264", "-qp", "0", "-g", "30", "-keyint_min", "30", "-sc_threshold", "0", "-pix_fmt", "yuv444p", video); err != nil {
+		t.Skipf("cannot make a test video: %v", err)
+	}
+	blue := func(img image.Image) int {
+		_, _, b, _ := img.At(img.Bounds().Dx()/2, img.Bounds().Dy()/2).RGBA()
+		return int(b >> 8)
+	}
+
+	// The first keyframe at or after 4s is frame 60, 6 seconds in.
+	img, err := f.FrameWith(t.Context(), video, nil, FrameOptions{At: 4 * time.Second, Keyframe: true, Width: 64, Height: 64})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := blue(img); got < 118 || got > 122 {
+		t.Errorf("keyframe after 4s has blue %d, want frame 60's 120", got)
+	}
+	// Shrunk to cover 64x64 at the video's 16:9.
+	if b := img.Bounds(); b.Dx() != 114 || b.Dy() != 64 {
+		t.Errorf("frame is %dx%d, want 114x64", b.Dx(), b.Dy())
+	}
+	// Never enlarged.
+	if img, err := f.FrameWith(t.Context(), video, nil, FrameOptions{Keyframe: true, Width: 4096}); err != nil {
+		t.Error(err)
+	} else if b := img.Bounds(); b.Dx() != 320 || b.Dy() != 180 {
+		t.Errorf("frame is %dx%d, want the video's 320x180", b.Dx(), b.Dy())
+	}
+	// Without Keyframe it's the frame at exactly 4s, frame 40.
+	if img, err := f.FrameWith(t.Context(), video, nil, FrameOptions{At: 4 * time.Second}); err != nil {
+		t.Error(err)
+	} else if got := blue(img); got < 78 || got > 82 {
+		t.Errorf("frame at 4s has blue %d, want frame 40's 80", got)
+	}
+	// No keyframe after the last one: no frame.
+	if _, err := f.FrameWith(t.Context(), video, nil, FrameOptions{At: 10 * time.Second, Keyframe: true}); !errors.Is(err, ErrNoFrame) {
+		t.Errorf("keyframe after 10s: error = %v, want ErrNoFrame", err)
 	}
 }
 
