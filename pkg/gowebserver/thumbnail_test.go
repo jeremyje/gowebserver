@@ -18,8 +18,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
+	"image/draw"
 	"image/jpeg"
 	"image/png"
 	"io/fs"
@@ -81,6 +83,16 @@ func encodePNG(t *testing.T, img image.Image) []byte {
 		t.Fatal(err)
 	}
 	return b.Bytes()
+}
+
+// encodePAM encodes img as the RGBA PAM image ffmpeg writes for
+// -c:v pam -pix_fmt rgba.
+func encodePAM(img image.Image) []byte {
+	b := img.Bounds()
+	rgba := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+	draw.Draw(rgba, rgba.Bounds(), img, b.Min, draw.Src)
+	header := fmt.Sprintf("P7\nWIDTH %d\nHEIGHT %d\nDEPTH 4\nMAXVAL 255\nTUPLTYPE RGB_ALPHA\nENDHDR\n", b.Dx(), b.Dy())
+	return append([]byte(header), rgba.Pix...)
 }
 
 // withOrientation inserts an EXIF APP1 segment carrying orientation o
@@ -706,15 +718,15 @@ func TestThumbnailStoreFallback(t *testing.T) {
 // fakeFFmpeg writes a script standing in for ffmpeg. It appends each
 // run's arguments to argsFile, describes the input as lasting duration
 // (an ffmpeg duration such as "00:00:20.00", or "N/A") when probed, and
-// prints frame as a PNG when asked for one.
+// prints frame as ffmpeg's PAM when asked for one.
 func fakeFFmpeg(t *testing.T, frame image.Image, duration string) (bin, argsFile string) {
 	t.Helper()
 	if runtime.GOOS == "windows" {
 		t.Skip("uses a shell script as ffmpeg")
 	}
 	dir := t.TempDir()
-	framePath := filepath.Join(dir, "frame.png")
-	if err := os.WriteFile(framePath, encodePNG(t, frame), 0o600); err != nil {
+	framePath := filepath.Join(dir, "frame.pam")
+	if err := os.WriteFile(framePath, encodePAM(frame), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	argsFile = filepath.Join(dir, "args.txt")
@@ -772,9 +784,16 @@ func TestThumbnailVideo(t *testing.T) {
 		if !strings.Contains(string(args), "-i pipe:0") {
 			t.Errorf("ffmpeg args %q: want the file piped to stdin", args)
 		}
-		// There is a frame five seconds in, so that's the only run.
-		if runs := frameArgs(t, argsFile); len(runs) != 1 || !strings.Contains(runs[0], "-ss 5.000 -i pipe:0") {
-			t.Errorf("frame runs %q: want one at 5s", runs)
+		// There is a keyframe ten seconds in, so that's the only run: one
+		// thread, keyframes only, shrunk to cover the 32-wide box.
+		runs := frameArgs(t, argsFile)
+		if len(runs) != 1 || !strings.Contains(runs[0], "-ss 10.000 -i pipe:0") {
+			t.Errorf("frame runs %q: want one at 10s", runs)
+		}
+		for _, want := range []string{"-threads 1 ", "-skip_frame nokey ", "max(32/iw,0/ih)", "-c:v pam -pix_fmt rgba pipe:1"} {
+			if len(runs) == 1 && !strings.Contains(runs[0], want) {
+				t.Errorf("frame run %q: missing %q", runs[0], want)
+			}
 		}
 	})
 
@@ -820,8 +839,8 @@ func TestThumbnailVideo(t *testing.T) {
 		if !strings.Contains(string(args), "-i "+filepath.Join(dir, "clip.mp4")) {
 			t.Errorf("ffmpeg args %q: want the file's path so ffmpeg can seek", args)
 		}
-		if runs := frameArgs(t, argsFile); len(runs) != 1 || !strings.Contains(runs[0], "-ss 5.000 -i ") {
-			t.Errorf("frame runs %q: want one at 5s", runs)
+		if runs := frameArgs(t, argsFile); len(runs) != 1 || !strings.Contains(runs[0], "-ss 10.000 -i ") {
+			t.Errorf("frame runs %q: want one at 10s", runs)
 		}
 		// The video's length wasn't needed, so it wasn't asked for.
 		if all := strings.Split(strings.TrimSpace(string(args)), "\n"); len(all) != 1 {
@@ -853,10 +872,10 @@ func TestThumbnailVideo(t *testing.T) {
 		noFrameExcept(t, bin, "-ss 0.400 ")
 		h, _ := newTestThumbnailHandler(t, video, bin)
 		decodeThumb(t, thumbGet(t, h, "/clip.mp4?width=32", nil))
-		// Nothing five seconds in; 10% of the 4s the probe then reported.
+		// Nothing ten seconds in; 10% of the 4s the probe then reported.
 		runs := frameArgs(t, argsFile)
-		if len(runs) != 2 || !strings.Contains(runs[0], "-ss 5.000 ") || !strings.Contains(runs[1], "-ss 0.400 ") {
-			t.Errorf("frame runs %q: want 5s, then 0.4s", runs)
+		if len(runs) != 2 || !strings.Contains(runs[0], "-ss 10.000 ") || !strings.Contains(runs[1], "-ss 0.400 ") {
+			t.Errorf("frame runs %q: want 10s, then 0.4s", runs)
 		}
 	})
 
@@ -870,8 +889,8 @@ func TestThumbnailVideo(t *testing.T) {
 		h, _ := newTestThumbnailHandler(t, os.DirFS(dir), bin)
 		decodeThumb(t, thumbGet(t, h, "/clip.mp4?width=32", nil))
 		runs := frameArgs(t, argsFile)
-		if len(runs) != 2 || !strings.Contains(runs[0], "-ss 5.000 ") || !strings.Contains(runs[1], "-ss 1.000 ") {
-			t.Errorf("frame runs %q: want 5s, then a second in", runs)
+		if len(runs) != 2 || !strings.Contains(runs[0], "-ss 10.000 ") || !strings.Contains(runs[1], "-ss 1.000 ") {
+			t.Errorf("frame runs %q: want 10s, then a second in", runs)
 		}
 	})
 
@@ -882,7 +901,7 @@ func TestThumbnailVideo(t *testing.T) {
 		decodeThumb(t, thumbGet(t, h, "/clip.mp4?width=32", nil))
 		runs := frameArgs(t, argsFile)
 		if len(runs) != 3 || !strings.Contains(runs[1], "-ss 0.008 ") || !strings.Contains(runs[2], "-ss 0.000 ") {
-			t.Errorf("frame runs %q: want 5s, 10%% in, then the first frame", runs)
+			t.Errorf("frame runs %q: want 10s, 10%% in, then the first frame", runs)
 		}
 	})
 
@@ -893,7 +912,7 @@ func TestThumbnailVideo(t *testing.T) {
 		decodeThumb(t, thumbGet(t, h, "/clip.mp4?width=32", nil))
 		runs := frameArgs(t, argsFile)
 		if len(runs) != 2 || !strings.Contains(runs[1], "-ss 0.000 ") {
-			t.Errorf("frame runs %q: want 5s, then the first frame", runs)
+			t.Errorf("frame runs %q: want 10s, then the first frame", runs)
 		}
 	})
 }

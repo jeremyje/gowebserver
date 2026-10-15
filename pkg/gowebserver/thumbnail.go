@@ -463,12 +463,12 @@ func (h *thumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // thumbnailPath is where the thumbnail of the file name (with info) for
 // spec lives in the store. The version, from the file's size and
 // modification time, gives an edited file a new thumbnail and ETag. A
-// video's also has where its frame is taken from, so thumbnails stored
-// when that was elsewhere aren't served.
+// video's also has which frame it's taken from, so thumbnails stored when
+// that was another one aren't served.
 func thumbnailPath(name string, info fs.FileInfo, spec *thumbnailSpec, video bool) string {
 	version := fmt.Sprintf("%d/%d", info.Size(), info.ModTime().UnixNano())
 	if video {
-		version += "/frame@" + thumbnailVideoFrameAt.String()
+		version += "/keyframe@" + thumbnailVideoFrameAt.String()
 	}
 	v := sha256.Sum256([]byte(version))
 	return path.Join(name, spec.key()+"@"+hex.EncodeToString(v[:6]))
@@ -497,7 +497,7 @@ func (h *thumbnailHandler) make(ctx context.Context, name string, video bool, sp
 	)
 	dctx, span, decoded := m.stage(ctx, kind, thumbnailStageDecode, &timing)
 	if video {
-		src, err = h.videoFrame(dctx, name)
+		src, err = h.videoFrame(dctx, name, spec)
 	} else {
 		src, orientation, err = h.decodeImage(name)
 	}
@@ -574,18 +574,21 @@ func (h *thumbnailHandler) decodeImage(name string) (image.Image, int, error) {
 }
 
 // thumbnailVideoFrameAt is how far into a video its thumbnail is taken
-// from: far enough to be past titles and fades from black. A video no
-// longer than that gives the frame 10% of the way through instead.
-const thumbnailVideoFrameAt = 5 * time.Second
+// from: far enough to be past titles and fades from black. The thumbnail
+// is the first keyframe at or after it, which is the one frame ffmpeg has
+// to decode; any frame past this point does. A video with none gives an
+// earlier one instead (see ffmpegFrames).
+const thumbnailVideoFrameAt = 10 * time.Second
 
-// videoFrame grabs the frame thumbnailVideoFrameAt into the video (see
-// ffmpegFrames for shorter ones) with ffmpeg, which also applies the
-// video's rotation. Files on local disk are passed by path so ffmpeg can seek.
+// videoFrame grabs the first keyframe thumbnailVideoFrameAt or more into
+// the video (see ffmpegFrames for shorter ones) with ffmpeg, which also
+// applies the video's rotation and shrinks the frame to what spec needs.
+// Files on local disk are passed by path so ffmpeg can seek.
 // Others, inside archives, are piped in, which works for streamable
 // containers; when it doesn't (an MP4 with its index at the end, the
 // usual layout), the file is copied to a temporary file up to
 // thumbnailMaxVideoCopy bytes.
-func (h *thumbnailHandler) videoFrame(ctx context.Context, name string) (image.Image, error) {
+func (h *thumbnailHandler) videoFrame(ctx context.Context, name string, spec *thumbnailSpec) (image.Image, error) {
 	if h.t.ffmpeg == nil {
 		return nil, errThumbnailUnsupported
 	}
@@ -599,10 +602,10 @@ func (h *thumbnailHandler) videoFrame(ctx context.Context, name string) (image.I
 		slog.Error("failed to close video after thumbnailing", "path", name, "error", err)
 	}
 	if local {
-		return h.ffmpegFrames(ctx, osf.Name(), "")
+		return h.ffmpegFrames(ctx, osf.Name(), "", spec)
 	}
 
-	img, err := h.ffmpegFrames(ctx, "pipe:0", name)
+	img, err := h.ffmpegFrames(ctx, "pipe:0", name, spec)
 	if err == nil || ctx.Err() != nil {
 		return img, err
 	}
@@ -618,7 +621,7 @@ func (h *thumbnailHandler) videoFrame(ctx context.Context, name string) (image.I
 			slog.Error("failed to remove temporary video copy", "path", tmp, "error", err)
 		}
 	}()
-	return h.ffmpegFrames(ctx, tmp, "")
+	return h.ffmpegFrames(ctx, tmp, "", spec)
 }
 
 // copyToTemp copies the file name to a new temporary file and returns its
@@ -649,18 +652,27 @@ func (h *thumbnailHandler) copyToTemp(ctx context.Context, name string) (string,
 	return tmp.Name(), nil
 }
 
-// ffmpegFrames returns the frame thumbnailVideoFrameAt into the video,
-// which for most is the one run of ffmpeg. Only when there is no frame
-// there is the video's length asked for: one no longer than that gives
-// the frame 10% of the way through, or its first frame when that fails
-// too (a clip too short for ffmpeg to seek in). When pipe is set, input
-// is "pipe:0" and the file pipe (in h.fsys) is opened afresh for each
-// run of ffmpeg and fed to its stdin.
-func (h *thumbnailHandler) ffmpegFrames(ctx context.Context, input, pipe string) (image.Image, error) {
+// ffmpegFrames returns the first keyframe thumbnailVideoFrameAt or more
+// into the video, shrunk to cover spec's box, which for most is the one
+// run of ffmpeg. Only when there is none is the video's length asked
+// for: one no longer than that gives the first keyframe from 10% of the
+// way through, and any other its first frame, as does a clip too short
+// for ffmpeg to seek in. When pipe is set, input is "pipe:0" and the file
+// pipe (in h.fsys) is opened afresh for each run of ffmpeg and fed to its
+// stdin.
+func (h *thumbnailHandler) ffmpegFrames(ctx context.Context, input, pipe string, spec *thumbnailSpec) (image.Image, error) {
 	frame := func(at time.Duration) (img image.Image, err error) {
-		err = h.withVideo(ctx, ffmpegFrame, pipe, func(ctx context.Context, stdin io.Reader) (err error) {
+		err = h.withVideo(ctx, ffmpegFrame, pipe, func(ctx context.Context, stdin io.Reader) error {
 			trace.SpanFromContext(ctx).SetAttributes(attribute.Float64("at_seconds", at.Seconds()))
-			img, err = h.t.ffmpeg.Frame(ctx, input, stdin, at)
+			// The frame only has to cover the box: making the thumbnail
+			// from it crops or pads it, and enlarges only a frame that
+			// was smaller to begin with.
+			rgba, err := h.t.ffmpeg.FrameWith(ctx, input, stdin, ffmpeg.FrameOptions{
+				At: at, Keyframe: true, Width: spec.width, Height: spec.height,
+			})
+			if err == nil {
+				img = rgba
+			}
 			return err
 		})
 		return img, err
