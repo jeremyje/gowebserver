@@ -27,6 +27,8 @@ import (
 	"testing"
 	"testing/fstest"
 	"time"
+
+	"github.com/cloudfra/gowebserver/pkg/ffmpeg"
 )
 
 // browserAccept is what a browser sends for an <img>.
@@ -226,7 +228,14 @@ func TestChooseWebP(t *testing.T) {
 		t.Errorf("webp asked for without ffmpeg: format %q, want it left to the image", got)
 	}
 	th.tools = &photoTools{jpeg: true, webp: true}
-	th.ffmpeg = newFFmpeg(FFmpeg{Path: "/bin/true"})
+	// Any binary that exists will do: it's never run.
+	self, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if th.ffmpeg, err = ffmpeg.Find(self); err != nil {
+		t.Fatal(err)
+	}
 	for _, tc := range []struct {
 		format, accept, want string
 	}{
