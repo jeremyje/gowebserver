@@ -349,7 +349,7 @@ func TestThumbnailBadRequests(t *testing.T) {
 	h, _ := newTestThumbnailHandler(t, fsys, "")
 	for _, q := range []string{
 		"width=0", "width=abc", "width=5000", "height=-1", "width=", "width=10&fit=zoom",
-		"width=10&format=webp", "width=10&background=red", "width=10&quality=0",
+		"width=10&format=avif", "width=10&background=red", "width=10&quality=0",
 	} {
 		t.Run(q, func(t *testing.T) {
 			if rec := thumbGet(t, h, "/photo.jpg?"+q, nil); rec.Code != http.StatusBadRequest {
@@ -896,22 +896,22 @@ func TestThumbnailVideo(t *testing.T) {
 
 	t.Run("first frame of a short clip", func(t *testing.T) {
 		bin, argsFile := fakeFFmpeg(t, stripes(64, 36), "00:00:00.08")
-		noFrameExcept(t, bin, "-ss 0.000 ")
+		noFrameExcept(t, bin, "nokey -i ")
 		h, _ := newTestThumbnailHandler(t, video, bin)
 		decodeThumb(t, thumbGet(t, h, "/clip.mp4?width=32", nil))
 		runs := frameArgs(t, argsFile)
-		if len(runs) != 3 || !strings.Contains(runs[1], "-ss 0.008 ") || !strings.Contains(runs[2], "-ss 0.000 ") {
+		if len(runs) != 3 || !strings.Contains(runs[1], "-ss 0.008 ") || !strings.Contains(runs[2], "nokey -i ") {
 			t.Errorf("frame runs %q: want 10s, 10%% in, then the first frame", runs)
 		}
 	})
 
 	t.Run("no frame anywhere in a longer video", func(t *testing.T) {
 		bin, argsFile := fakeFFmpeg(t, stripes(64, 36), "00:00:20.00")
-		noFrameExcept(t, bin, "-ss 0.000 ")
+		noFrameExcept(t, bin, "nokey -i ")
 		h, _ := newTestThumbnailHandler(t, video, bin)
 		decodeThumb(t, thumbGet(t, h, "/clip.mp4?width=32", nil))
 		runs := frameArgs(t, argsFile)
-		if len(runs) != 2 || !strings.Contains(runs[1], "-ss 0.000 ") {
+		if len(runs) != 2 || !strings.Contains(runs[1], "nokey -i ") {
 			t.Errorf("frame runs %q: want 10s, then the first frame", runs)
 		}
 	})
@@ -929,7 +929,7 @@ func TestParseThumbnailSpec(t *testing.T) {
 		t.Errorf("a request without width or height is not a thumbnail request (ok %v, err %v)", ok, err)
 	}
 	spec, ok, err := parseThumbnailSpec(q("width=10"))
-	if !ok || err != nil || spec.fit != fitCover || spec.quality != thumbnailJPEGQuality || spec.format != "" {
+	if !ok || err != nil || spec.fit != fitCover || spec.quality != thumbnailQuality || spec.format != "" {
 		t.Errorf("defaults: %+v, %v, %v", spec, ok, err)
 	}
 	a, _, err := parseThumbnailSpec(q("width=10&height=20&fit=cover"))

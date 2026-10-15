@@ -42,7 +42,7 @@ const (
 // request's "thumbnail" span (as thumbnail.wait and so on).
 const (
 	thumbnailStageWait   = "wait"   // for one of the render slots
-	thumbnailStageDecode = "decode" // the photo, or ffmpeg for a video's frame
+	thumbnailStageDecode = "decode" // the photo, or ffmpeg for a video's frame; all of it when ffmpeg makes the whole thumbnail
 	thumbnailStageScale  = "scale"
 	thumbnailStageEncode = "encode"
 	thumbnailStageStore  = "store"
@@ -93,10 +93,12 @@ type thumbnailMetrics struct {
 
 // What ffmpeg was run for, the "operation" of
 // thumbnail_ffmpeg_duration_seconds and the names of the spans under
-// thumbnail.decode (as ffmpeg.frame and ffmpeg.duration).
+// thumbnail.decode and thumbnail.encode (as ffmpeg.frame and so on).
 const (
-	ffmpegFrame    = "frame"
-	ffmpegDuration = "duration"
+	ffmpegFrame    = "frame"    // a video's frame, or its whole thumbnail
+	ffmpegDuration = "duration" // a video's length
+	ffmpegPhoto    = "photo"    // a photo, or its whole thumbnail
+	ffmpegEncode   = "encode"   // a thumbnail made in Go as WebP
 )
 
 // How a run of ffmpeg ended, the "outcome" of
@@ -166,7 +168,7 @@ func newThumbnailMetrics(mc *monitoringContext) (*thumbnailMetrics, error) {
 		return nil, err
 	}
 	if tm.ffmpegDuration, err = m.Float64Histogram("thumbnail_ffmpeg_duration_seconds",
-		metric.WithDescription("How long each run of ffmpeg took, by operation (frame, duration), input (file, pipe) and outcome (ok, nothing, timeout, canceled, error)."),
+		metric.WithDescription("How long each run of ffmpeg took, by operation (frame, duration, photo, encode), input (file, pipe) and outcome (ok, nothing, timeout, canceled, error)."),
 		metric.WithUnit("s"), metric.WithExplicitBucketBoundaries(thumbnailSeconds...)); err != nil {
 		return nil, err
 	}
