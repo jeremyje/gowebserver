@@ -252,6 +252,33 @@ func TestInstalledWins(t *testing.T) {
 	}
 }
 
+func TestDownloadIgnoresInstalled(t *testing.T) {
+	skipScripts(t)
+	r := serveRelease(t, "linux", "amd64")
+	linuxRelease(t, r, "9.0")
+	bin, _ := script(t, "echo installed")
+	t.Setenv("PATH", filepath.Dir(bin))
+	dir := t.TempDir()
+	o := onDemand(dir)
+	if _, err := Download(t.Context(), Options{DownloadDir: dir}); !errors.Is(err, ErrLicenseNotAccepted) {
+		t.Errorf("without the license: error = %v, want ErrLicenseNotAccepted", err)
+	}
+	exe, err := Download(t.Context(), o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := filepath.Join(dir, "9.0", "ffmpeg"); exe != want {
+		t.Errorf("Download = %q, want %q", exe, want)
+	}
+	// Again, it's the same download.
+	if again, err := Download(t.Context(), o); err != nil || again != exe {
+		t.Errorf("Download again = %q, %v; want %q", again, err, exe)
+	}
+	if n := r.hits["ffmpeg-n9.0-latest-linux64-gpl-9.0.tar.xz"]; n != 1 {
+		t.Errorf("downloaded %d times, want once", n)
+	}
+}
+
 func TestDownloadOnFirstUse(t *testing.T) {
 	skipScripts(t)
 	r := serveRelease(t, "linux", "amd64")

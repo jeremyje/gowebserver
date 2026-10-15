@@ -117,6 +117,21 @@ func New(o Options) (*FFmpeg, error) {
 	return &FFmpeg{dl: dl}, nil
 }
 
+// Download downloads ffmpeg as o says, or finds the copy it downloaded
+// before, and returns its path. Unlike New, it ignores o.Path and any
+// ffmpeg installed on PATH, so it always gives the same build. It needs
+// o.AcceptLicense.
+func Download(ctx context.Context, o Options) (string, error) {
+	if !o.AcceptLicense {
+		return "", ErrLicenseNotAccepted
+	}
+	d, err := newDownloader(o)
+	if err != nil {
+		return "", fmt.Errorf("%w: %w", ErrNotFound, err)
+	}
+	return d.install(ctx)
+}
+
 // Find returns an FFmpeg for the binary at path, or ffmpeg on PATH when
 // path is empty. It never downloads.
 func Find(path string) (*FFmpeg, error) {
