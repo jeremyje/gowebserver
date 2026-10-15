@@ -34,3 +34,4 @@ ffmpeg:
 thumbnails:
   enabled: false
   cachePath: /var/cache/gowebserver/thumbnails.db
+  prefetch: 4

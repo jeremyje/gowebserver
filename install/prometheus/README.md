@@ -74,3 +74,4 @@ Metric | Labels | What it measures
 `thumbnail_store_size_bytes` | | Size of the store's database file.
 `thumbnail_ffmpeg_duration_seconds` | `operation` (frame, duration, photo, encode), `input` (file, pipe), `outcome` | Each run of ffmpeg: a video's frame, its length, a photo, or a thumbnail made in Go written as WebP. A frame or photo run can make the whole thumbnail, which is then all of its decode stage.
 `thumbnail_video_copy_bytes_total` | | Videos copied out of archives for ffmpeg.
+`thumbnail_prefetches_total` | `kind`, `result` (made, cached, unsupported, failed, canceled) | Thumbnails made ahead in the subfolders of folders being browsed.

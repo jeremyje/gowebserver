@@ -87,6 +87,8 @@ type thumbnailMetrics struct {
 	// Bytes of videos copied out of archives to temporary files, for
 	// ffmpeg to seek in.
 	videoCopyBytes metric.Int64Counter
+	// Thumbnails made ahead, by kind of file and result.
+	prefetches metric.Int64Counter
 
 	meter metric.Meter
 }
@@ -174,6 +176,10 @@ func newThumbnailMetrics(mc *monitoringContext) (*thumbnailMetrics, error) {
 	}
 	if tm.videoCopyBytes, err = m.Int64Counter("thumbnail_video_copy_bytes_total",
 		metric.WithDescription("Bytes of videos copied out of archives to temporary files so ffmpeg could seek in them.")); err != nil {
+		return nil, err
+	}
+	if tm.prefetches, err = m.Int64Counter("thumbnail_prefetches_total",
+		metric.WithDescription("Thumbnails made ahead in the subfolders of folders being browsed, by kind of file and result (made, cached, unsupported, failed, canceled).")); err != nil {
 		return nil, err
 	}
 	tm.meter = m

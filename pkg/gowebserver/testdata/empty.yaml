@@ -32,3 +32,4 @@ ffmpeg:
 thumbnails:
   enabled: false
   cachePath: ""
+  prefetch: 0

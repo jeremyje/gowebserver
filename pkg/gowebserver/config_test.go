@@ -88,6 +88,7 @@ func TestPopulatedConfig(t *testing.T) {
 		},
 		Thumbnails: Thumbnails{
 			CachePath: "/var/cache/gowebserver/thumbnails.db",
+			Prefetch:  4,
 		},
 	}
 
@@ -218,6 +219,7 @@ func TestPopulatedYamlConfig(t *testing.T) {
 		},
 		Thumbnails: Thumbnails{
 			CachePath: "/var/cache/gowebserver/thumbnails.db",
+			Prefetch:  4,
 		},
 	}
 
@@ -276,7 +278,8 @@ func TestDefaultConfiguration(t *testing.T) {
 			Endpoint: "/upload.asp",
 		},
 		Thumbnails: Thumbnails{
-			Enabled: true,
+			Enabled:  true,
+			Prefetch: 8,
 		},
 	}
 

@@ -223,6 +223,8 @@ type thumbnailer struct {
 	sem     chan struct{}
 	tp      trace.TracerProvider
 	metrics *thumbnailMetrics
+	// Makes thumbnails ahead; nil when that's off.
+	prefetch *prefetcher
 
 	mu      sync.Mutex
 	renders map[string]*render // by store key, while being made
@@ -351,7 +353,7 @@ func newThumbnailer(conf Thumbnails, ff *ffmpeg.FFmpeg, mc *monitoringContext) (
 		return nil, errors.Join(err, store.close())
 	}
 	probeCtx, probeCancel := context.WithCancel(context.Background())
-	return &thumbnailer{
+	t := &thumbnailer{
 		probeCtx:    probeCtx,
 		probeCancel: probeCancel,
 		store:       store,
@@ -361,7 +363,9 @@ func newThumbnailer(conf Thumbnails, ff *ffmpeg.FFmpeg, mc *monitoringContext) (
 		metrics:     metrics,
 		renders:     map[string]*render{},
 		probed:      make(chan struct{}),
-	}, nil
+	}
+	t.prefetch = newPrefetcher(t, conf.Prefetch, slots)
+	return t, nil
 }
 
 // thumbnailProbeRetry is how long after failing to run ffmpeg photos are
@@ -410,11 +414,13 @@ func (t *thumbnailer) probe() {
 	close(t.probed)
 }
 
-// close releases the thumbnail store. It's safe on a nil thumbnailer.
+// close stops making thumbnails ahead and releases the thumbnail store.
+// It's safe on a nil thumbnailer.
 func (t *thumbnailer) close() error {
 	if t == nil {
 		return nil
 	}
+	t.prefetch.stop()
 	t.toolsMu.Lock()
 	t.probeCancel()
 	t.toolsMu.Unlock()
@@ -431,7 +437,7 @@ func (t *thumbnailer) videos() bool {
 // request to base. source names what fsys serves (its ufs URI): the store
 // is shared by every served filesystem and outlives the server, so each
 // source's thumbnails are kept apart.
-func (t *thumbnailer) handler(base http.Handler, fsys fs.FS, source string) http.Handler {
+func (t *thumbnailer) handler(base http.Handler, fsys fs.FS, source string) *thumbnailHandler {
 	sum := sha256.Sum256([]byte(source))
 	return &thumbnailHandler{t: t, base: base, fsys: fsys, source: hex.EncodeToString(sum[:8])}
 }
@@ -482,8 +488,12 @@ func (h *thumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// Which formats the browser shows picks the format.
 		w.Header().Add("Vary", "Accept")
 	}
+	asked := spec
 	spec = h.t.chooseWebP(spec, r.Header.Get("Accept"))
 	kind := thumbnailKind(video)
+	// Thumbnails aren't made ahead while one is being asked for.
+	defer h.t.prefetch.served()()
+	h.t.prefetch.learn(kind, asked, spec)
 	ctx, span := h.t.tp.Tracer("thumbnail").Start(r.Context(), "thumbnail")
 	defer span.End()
 	span.SetAttributes(attribute.String("path", name), attribute.String("spec", spec.key()), attribute.String("kind", kind))
@@ -557,6 +567,13 @@ func (t *thumbnailer) chooseWebP(spec *thumbnailSpec, accept string) *thumbnailS
 		s.format = "webp"
 	}
 	return &s
+}
+
+// listed is told the subfolders (names in dir, in the order the list shows
+// them) of each folder of h's filesystem that is listed, to make the
+// first thumbnails of each ahead.
+func (h *thumbnailHandler) listed(dir string, subdirs []string) {
+	h.t.prefetch.listed(h, dir, subdirs)
 }
 
 // thumbnailPath is where the thumbnail of the file name (with info) for
@@ -1411,6 +1428,12 @@ func (s *thumbnailStore) get(name string) (*thumbnail, bool) {
 		return nil, false
 	}
 	return &thumbnail{data: data, contentType: http.DetectContentType(data)}, true
+}
+
+// has reports whether a thumbnail is stored at name.
+func (s *thumbnailStore) has(name string) bool {
+	_, err := fs.Stat(s.fsys, name)
+	return err == nil
 }
 
 // put stores th at name, a path from thumbnailPath, and removes the

@@ -69,7 +69,9 @@ func newHandlerFromFS(fsSpec string, mc *monitoringContext, enhancedList bool, t
 	if thumbs == nil {
 		return rv, nFS.Close, nil
 	}
-	return thumbs.handler(rv, nFS, fsSpec), nFS.Close, nil
+	th := thumbs.handler(rv, nFS, fsSpec)
+	ci.listed = th.listed
+	return th, nFS.Close, nil
 }
 
 func cleanPath(path string) string {
@@ -175,6 +177,9 @@ type customIndexHandler struct {
 	thumbs       *thumbnailer
 	metrics      *listingMetrics
 	tmpl         *template.Template
+	// listed, when set, is told the subfolders (names in dir, in the
+	// order the list shows them) of each folder listed.
+	listed func(dir string, subdirs []string)
 }
 
 func canonicalizeSortBy(v string) string {
@@ -394,6 +399,17 @@ func (c *customIndexHandler) serveListing(w http.ResponseWriter, r *http.Request
 	sort.Sort(files)
 	sorted()
 
+	if c.listed != nil {
+		var subdirs []string
+		for _, name := range files.EntryOrder {
+			// Opening an archive to look inside is too much to do ahead.
+			if e := files.Entries[name]; e.IsDir && !e.IsArchive {
+				subdirs = append(subdirs, name)
+			}
+		}
+		c.listed(path, subdirs)
+	}
+
 	_, renderSpan, rendered := c.metrics.stage(ctx, listingStageRender)
 	renderSpan.SetAttributes(attribute.Int("num_files", files.Len()))
 	defer rendered()
@@ -423,7 +439,7 @@ func (c *customIndexHandler) serveListing(w http.ResponseWriter, r *http.Request
 	return true
 }
 
-func newCustomIndex(baseHandler http.Handler, baseFS fs.FS, mc *monitoringContext, enhancedList bool, thumbs *thumbnailer) (http.Handler, error) {
+func newCustomIndex(baseHandler http.Handler, baseFS fs.FS, mc *monitoringContext, enhancedList bool, thumbs *thumbnailer) (*customIndexHandler, error) {
 	tmpl, err := createTemplate(customIndexHTML)
 	if err != nil {
 		return nil, err
