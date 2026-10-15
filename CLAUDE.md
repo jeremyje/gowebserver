@@ -59,6 +59,7 @@ internal/gowebserver/testing/  # Test utilities and embedded test archives
 - **richview.go**: Syntax-highlighted text viewer (`?view=rich`)
 - **thumbnail.go**: Resized images and video frames (`?width=`/`?height=`), made once and stored
 - **thumbnail_metrics.go**: Where thumbnail time goes: `thumbnail_*` Prometheus metrics, a span per stage (wait, decode, scale, encode, store), and a `Server-Timing` header on each thumbnail for the browser's network panel
+- **request_metrics.go**: What otelhttp's request metrics leave out: the `handler` label (file, listing, thumbnail, richview, upload, proxy, index) on them, time to first byte, requests in progress; and `stageMetrics`, the span-and-histogram per stage that listings and the text viewer use. A handler says what it is with `setRequestHandler`
 - **templates.go**: Loads the page templates; see below
 
 ### Page templates (pkg/gowebserver/template/)
@@ -81,6 +82,10 @@ To see how a page actually behaves, use the browser rather than guessing: `make 
 Only `template/*/*.{html,css,js}` is embedded, so keep tests in those subdirectories.
 
 Filesystem handlers are mounted with `http.StripPrefix`, so `r.URL.Path` lacks the serve path (e.g. `/e`). Build links and redirects relative to the request (`relativeURL`, `redirectRelative`), never from `r.URL.Path`.
+
+### Monitoring (install/prometheus, install/grafana)
+
+`install/prometheus/rules` holds the alerts (with `promtool test rules` tests beside them) and `install/grafana/dashboards` the dashboards; both name the server's metrics, and `install/prometheus/README.md` lists them. When a metric or label is added, renamed or removed, change them together. `install/compose` mounts both.
 
 ### Request Flow
 

@@ -52,6 +52,7 @@ type webServerImpl struct {
 	enableDebugMethods  bool
 	thumbnails          Thumbnails
 	monitoringCtx       *monitoringContext
+	requestMetrics      *requestMetrics
 	ffmpeg              *ffmpeg.FFmpeg // nil when ffmpeg is unavailable
 
 	httpListenPort  int
@@ -76,9 +77,11 @@ func expandPath(dir string) (string, error) {
 	return dir, nil
 }
 
-func (ws *webServerImpl) addHandler(serverMux *http.ServeMux, servePath string, handler http.Handler) {
+// addHandler serves servePath with handler, whose requests are measured
+// as kind's (see the handler constants) unless it says otherwise.
+func (ws *webServerImpl) addHandler(serverMux *http.ServeMux, servePath string, handler http.Handler, kind string) {
 	if ws.metricsEnabled {
-		serverMux.Handle(servePath, otelhttp.NewHandler(handler, servePath, otelhttp.WithTracerProvider(ws.monitoringCtx.getTraceProvider()), otelhttp.WithMeterProvider(ws.monitoringCtx.getMeterProvider())))
+		serverMux.Handle(servePath, otelhttp.NewHandler(ws.requestMetrics.wrap(handler, kind), servePath, otelhttp.WithTracerProvider(ws.monitoringCtx.getTraceProvider()), otelhttp.WithMeterProvider(ws.monitoringCtx.getMeterProvider()), otelhttp.WithPropagators(tracePropagator)))
 	} else {
 		serverMux.Handle(servePath, handler)
 	}
@@ -169,17 +172,17 @@ func (ws *webServerImpl) Serve(wait func()) error {
 		if err != nil {
 			return err
 		}
-		ws.addHandler(serverMux, "/", indexHandler)
+		ws.addHandler(serverMux, "/", indexHandler, handlerIndex)
 
 		for _, paths := range ws.fileSystemServePath {
-			fsHandler, cleanup, err := newHandlerFromFS(paths.localPath, ws.monitoringCtx.getTraceProvider(), ws.enhancedListMode, thumbs)
+			fsHandler, cleanup, err := newHandlerFromFS(paths.localPath, ws.monitoringCtx, ws.enhancedListMode, thumbs)
 			if err != nil {
 				return err
 			}
 			allCleanups = append(allCleanups, cleanup)
 			httpPath := paths.httpPath
 			strippedPrefix := strings.TrimRight(httpPath, "/")
-			ws.addHandler(serverMux, httpPath, http.StripPrefix(strippedPrefix, fsHandler))
+			ws.addHandler(serverMux, httpPath, http.StripPrefix(strippedPrefix, fsHandler), handlerFile)
 		}
 	} else {
 		if rootPath == "" {
@@ -189,12 +192,12 @@ func (ws *webServerImpl) Serve(wait func()) error {
 		if err != nil {
 			return err
 		}
-		fsHandler, cleanup, err := newHandlerFromFS(fsSpec, ws.monitoringCtx.getTraceProvider(), ws.enhancedListMode, thumbs)
+		fsHandler, cleanup, err := newHandlerFromFS(fsSpec, ws.monitoringCtx, ws.enhancedListMode, thumbs)
 		if err != nil {
 			return err
 		}
 		allCleanups = append(allCleanups, cleanup)
-		ws.addHandler(serverMux, "/", fsHandler)
+		ws.addHandler(serverMux, "/", fsHandler, handlerFile)
 	}
 
 	defer func() {
@@ -210,7 +213,7 @@ func (ws *webServerImpl) Serve(wait func()) error {
 		if err != nil {
 			return err
 		}
-		ws.addHandler(serverMux, ws.uploadHTTPPath, uploadHandler)
+		ws.addHandler(serverMux, ws.uploadHTTPPath, uploadHandler, handlerUpload)
 	}
 
 	httpSocket, err := net.Listen("tcp", ws.httpAddr)
@@ -244,7 +247,7 @@ func (ws *webServerImpl) Serve(wait func()) error {
 		}
 
 		slog.Info("Endpoint", "http", "/diediedie")
-		ws.addHandler(serverMux, "/diediedie", &killHTTPServerHandler{killFunc: killFunc})
+		ws.addHandler(serverMux, "/diediedie", &killHTTPServerHandler{killFunc: killFunc}, handlerDebug)
 	}
 
 	defer func() {
@@ -311,7 +314,12 @@ func New(conf *Config) (WebServer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot setup monitoring '%+v', %w", conf.Monitoring, err)
 	}
+	requestMetrics, err := newRequestMetrics(monitoringCtx)
+	if err != nil {
+		return nil, fmt.Errorf("cannot setup request metrics, %w", err)
+	}
 	ws := &webServerImpl{
+		requestMetrics:      requestMetrics,
 		httpAddr:            toAddr(conf.HTTP.Port),
 		httpsAddr:           toAddr(conf.HTTPS.Port),
 		monitoringCtx:       monitoringCtx,

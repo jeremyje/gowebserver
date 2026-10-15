@@ -16,10 +16,12 @@ package gowebserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/cloudfra/gowebserver/pkg/ffmpeg"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
@@ -73,6 +75,54 @@ type thumbnailMetrics struct {
 	// Thumbnails whose every request left while they were being made:
 	// work started and thrown away.
 	abandoned metric.Int64Counter
+	// How long asking the store for a thumbnail took, by whether it was
+	// there. Every thumbnail request starts with one.
+	lookupDuration metric.Float64Histogram
+	// Bytes of thumbnails put in the store, which nothing takes out
+	// again: the rate the store grows at.
+	storedBytes metric.Int64Counter
+	// How long each run of ffmpeg took, by what it was asked for, how it
+	// was given the video and how it ended. A video can take several.
+	ffmpegDuration metric.Float64Histogram
+	// Bytes of videos copied out of archives to temporary files, for
+	// ffmpeg to seek in.
+	videoCopyBytes metric.Int64Counter
+
+	meter metric.Meter
+}
+
+// What ffmpeg was run for, the "operation" of
+// thumbnail_ffmpeg_duration_seconds and the names of the spans under
+// thumbnail.decode (as ffmpeg.frame and ffmpeg.duration).
+const (
+	ffmpegFrame    = "frame"
+	ffmpegDuration = "duration"
+)
+
+// How a run of ffmpeg ended, the "outcome" of
+// thumbnail_ffmpeg_duration_seconds.
+const (
+	ffmpegOK       = "ok"
+	ffmpegNothing  = "nothing"  // it ran, but had no frame or duration to give
+	ffmpegTimeout  = "timeout"  // it was stopped after thumbnailVideoTimeout
+	ffmpegCanceled = "canceled" // the thumbnail's requests all left
+	ffmpegError    = "error"
+)
+
+// ffmpegOutcome is how a run of ffmpeg under run, a context with the
+// run's timeout made from parent, ended with err.
+func ffmpegOutcome(parent, run context.Context, err error) string {
+	switch {
+	case err == nil:
+		return ffmpegOK
+	case parent.Err() != nil:
+		return ffmpegCanceled
+	case errors.Is(run.Err(), context.DeadlineExceeded):
+		return ffmpegTimeout
+	case errors.Is(err, ffmpeg.ErrNoFrame), errors.Is(err, ffmpeg.ErrNoDuration):
+		return ffmpegNothing
+	}
+	return ffmpegError
 }
 
 func newThumbnailMetrics(mc *monitoringContext) (*thumbnailMetrics, error) {
@@ -106,7 +156,83 @@ func newThumbnailMetrics(mc *monitoringContext) (*thumbnailMetrics, error) {
 		metric.WithDescription("Thumbnails every request left while they were being made.")); err != nil {
 		return nil, err
 	}
+	if tm.lookupDuration, err = m.Float64Histogram("thumbnail_store_lookup_duration_seconds",
+		metric.WithDescription("How long asking the store for a thumbnail took, by result (hit, miss)."),
+		metric.WithUnit("s"), metric.WithExplicitBucketBoundaries(thumbnailSeconds...)); err != nil {
+		return nil, err
+	}
+	if tm.storedBytes, err = m.Int64Counter("thumbnail_stored_bytes_total",
+		metric.WithDescription("Bytes of thumbnails put in the store, by kind of file. Nothing is evicted, so this is how fast the store grows.")); err != nil {
+		return nil, err
+	}
+	if tm.ffmpegDuration, err = m.Float64Histogram("thumbnail_ffmpeg_duration_seconds",
+		metric.WithDescription("How long each run of ffmpeg took, by operation (frame, duration), input (file, pipe) and outcome (ok, nothing, timeout, canceled, error)."),
+		metric.WithUnit("s"), metric.WithExplicitBucketBoundaries(thumbnailSeconds...)); err != nil {
+		return nil, err
+	}
+	if tm.videoCopyBytes, err = m.Int64Counter("thumbnail_video_copy_bytes_total",
+		metric.WithDescription("Bytes of videos copied out of archives to temporary files so ffmpeg could seek in them.")); err != nil {
+		return nil, err
+	}
+	tm.meter = m
 	return tm, nil
+}
+
+// observe reports what doesn't change with each thumbnail: how many can
+// be made at once, and how large the store's database is.
+func (m *thumbnailMetrics) observe(store *thumbnailStore, slots int) error {
+	if _, err := m.meter.Int64ObservableGauge("thumbnail_render_slots",
+		metric.WithDescription("Thumbnails that can be made at once. thumbnail_renders{state=\"running\"} at this number means the rest are waiting."),
+		metric.WithInt64Callback(func(_ context.Context, o metric.Int64Observer) error {
+			o.Observe(int64(slots))
+			return nil
+		})); err != nil {
+		return err
+	}
+	_, err := m.meter.Int64ObservableGauge("thumbnail_store_size_bytes",
+		metric.WithDescription("Size of the thumbnail store's database file. Absent when thumbnails are kept in memory."),
+		metric.WithInt64Callback(func(_ context.Context, o metric.Int64Observer) error {
+			if size, ok := store.size(); ok {
+				o.Observe(size)
+			}
+			return nil
+		}))
+	return err
+}
+
+// lookup starts asking the store for a thumbnail. The function it
+// returns ends that, given whether the thumbnail was there.
+func (m *thumbnailMetrics) lookup(ctx context.Context) func(hit bool) {
+	start := time.Now()
+	_, span := m.tracer.Start(ctx, "thumbnail.lookup")
+	return func(hit bool) {
+		result := "miss"
+		if hit {
+			result = "hit"
+		}
+		span.SetAttributes(attribute.String("result", result))
+		span.End()
+		m.lookupDuration.Record(context.WithoutCancel(ctx), time.Since(start).Seconds(), metric.WithAttributes(attribute.String("result", result)))
+	}
+}
+
+// ffmpegRun starts a run of ffmpeg for operation, with the video piped
+// to it or not, as a span that *ctx becomes the context of. The function
+// it returns ends the run, given its outcome.
+func (m *thumbnailMetrics) ffmpegRun(ctx *context.Context, operation string, piped bool) func(outcome string) {
+	start := time.Now()
+	input := "file"
+	if piped {
+		input = "pipe"
+	}
+	sctx, span := m.tracer.Start(*ctx, "ffmpeg."+operation, trace.WithAttributes(attribute.String("input", input)))
+	*ctx = sctx
+	return func(outcome string) {
+		span.SetAttributes(attribute.String("outcome", outcome))
+		span.End()
+		m.ffmpegDuration.Record(context.WithoutCancel(sctx), time.Since(start).Seconds(), metric.WithAttributes(
+			attribute.String("operation", operation), attribute.String("input", input), attribute.String("outcome", outcome)))
+	}
 }
 
 func thumbnailKind(video bool) string {

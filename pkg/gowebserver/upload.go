@@ -17,6 +17,7 @@ package gowebserver
 // https://astaxie.gitbooks.io/build-web-application-with-golang/content/en/04.5.html
 // http://sanatgersappa.blogspot.com/2013/03/handling-multiple-file-uploads-in-go.html
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -49,7 +50,9 @@ type uploadHTTPHandler struct {
 	uploadDirectory    string
 	uploadedBytesTotal metric.Int64Counter
 	uploadedFilesTotal metric.Int64Counter
-	tmpl               *template.Template
+	// How long an upload request took, by result.
+	requestDuration metric.Float64Histogram
+	tmpl            *template.Template
 }
 
 type uploadResponse struct {
@@ -60,6 +63,17 @@ type uploadResponse struct {
 const (
 	uploadTraceName = "uploadHTTPHandler"
 )
+
+// What an upload came to, the "result" of upload_request_duration_seconds.
+const (
+	uploadOK       = "ok"
+	uploadRejected = "rejected" // the request's fault: another origin, or not a form
+	uploadFailed   = "failed"   // the server couldn't store a file
+)
+
+// uploadSeconds are the histogram buckets for how long uploads take,
+// which is mostly how long the client takes to send the files.
+var uploadSeconds = []float64{0.01, 0.05, 0.1, 0.5, 1, 5, 10, 30, 60, 300, 900}
 
 func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	uploadTracer := uh.tp.Tracer(uploadTraceName)
@@ -88,8 +102,15 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		var resp uploadResponse
+		start := time.Now()
+		result := uploadFailed
+		defer func() {
+			span.SetAttributes(attribute.String("result", result))
+			uh.requestDuration.Record(context.WithoutCancel(ctx), time.Since(start).Seconds(), metric.WithAttributes(attribute.String("result", result)))
+		}()
 
 		if !isSameOrigin(r) {
+			result = uploadRejected
 			resp.Error = fmt.Errorf("forbidden: cross-origin upload requests are not allowed")
 			writeUploadResponse(w, resp, http.StatusForbidden, logger, span)
 			return
@@ -97,6 +118,7 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		ctx, childSpan := uploadTracer.Start(ctx, "ParseMultipartForm")
 		if err := r.ParseMultipartForm(32 << 20); err != nil {
+			result = uploadRejected
 			resp.Error = fmt.Errorf("InternalError: cannot parse multi-part form")
 			writeUploadResponse(w, resp, http.StatusBadRequest, logger, childSpan)
 			childSpan.End()
@@ -109,7 +131,7 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		for i := range files {
 			fileName := sanitizeFileName(files[i].Filename)
 
-			ctx, childSpan := uploadTracer.Start(ctx, fileName)
+			ctx, childSpan := uploadTracer.Start(ctx, "upload.file", trace.WithAttributes(attribute.String("filename", fileName)))
 			defer childSpan.End()
 			span.AddEvent("create file", trace.WithAttributes(attribute.String("filename", fileName)))
 
@@ -156,13 +178,14 @@ func (uh *uploadHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			logger.Info("Upload Complete", "fileName", fileName, "localPath", localPath)
 		}
 
+		result = uploadOK
 		resp.Success = true
 		writeUploadResponse(w, resp, http.StatusOK, logger, span)
 	}
 }
 
 func newUploadHandler(mc *monitoringContext, uploadHTTPPath string, uploadDirectory string) (http.Handler, error) {
-	m := mc.getMeterProvider().Meter(uploadDirectory)
+	m := mc.getMeterProvider().Meter("upload")
 
 	uploadedBytesTotal, err := m.Int64Counter("uploaded_bytes_total", metric.WithDescription("Number of bytes uploaded."), metric.WithUnit("bytes"))
 	if err != nil {
@@ -172,11 +195,18 @@ func newUploadHandler(mc *monitoringContext, uploadHTTPPath string, uploadDirect
 	if err != nil {
 		return nil, err
 	}
+	requestDuration, err := m.Float64Histogram("upload_request_duration_seconds",
+		metric.WithDescription("How long an upload request took, receiving the files included, by result (ok, rejected, failed)."),
+		metric.WithUnit("s"), metric.WithExplicitBucketBoundaries(uploadSeconds...))
+	if err != nil {
+		return nil, err
+	}
 	tmpl, err := createTemplate(uploadHTML)
 	if err != nil {
 		return nil, err
 	}
 	return &uploadHTTPHandler{
+		requestDuration:    requestDuration,
 		tp:                 mc.getTraceProvider(),
 		uploadHTTPPath:     uploadHTTPPath,
 		uploadDirectory:    uploadDirectory,

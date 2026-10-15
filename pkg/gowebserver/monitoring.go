@@ -117,7 +117,7 @@ func setupMonitoring(m Monitoring) (*monitoringContext, error) {
 	return mc, nil
 }
 
-func newPrometheusExporter(_ Monitoring, _ *resource.Resource) (*otelprom.Exporter, *sdkmetric.MeterProvider, http.Handler, error) {
+func newPrometheusExporter(_ Monitoring, r *resource.Resource) (*otelprom.Exporter, *sdkmetric.MeterProvider, http.Handler, error) {
 	registry := prometheus.NewRegistry()
 	if err := registry.Register(collectors.NewBuildInfoCollector()); err != nil {
 		return nil, nil, nil, err
@@ -136,7 +136,9 @@ func newPrometheusExporter(_ Monitoring, _ *resource.Resource) (*otelprom.Export
 		return nil, nil, nil, err
 	}
 
-	provider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(prometheusExporter))
+	// The resource is what target_info says of the server: its name and
+	// version.
+	provider := sdkmetric.NewMeterProvider(sdkmetric.WithReader(prometheusExporter), sdkmetric.WithResource(r))
 	otel.SetMeterProvider(provider)
 
 	h := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})

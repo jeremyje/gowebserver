@@ -20,6 +20,8 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"strings"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 func overlayURLProxy(target *url.URL, client *http.Client) *httputil.ReverseProxy {
@@ -40,14 +42,24 @@ func overlayURLProxy(target *url.URL, client *http.Client) *httputil.ReverseProx
 	}
 }
 
-func newHTTPReverseProxy(httpPath string) (http.Handler, error) {
+// newHTTPReverseProxy passes requests on to the server at httpPath. Each
+// request to it is a client span under the request's own, which that
+// server can continue, and is in the http_client_* metrics.
+func newHTTPReverseProxy(httpPath string, mc *monitoringContext) (http.Handler, error) {
 	if !isSupportedHTTP(httpPath) {
 		return nil, fmt.Errorf("%s is not a valid HTTP server", httpPath)
 	}
 
-	reverseProxy := overlayURLProxy(mustURLParse(httpPath), &http.Client{})
+	transport := otelhttp.NewTransport(http.DefaultTransport,
+		otelhttp.WithTracerProvider(mc.getTraceProvider()),
+		otelhttp.WithMeterProvider(mc.getMeterProvider()),
+		otelhttp.WithPropagators(tracePropagator))
+	reverseProxy := overlayURLProxy(mustURLParse(httpPath), &http.Client{Transport: transport})
 
-	return reverseProxy, nil
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		setRequestHandler(r, handlerProxy)
+		reverseProxy.ServeHTTP(w, r)
+	}), nil
 }
 
 func isSupportedHTTP(filePath string) bool {

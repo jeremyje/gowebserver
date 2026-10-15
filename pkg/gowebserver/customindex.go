@@ -31,6 +31,8 @@ import (
 	"github.com/cloudfra/gowebserver/internal"
 	"github.com/cloudfra/ufs"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -43,11 +45,11 @@ func isSupportedGit(filePath string) bool {
 	return strings.HasSuffix(strings.ToLower(filePath), ".git")
 }
 
-func newHandlerFromFS(fsSpec string, tp trace.TracerProvider, enhancedList bool, thumbs *thumbnailer) (http.Handler, func() error, error) {
+func newHandlerFromFS(fsSpec string, mc *monitoringContext, enhancedList bool, thumbs *thumbnailer) (http.Handler, func() error, error) {
 	ctx := context.Background()
 	// fsSpec is probably breaking this.
 	if !isSupportedGit(fsSpec) && isSupportedHTTP(fsSpec) {
-		handler, err := newHTTPReverseProxy(fsSpec)
+		handler, err := newHTTPReverseProxy(fsSpec, mc)
 		return handler, nilFuncWithError, err
 	}
 
@@ -56,11 +58,11 @@ func newHandlerFromFS(fsSpec string, tp trace.TracerProvider, enhancedList bool,
 		return nil, nilFuncWithError, err
 	}
 
-	ci, err := newCustomIndex(http.FileServer(http.FS(nFS)), nFS, tp, enhancedList, thumbs)
+	ci, err := newCustomIndex(http.FileServer(http.FS(nFS)), nFS, mc, enhancedList, thumbs)
 	if err != nil {
 		return nil, nilFuncWithError, err
 	}
-	rv, err := newRichViewHandler(ci, nFS, tp)
+	rv, err := newRichViewHandler(ci, nFS, mc)
 	if err != nil {
 		return nil, nilFuncWithError, err
 	}
@@ -171,7 +173,7 @@ type customIndexHandler struct {
 	baseFS       fs.FS
 	enhancedList bool
 	thumbs       *thumbnailer
-	tp           trace.TracerProvider
+	metrics      *listingMetrics
 	tmpl         *template.Template
 }
 
@@ -223,162 +225,210 @@ func (c *customIndexHandler) redirectDirectoryToTrailingSlash(w http.ResponseWri
 	return true
 }
 
-func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	sortBy := canonicalizeSortBy(r.URL.Query().Get("sort"))
-	rootTrace := c.tp.Tracer("customIndex")
-	ctx, span := rootTrace.Start(r.Context(), r.URL.Path)
-	defer span.End()
-	span.SetAttributes(attribute.Bool("enhanced_list", c.enhancedList))
-	if c.enhancedList {
-		path := r.URL.Path
-		urlPath := r.URL.Path
-		path = cleanPath(strings.TrimPrefix(path, "/"))
+// The stages of a directory listing, the "stage" of
+// listing_stage_duration_seconds and the names of the spans under a
+// request's "listing" span (as listing.open and so on).
+const (
+	listingStageOpen   = "open"
+	listingStageRead   = "read" // the directory's entries
+	listingStageStat   = "stat" // each entry's size and time
+	listingStageSort   = "sort"
+	listingStageRender = "render" // the page, written to the client
+)
 
-		slog.Info("customIndexHandler", "url", r.URL, "path", path)
+// listingEntries are the histogram buckets for how many entries the
+// listed directories hold, which is what every stage's time follows.
+var listingEntries = []float64{10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000}
 
-		if c.redirectDirectoryToTrailingSlash(w, r, path, urlPath) {
-			return
-		}
+// listingMetrics says where the time listing directories goes.
+type listingMetrics struct {
+	*stageMetrics
+	// Entries in each directory listed.
+	entries metric.Int64Histogram
+}
 
-		if strings.HasSuffix(urlPath, "/") || path == "." {
-			_, openSpan := rootTrace.Start(ctx, "Open")
-			openSpan.SetAttributes(attribute.String("path", path))
-			f, err := c.baseFS.Open(path)
-			openSpan.End()
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			defer func() {
-				_, closeSpan := rootTrace.Start(ctx, "Close")
-				closeSpan.SetAttributes(attribute.String("path", path))
-				if err := f.Close(); err != nil {
-					slog.Error("failed to close file after serving custom index", "path", path, "error", err)
-				}
-				closeSpan.End()
-			}()
-
-			readDirCtx, readDirSpan := rootTrace.Start(ctx, "readDirectory")
-			defer readDirSpan.End()
-			rdf, ok := f.(fs.ReadDirFile)
-			if ok {
-				span.SetAttributes(attribute.Bool("custom_directory_list", true))
-				readDirSpan.AddEvent("")
-				now := time.Now()
-				entries, err := rdf.ReadDir(-1)
-				span.SetAttributes(attribute.Int("num_entries", len(entries)))
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-
-				params := &customIndexReport{
-					Root:                  path,
-					RootName:              strings.TrimSuffix(filepath.Base(path), nestedDirSuffix),
-					DirEntries:            []*DirEntry{},
-					SortBy:                sortBy,
-					UseTimestamp:          strings.Contains(sortBy, "date"),
-					Thumbnails:            c.thumbs != nil,
-					VideoThumbnails:       c.thumbs.videos(),
-					ApplicationVersion:    internal.Version(),
-					ApplicationBuildstamp: internal.Buildstamp(),
-				}
-
-				allFiles := map[string]any{}
-				archiveDirs := map[string]fs.DirEntry{}
-				for _, entry := range entries {
-					if strings.HasSuffix(entry.Name(), nestedDirSuffix) {
-						archiveDirs[entry.Name()] = entry
-					}
-					allFiles[entry.Name()] = entry
-				}
-				actualArchiveDir := map[string]fs.DirEntry{}
-				for name := range allFiles {
-					if archiveDir, ok := archiveDirs[name+nestedDirSuffix]; ok {
-						actualArchiveDir[name] = archiveDir
-					}
-				}
-
-				files := newEntryList(sortBy)
-				for _, entry := range entries {
-					_, statFileSpan := rootTrace.Start(readDirCtx, entry.Name())
-
-					if strings.HasSuffix(entry.Name(), nestedDirSuffix) {
-						if _, ok := actualArchiveDir[strings.TrimSuffix(entry.Name(), nestedDirSuffix)]; ok {
-							continue
-						}
-					}
-
-					size := int64(0)
-					t := now
-					stat, err := entry.Info()
-					if err == nil {
-						t = stat.ModTime()
-						size = stat.Size()
-					}
-
-					if strings.HasSuffix(entry.Name(), ".xz") {
-						slog.Info(entry.Name())
-					}
-					_, isArchive := actualArchiveDir[entry.Name()]
-					isDir := entry.IsDir() || isArchive
-					iconClass := nameToIconClass(isDir, entry.Name())
-					newEntry := &DirEntry{
-						Name:       entry.Name(),
-						Size:       uint64(size),
-						ModTime:    t,
-						IsDir:      isDir,
-						IsArchive:  isArchive,
-						IsViewable: !isDir && isRichViewable(iconClass),
-						IconClass:  iconClass,
-					}
-					files.add(newEntry)
-					statFileSpan.End()
-				}
-
-				_, sortFileSpan := rootTrace.Start(readDirCtx, "sort")
-				sortFileSpan.SetAttributes(attribute.Int("num_files", files.Len()))
-				sort.Sort(files)
-				sortFileSpan.End()
-
-				_, generateSpan := rootTrace.Start(readDirCtx, "applyTemplate")
-				generateSpan.SetAttributes(attribute.Int("num_files", files.Len()))
-				defer generateSpan.End()
-				hasNonMediaEntry := false
-				hasImage := false
-				hasVideo := false
-				for _, name := range files.EntryOrder {
-					entry := files.Entries[name]
-					params.DirEntries = append(params.DirEntries, entry)
-					if !isMedia(entry.Name) {
-						hasNonMediaEntry = true
-					}
-					if isImage(entry.Name) {
-						hasImage = true
-					}
-					if isVideo(entry.Name) {
-						hasVideo = true
-					}
-				}
-				params.HasNonMediaEntry = hasNonMediaEntry
-				params.HasImage = hasImage
-				params.HasVideo = hasVideo
-
-				if err := c.tmpl.Execute(w, params); err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-
-				return
-			}
-		}
+func newListingMetrics(mc *monitoringContext) (*listingMetrics, error) {
+	stages, m, err := newStageMetrics(mc, "listing",
+		"How long each stage of listing a directory took: open, read (its entries), stat (each entry), sort, render (the page).")
+	if err != nil {
+		return nil, err
 	}
-	span.SetAttributes(attribute.Bool("custom_directory_list", false))
+	entries, err := m.Int64Histogram("listing_entries",
+		metric.WithDescription("Entries in the directories listed."),
+		metric.WithExplicitBucketBoundaries(listingEntries...))
+	if err != nil {
+		return nil, err
+	}
+	return &listingMetrics{stageMetrics: stages, entries: entries}, nil
+}
+
+func (c *customIndexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if c.enhancedList && c.serveListing(w, r) {
+		return
+	}
 	c.baseHandler.ServeHTTP(w, r)
 }
 
-func newCustomIndex(baseHandler http.Handler, baseFS fs.FS, tp trace.TracerProvider, enhancedList bool, thumbs *thumbnailer) (http.Handler, error) {
+// serveListing answers a request for a directory with the file browser's
+// page, or with the redirect to the directory's own URL. It reports
+// whether it answered; other requests are the base handler's.
+func (c *customIndexHandler) serveListing(w http.ResponseWriter, r *http.Request) bool {
+	urlPath := r.URL.Path
+	path := cleanPath(strings.TrimPrefix(urlPath, "/"))
+
+	slog.Info("customIndexHandler", "url", r.URL, "path", path)
+
+	if c.redirectDirectoryToTrailingSlash(w, r, path, urlPath) {
+		return true
+	}
+	if !strings.HasSuffix(urlPath, "/") && path != "." {
+		return false
+	}
+
+	// One span per stage, never per entry: a folder can hold tens of
+	// thousands.
+	ctx, span := c.metrics.tracer.Start(r.Context(), "listing", trace.WithAttributes(attribute.String("path", path)))
+	defer span.End()
+	fail := func(err error) bool {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return true
+	}
+
+	_, _, opened := c.metrics.stage(ctx, listingStageOpen)
+	f, err := c.baseFS.Open(path)
+	opened()
+	if err != nil {
+		return fail(err)
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			slog.Error("failed to close file after serving custom index", "path", path, "error", err)
+		}
+	}()
+	rdf, ok := f.(fs.ReadDirFile)
+	span.SetAttributes(attribute.Bool("custom_directory_list", ok))
+	if !ok {
+		return false
+	}
+	setRequestHandler(r, handlerListing)
+
+	now := time.Now()
+	_, _, read := c.metrics.stage(ctx, listingStageRead)
+	entries, err := rdf.ReadDir(-1)
+	read()
+	span.SetAttributes(attribute.Int("num_entries", len(entries)))
+	if err != nil {
+		return fail(err)
+	}
+	c.metrics.entries.Record(context.WithoutCancel(ctx), int64(len(entries)))
+
+	sortBy := canonicalizeSortBy(r.URL.Query().Get("sort"))
+	params := &customIndexReport{
+		Root:                  path,
+		RootName:              strings.TrimSuffix(filepath.Base(path), nestedDirSuffix),
+		DirEntries:            []*DirEntry{},
+		SortBy:                sortBy,
+		UseTimestamp:          strings.Contains(sortBy, "date"),
+		Thumbnails:            c.thumbs != nil,
+		VideoThumbnails:       c.thumbs.videos(),
+		ApplicationVersion:    internal.Version(),
+		ApplicationBuildstamp: internal.Buildstamp(),
+	}
+
+	allFiles := map[string]any{}
+	archiveDirs := map[string]fs.DirEntry{}
+	for _, entry := range entries {
+		if strings.HasSuffix(entry.Name(), nestedDirSuffix) {
+			archiveDirs[entry.Name()] = entry
+		}
+		allFiles[entry.Name()] = entry
+	}
+	actualArchiveDir := map[string]fs.DirEntry{}
+	for name := range allFiles {
+		if archiveDir, ok := archiveDirs[name+nestedDirSuffix]; ok {
+			actualArchiveDir[name] = archiveDir
+		}
+	}
+
+	_, statSpan, statted := c.metrics.stage(ctx, listingStageStat)
+	statErrors := 0
+	files := newEntryList(sortBy)
+	for _, entry := range entries {
+		if strings.HasSuffix(entry.Name(), nestedDirSuffix) {
+			if _, ok := actualArchiveDir[strings.TrimSuffix(entry.Name(), nestedDirSuffix)]; ok {
+				continue
+			}
+		}
+
+		size := int64(0)
+		t := now
+		stat, err := entry.Info()
+		if err == nil {
+			t = stat.ModTime()
+			size = stat.Size()
+		} else {
+			statErrors++
+		}
+
+		_, isArchive := actualArchiveDir[entry.Name()]
+		isDir := entry.IsDir() || isArchive
+		iconClass := nameToIconClass(isDir, entry.Name())
+		newEntry := &DirEntry{
+			Name:       entry.Name(),
+			Size:       uint64(size),
+			ModTime:    t,
+			IsDir:      isDir,
+			IsArchive:  isArchive,
+			IsViewable: !isDir && isRichViewable(iconClass),
+			IconClass:  iconClass,
+		}
+		files.add(newEntry)
+	}
+	statSpan.SetAttributes(attribute.Int("num_files", files.Len()), attribute.Int("stat_errors", statErrors))
+	statted()
+
+	_, sortSpan, sorted := c.metrics.stage(ctx, listingStageSort)
+	sortSpan.SetAttributes(attribute.Int("num_files", files.Len()), attribute.String("sort", sortBy))
+	sort.Sort(files)
+	sorted()
+
+	_, renderSpan, rendered := c.metrics.stage(ctx, listingStageRender)
+	renderSpan.SetAttributes(attribute.Int("num_files", files.Len()))
+	defer rendered()
+	hasNonMediaEntry := false
+	hasImage := false
+	hasVideo := false
+	for _, name := range files.EntryOrder {
+		entry := files.Entries[name]
+		params.DirEntries = append(params.DirEntries, entry)
+		if !isMedia(entry.Name) {
+			hasNonMediaEntry = true
+		}
+		if isImage(entry.Name) {
+			hasImage = true
+		}
+		if isVideo(entry.Name) {
+			hasVideo = true
+		}
+	}
+	params.HasNonMediaEntry = hasNonMediaEntry
+	params.HasImage = hasImage
+	params.HasVideo = hasVideo
+
+	if err := c.tmpl.Execute(w, params); err != nil {
+		return fail(err)
+	}
+	return true
+}
+
+func newCustomIndex(baseHandler http.Handler, baseFS fs.FS, mc *monitoringContext, enhancedList bool, thumbs *thumbnailer) (http.Handler, error) {
 	tmpl, err := createTemplate(customIndexHTML)
+	if err != nil {
+		return nil, err
+	}
+	metrics, err := newListingMetrics(mc)
 	if err != nil {
 		return nil, err
 	}
@@ -387,7 +437,7 @@ func newCustomIndex(baseHandler http.Handler, baseFS fs.FS, tp trace.TracerProvi
 		baseFS:       baseFS,
 		enhancedList: enhancedList,
 		thumbs:       thumbs,
-		tp:           tp,
+		metrics:      metrics,
 		tmpl:         tmpl,
 	}, nil
 }
