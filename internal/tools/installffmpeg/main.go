@@ -57,12 +57,12 @@ func run(out, cache string) error {
 }
 
 // copyFile copies src to dst, executable, replacing dst whole.
-func copyFile(src, dst string) error {
+func copyFile(src, dst string) (err error) {
 	in, err := os.Open(src)
 	if err != nil {
 		return err
 	}
-	defer func() { _ = in.Close() }()
+	defer func() { err = errors.Join(err, in.Close()) }()
 	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return err
 	}
