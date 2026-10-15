@@ -45,6 +45,8 @@ pkg/                      # Public libraries
 └── gowebserver/          # Core server implementation
 
 internal/gowebserver/testing/  # Test utilities and embedded test archives
+internal/downloadmirror/       # Cache for the build's downloads, and the clients' side of it
+internal/tools/                # Build tools: installffmpeg (make tools), downloadcache (run on CI machines)
 ```
 
 ### Core Components (pkg/gowebserver/)
@@ -108,3 +110,5 @@ GitHub Actions runs on push to main, tags, and PRs:
 - Test: `make test-10 benchmark coverage.txt`
 - Code quality: misspell, hadolint, codespell, CodeQL
 - Release: Tag-triggered multi-platform binary releases
+
+`make tools` installs ffmpeg into `build/toolchain/bin` (kept in the user cache directory across `make clean`), so the tests that run the real ffmpeg run in CI. When `DOWNLOAD_MIRROR` is set, downloads go through that cache (`internal/tools/downloadcache/README.md`); new download rules use `$(call download,FILE,URL)` and `$(GO_WITH_PROXY)` rather than calling `curl` or `go install` directly.

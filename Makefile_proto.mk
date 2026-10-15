@@ -58,7 +58,7 @@ PROTOC_TOOLCHAIN += build/toolchain/bin/protoc-gen-openapiv2$(EXE)
 
 build/archives/protoc.zip:
 	mkdir -p $(ARCHIVES_DIR)/
-	$(CURL) -o $(ARCHIVES_DIR)/protoc.zip -L $(PROTOC_PACKAGE)
+	$(call download,$(ARCHIVES_DIR)/protoc.zip,$(PROTOC_PACKAGE))
 	touch "$(REPOSITORY_ROOT)/$@"
 
 build/toolchain/bin/protoc$(EXE): build/archives/protoc.zip
@@ -91,14 +91,12 @@ build/toolchain/bin/protoc-gen-openapiv2$(EXE): third_party/google_protobuf/incl
 
 build/archives/googleapis.zip:
 	mkdir -p "$(dir $@)"
-	$(CURL) -o "$(ARCHIVES_DIR)/googleapis.zip" -L \
-		"https://github.com/googleapis/googleapis/archive/master.zip"
+	$(call download,$(ARCHIVES_DIR)/googleapis.zip,https://github.com/googleapis/googleapis/archive/master.zip)
 	touch "$(REPOSITORY_ROOT)/$@"
 
 build/archives/grpc-gateway.zip:
 	mkdir -p "$(dir $@)"
-	$(CURL) -o "$(ARCHIVES_DIR)/grpc-gateway.zip" -L \
-		"https://github.com/grpc-ecosystem/grpc-gateway/archive/master.zip"
+	$(call download,$(ARCHIVES_DIR)/grpc-gateway.zip,https://github.com/grpc-ecosystem/grpc-gateway/archive/master.zip)
 	touch "$(REPOSITORY_ROOT)/$@"
 
 third_party/google_protobuf/include/google/: third_party/google_protobuf/include/google/LICENSE
