@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Command installffmpeg puts a copy of ffmpeg at -o for the build: the
 // latest release of BtbN's GPL build for this platform, which the tests
 // that run ffmpeg find on PATH. The download is kept in -cache (by default
