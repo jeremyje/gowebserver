@@ -55,15 +55,22 @@ JAVASCRIPT_ENV = NODE_PATH="$(NODE_TOOLCHAIN_DIR)/node_modules" PLAYWRIGHT_BROWS
 
 TEST_TARGETS += test-js
 
+# Through the download mirror (DOWNLOAD_MIRROR, see Makefile_core.mk) when
+# it's up: neither falls back by itself. npm fetches packages from the
+# registry it's given, and Playwright its browsers from the host it's
+# given: Chromium from one server, everything else from a path on another.
+NPM_MIRROR_FLAGS = $(if $(MIRROR_UP),--registry "$(call mirror_url,https://registry.npmjs.org)/")
+PLAYWRIGHT_MIRROR_ENV = $(if $(MIRROR_UP),PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST="$(call mirror_url,https://cdn.playwright.dev)" PLAYWRIGHT_DOWNLOAD_HOST="$(call mirror_url,https://cdn.playwright.dev/dbazure/download/playwright)" )
+
 $(PLAYWRIGHT):
 	mkdir -p "$(NODE_TOOLCHAIN_DIR)"
-	$(NPM) install --prefix "$(NODE_TOOLCHAIN_DIR)" --no-save --no-audit --no-fund playwright@$(PLAYWRIGHT_VERSION)
+	$(NPM) install --prefix "$(NODE_TOOLCHAIN_DIR)" --no-save --no-audit --no-fund $(NPM_MIRROR_FLAGS) playwright@$(PLAYWRIGHT_VERSION)
 	touch "$(REPOSITORY_ROOT)/$@"
 
 # Headless Chromium is its own, smaller download.
 build/toolchain/browsers/%.installed: $(PLAYWRIGHT)
 	mkdir -p "$(dir $@)"
-	PLAYWRIGHT_BROWSERS_PATH="$(BROWSERS_DIR)" "$(NODE_TOOLCHAIN_DIR)/node_modules/.bin/playwright" install $(patsubst chromium,chromium-headless-shell,$*)
+	PLAYWRIGHT_BROWSERS_PATH="$(BROWSERS_DIR)" $(PLAYWRIGHT_MIRROR_ENV)"$(NODE_TOOLCHAIN_DIR)/node_modules/.bin/playwright" install $(patsubst chromium,chromium-headless-shell,$*)
 	touch "$(REPOSITORY_ROOT)/$@"
 
 tools-js: $(JAVASCRIPT_TOOLCHAIN)

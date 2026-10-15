@@ -25,10 +25,12 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/cloudfra/gowebserver/internal/downloadmirror"
 	"github.com/cloudfra/gowebserver/pkg/ffmpeg"
 )
 
@@ -49,7 +51,9 @@ func run(out, cache string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 	defer cancel()
 	// The builds are GPL; the build only runs them, it doesn't ship them.
-	exe, err := ffmpeg.Download(ctx, ffmpeg.Options{InstallOnDemand: true, AcceptLicense: true, DownloadDir: cache})
+	// Through the build's download cache, when there is one.
+	client := &http.Client{Transport: downloadmirror.FromEnv(nil), Timeout: 15 * time.Minute}
+	exe, err := ffmpeg.Download(ctx, ffmpeg.Options{InstallOnDemand: true, AcceptLicense: true, DownloadDir: cache, Client: client})
 	if err != nil {
 		return err
 	}

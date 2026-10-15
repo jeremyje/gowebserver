@@ -19,7 +19,7 @@ include Makefile_testassets.mk
 
 DOCKER_PUSH = --push
 
-GO_WITH_PROXY = go
+GO_WITH_PROXY = $(GO_MIRROR_ENV)go
 GO = GOPROXY=off go
 GO_RACE=-race
 

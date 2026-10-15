@@ -133,12 +133,12 @@ $(ACTIONLINT):
 
 $(CERTTOOL):
 	mkdir -p "$(dir $@)"
-	$(CURL) -Lo $@ "$(CERTTOOL_PACKAGE)"
+	$(call download,$@,$(CERTTOOL_PACKAGE))
 	chmod +x "$(REPOSITORY_ROOT)/$@"
 
 $(DOCKER_COMPOSE):
 	mkdir -p "$(dir $@)"
-	$(CURL) -Lo $@ "$(DOCKERCOMPOSE_PACKAGE)"
+	$(call download,$@,$(DOCKERCOMPOSE_PACKAGE))
 	chmod +x "$(REPOSITORY_ROOT)/$@"
 
 # For the tests that run the real ffmpeg (thumbnails of photos and videos),
@@ -146,7 +146,7 @@ $(DOCKER_COMPOSE):
 # build through pkg/ffmpeg, is kept in the user cache directory, so it
 # survives `make clean` and is fetched again only for a new ffmpeg version.
 $(FFMPEG):
-	$(GO) run ./internal/tools/installffmpeg -o "$@"
+	$(GO_WITH_PROXY) run ./internal/tools/installffmpeg -o "$@"
 
 $(GOCOVER_COBERTURA):
 	mkdir -p "$(dir $@)"
@@ -171,7 +171,7 @@ $(GOVULNCHECK):
 # Not a Go module, so it's fetched as a prebuilt binary like terraform/docker-compose above.
 $(HADOLINT):
 	mkdir -p "$(dir $@)"
-	$(CURL) -o $@ -L "$(HADOLINT_PACKAGE)"
+	$(call download,$@,$(HADOLINT_PACKAGE))
 	chmod +x "$(REPOSITORY_ROOT)/$@"
 
 # Style/doc-comment linter; not covered by golangci-lint's default config.
@@ -247,25 +247,25 @@ $(ANDROID_NDK_CLANG): build/archives/android-ndk.zip
 
 build/archives/android-ndk.zip:
 	mkdir -p "$(dir $@)"
-	$(CURL) -o "$(REPOSITORY_ROOT)/$@" -L "https://dl.google.com/android/repository/android-ndk-$(ANDROID_NDK_VERSION)-linux.zip"
+	$(call download,$(REPOSITORY_ROOT)/$@,https://dl.google.com/android/repository/android-ndk-$(ANDROID_NDK_VERSION)-linux.zip)
 	touch "$(REPOSITORY_ROOT)/$@"
 
 build/archives/terraform.zip:
 	mkdir -p "$(dir $@)"
-	$(CURL) -o "$(ARCHIVES_DIR)/terraform.zip" -L "$(TERRAFORM_PACKAGE)"
+	$(call download,$(ARCHIVES_DIR)/terraform.zip,$(TERRAFORM_PACKAGE))
 	touch "$(REPOSITORY_ROOT)/$@"
 
 $(RUMDL_ARCHIVE):
 	mkdir -p "$(dir $@)"
-	$(CURL) -o $@ -L "$(RUMDL_PACKAGE)"
+	$(call download,$@,$(RUMDL_PACKAGE))
 	touch "$(REPOSITORY_ROOT)/$@"
 
 $(SHELLCHECK_ARCHIVE):
 	mkdir -p "$(dir $@)"
-	$(CURL) -o $@ -L "$(SHELLCHECK_PACKAGE)"
+	$(call download,$@,$(SHELLCHECK_PACKAGE))
 	touch "$(REPOSITORY_ROOT)/$@"
 
 $(TRIVY_ARCHIVE):
 	mkdir -p "$(dir $@)"
-	$(CURL) -o $@ -L "$(TRIVY_PACKAGE)"
+	$(call download,$@,$(TRIVY_PACKAGE))
 	touch "$(REPOSITORY_ROOT)/$@"
