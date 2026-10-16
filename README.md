@@ -84,6 +84,8 @@ With ffmpeg, thumbnails are cheaper and smaller. It decodes JPEG photos several 
 
 The enhanced index asks for only a few sizes: 128, 256, 512 or 1024 pixels, covering square photo tiles or 16:9 video tiles (`fit=outside`, so the thumbnail keeps the file's shape and the tile crops it), chosen once for the screen's pixel density. It uses 1024 for slideshow previews. The browser scales these to fit, so each file is rendered at only a couple of sizes.
 
+While it's otherwise idle, the server makes thumbnails ahead for the folder being browsed. It goes through that folder's immediate subfolders, up to 32 in list order, and makes the first few tiles of each one's grid: videos, then photos, by name. Opening a subfolder then shows them at once. It makes them at the tile sizes the browser last asked for, starts only after half a second with no thumbnail requests, and uses at most half the render slots. Listing another folder throws away what's left. Set how many it makes in each subfolder with `thumbnails.prefetch` (`-thumbnails.prefetch`, default 8); 0 turns it off.
+
 ## Downloads
 
 |   OS    | Arch  | Link

@@ -70,6 +70,7 @@ var (
 	// Thumbnail Flags
 	thumbnailsEnabledFlag   = flag.Bool("thumbnails.enabled", true, "Serve resized images and video frames when a file is requested with width or height query parameters.")
 	thumbnailsCachePathFlag = flag.String("thumbnails.cachepath", "", "BoltDB file that caches thumbnails across restarts. Empty uses <user cache dir>/gowebserver/thumbnails.db; \"memory:\" keeps them in memory only.")
+	thumbnailsPrefetchFlag  = flag.Int("thumbnails.prefetch", 8, "Thumbnails to make ahead, while the server is otherwise idle, in each subfolder of a folder being browsed. 0 turns it off.")
 	debugFlag               = flag.Bool("debug", false, "Expose the /diediedie shutdown endpoint for testing.")
 )
 
@@ -157,6 +158,10 @@ type Thumbnails struct {
 	// Empty uses <user cache dir>/gowebserver/thumbnails.db; "memory:"
 	// keeps them in memory only, for the life of the server.
 	CachePath string `yaml:"cachePath"`
+	// Prefetch is how many thumbnails to make ahead in each subfolder of a
+	// folder being browsed: the first photos and videos its grid shows, so
+	// they're ready when it's opened. 0 turns it off.
+	Prefetch int `yaml:"prefetch"`
 }
 
 // Serve maps the source to endpoint serving of content.
@@ -284,6 +289,7 @@ func loadFromFlags() (*Config, error) {
 		Thumbnails: Thumbnails{
 			Enabled:   *thumbnailsEnabledFlag,
 			CachePath: *thumbnailsCachePathFlag,
+			Prefetch:  *thumbnailsPrefetchFlag,
 		},
 	}, nil
 }
