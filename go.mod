@@ -10,7 +10,7 @@ require (
 	github.com/cloudfra/ufs v0.16.1
 	github.com/dustin/go-humanize v1.1.0
 	github.com/google/go-cmp v0.7.0
-	github.com/prometheus/client_golang v1.24.1
+	github.com/prometheus/client_golang v1.25.0
 	github.com/rs/cors v1.11.1
 	github.com/ulikunitz/xz v0.5.17
 	go.opentelemetry.io/contrib/instrumentation/host v0.72.0
