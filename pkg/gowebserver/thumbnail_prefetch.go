@@ -116,12 +116,12 @@ func (p *prefetcher) served() func() {
 	}
 }
 
-// learn remembers made as the size of a grid tile for kind of file when
-// asked is one: covering a box at the file's shape, with nothing else
-// asked for. made is what asked is made as, in the format the browser's
-// Accept header picked. The slideshow's sizes aren't, and aren't made
-// ahead.
-func (p *prefetcher) learn(kind string, asked, made *thumbnailSpec) {
+// rememberTileSize keeps the size of a thumbnail request when it's for a
+// grid tile, as the size to make tiles of kind of file in: covering a box
+// at the file's shape, with nothing else asked for. asked is the request
+// and made what it's made as, in the format the browser's Accept header
+// picked. The slideshow's sizes aren't tiles, and aren't made ahead.
+func (p *prefetcher) rememberTileSize(kind string, asked, made *thumbnailSpec) {
 	if p == nil || asked.fit != fitOutside || asked.width == 0 || asked.height == 0 ||
 		asked.format != "" || asked.background != nil || asked.quality != thumbnailQuality {
 		return

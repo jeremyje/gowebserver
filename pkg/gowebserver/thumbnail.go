@@ -491,9 +491,10 @@ func (h *thumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	asked := spec
 	spec = h.t.chooseWebP(spec, r.Header.Get("Accept"))
 	kind := thumbnailKind(video)
-	// Thumbnails aren't made ahead while one is being asked for.
+	// Thumbnails aren't made ahead while one is being asked for, and are
+	// made at the size the grid's tiles ask for.
 	defer h.t.prefetch.served()()
-	h.t.prefetch.learn(kind, asked, spec)
+	h.t.prefetch.rememberTileSize(kind, asked, spec)
 	ctx, span := h.t.tp.Tracer("thumbnail").Start(r.Context(), "thumbnail")
 	defer span.End()
 	span.SetAttributes(attribute.String("path", name), attribute.String("spec", spec.key()), attribute.String("kind", kind))
