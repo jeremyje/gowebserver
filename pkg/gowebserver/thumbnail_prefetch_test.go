@@ -16,6 +16,7 @@ package gowebserver
 
 import (
 	"io/fs"
+	"mime"
 	"net/http"
 	"os"
 	"os/exec"
@@ -31,6 +32,13 @@ import (
 )
 
 func TestFirstTiles(t *testing.T) {
+	// Videos are known by the system's MIME types, which Windows may not
+	// have for these.
+	for ext, typ := range map[string]string{".mp4": "video/mp4", ".mov": "video/quicktime"} {
+		if err := mime.AddExtensionType(ext, typ); err != nil {
+			t.Fatal(err)
+		}
+	}
 	fsys := fstest.MapFS{
 		"album/10.jpg":      {},
 		"album/2.JPG":       {},
