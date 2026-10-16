@@ -15,16 +15,20 @@
 package ffmpeg
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"image"
 	"image/color"
+	"image/jpeg"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
 	"time"
+
+	"golang.org/x/image/webp"
 )
 
 // script writes an executable shell script standing in for ffmpeg. It
@@ -163,11 +167,82 @@ func TestFrameWith(t *testing.T) {
 	for _, want := range []string{
 		// Keyframes only is a decoder option, so it comes before the input.
 		"-skip_frame nokey -ss 10.000 -i clip.mp4",
-		"-vf scale=w='max(1,round(iw*min(1,max(512/iw,288/ih))))':h='max(1,round(ih*min(1,max(512/iw,288/ih))))':flags=area",
+		"-vf scale=w='max(1,round(iw*min(1,max(512/iw,288/ih))))':h='max(1,round(ih*min(1,max(512/iw,288/ih))))':flags=bicubic",
 	} {
 		if !strings.Contains(string(args), want) {
 			t.Errorf("args %q missing %q", args, want)
 		}
+	}
+}
+
+func TestFrameArgs(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		o    FrameOptions
+		want string
+	}{
+		{"exact frame", FrameOptions{At: time.Second}, "-ss 1.000 -i in -frames:v 1"},
+		{"first frame", FrameOptions{}, "-filter_threads 1 -i in -frames:v 1"},
+		{
+			"fit inside",
+			FrameOptions{Width: 100, Height: 50, Inside: true},
+			"-vf scale=w='max(1,round(iw*min(1,min(100/iw,50/ih))))':h='max(1,round(ih*min(1,min(100/iw,50/ih))))':flags=bicubic",
+		},
+		{"fit inside a width", FrameOptions{Width: 100, Inside: true}, "min(1,min(100/iw,ih/ih))"},
+		// Decoder options, so before the input.
+		{"reduced", FrameOptions{Reduce: 2}, "-lowres 2 -i in"},
+		{"reduced at most 8 times", FrameOptions{Reduce: 5}, "-lowres 3 "},
+		// Turned after scaling, which happens in the input's orientation.
+		{
+			"turned",
+			FrameOptions{Width: 100, Height: 50, Orientation: 6},
+			"-noautorotate -i in -frames:v 1 -vf scale=w='max(1,round(iw*min(1,max(50/iw,100/ih))))':h='max(1,round(ih*min(1,max(50/iw,100/ih))))':flags=bicubic,transpose=clock",
+		},
+		{"mirrored", FrameOptions{Orientation: 2}, "-noautorotate -i in -frames:v 1 -vf hflip"},
+	} {
+		if got := strings.Join(frameArgs("in", tc.o), " "); !strings.Contains(got, tc.want) {
+			t.Errorf("%s: args %q missing %q", tc.name, got, tc.want)
+		}
+	}
+	if got := strings.Join(frameArgs("in", FrameOptions{Orientation: 1}), " "); strings.Contains(got, "-vf") {
+		t.Errorf("upright: args %q have a filter", got)
+	}
+}
+
+func TestEncoders(t *testing.T) {
+	bin, _ := script(t, "printf 'Encoders:\\n V..... = Video\\n ------\\n V....D libwebp              libwebp WebP image (codec webp)\\n VFS..D mjpeg                MJPEG (Motion JPEG)\\n'")
+	f, err := Find(bin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := f.Encoders(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got["libwebp"] || !got["mjpeg"] || got["="] || len(got) != 2 {
+		t.Errorf("Encoders = %v, want libwebp and mjpeg", got)
+	}
+}
+
+func TestFrameWebP(t *testing.T) {
+	bin, argsFile := script(t, "printf RIFF")
+	f, err := Find(bin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := f.FrameWebP(t.Context(), "photo.jpg", nil, FrameOptions{Width: 256, Height: 256, Reduce: 3}, 70)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(out) != "RIFF" {
+		t.Errorf("FrameWebP = %q, want what ffmpeg wrote", out)
+	}
+	args, err := os.ReadFile(argsFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "-c:v libwebp -quality 70 -compression_level 2 -f webp pipe:1"; !strings.Contains(string(args), want) {
+		t.Errorf("args %q missing %q", args, want)
 	}
 }
 
@@ -240,6 +315,161 @@ func TestFrameWithFFmpeg(t *testing.T) {
 	// No keyframe after the last one: no frame.
 	if _, err := f.FrameWith(t.Context(), video, nil, FrameOptions{At: 10 * time.Second, Keyframe: true}); !errors.Is(err, ErrNoFrame) {
 		t.Errorf("keyframe after 10s: error = %v, want ErrNoFrame", err)
+	}
+}
+
+// cornersJPEG is a 64x32 JPEG photo, red at its top left and green at its
+// top right, whose EXIF orientation says to turn it upside down.
+func cornersJPEG(t *testing.T) string {
+	t.Helper()
+	img := image.NewRGBA(image.Rect(0, 0, 64, 32))
+	for y := range 32 {
+		for x := range 64 {
+			c := color.RGBA{R: 128, G: 128, B: 128, A: 255}
+			switch {
+			case x < 16 && y < 16:
+				c = color.RGBA{R: 255, A: 255}
+			case x >= 48 && y < 16:
+				c = color.RGBA{G: 255, A: 255}
+			}
+			img.SetRGBA(x, y, c)
+		}
+	}
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 95}); err != nil {
+		t.Fatal(err)
+	}
+	jpg := buf.Bytes()
+	tiff := []byte{
+		'M', 'M', 0, 42, 0, 0, 0, 8, // big-endian header, IFD at 8
+		0, 1, // one entry
+		0x01, 0x12, 0, 3, 0, 0, 0, 1, 0, 3, 0, 0, // Orientation, SHORT, 1, upside down
+		0, 0, 0, 0, // no next IFD
+	}
+	payload := append([]byte("Exif\x00\x00"), tiff...)
+	exif := append([]byte{0xFF, 0xE1, byte((len(payload) + 2) >> 8), byte(len(payload) + 2)}, payload...)
+	p := filepath.Join(t.TempDir(), "corners.jpg")
+	if err := os.WriteFile(p, append(append(append([]byte{}, jpg[:2]...), exif...), jpg[2:]...), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return p
+}
+
+// corners returns the colors at the four corners of img: top left, top
+// right, bottom left, bottom right, as r (red), g (green) or . (gray).
+func corners(img image.Image) string {
+	b := img.Bounds()
+	name := func(x, y int) string {
+		r, g, _, _ := img.At(x, y).RGBA()
+		switch {
+		case r > 0xc000 && g < 0x4000:
+			return "r"
+		case g > 0xc000 && r < 0x4000:
+			return "g"
+		}
+		return "."
+	}
+	return name(b.Min.X+1, b.Min.Y+1) + name(b.Max.X-2, b.Min.Y+1) + name(b.Min.X+1, b.Max.Y-2) + name(b.Max.X-2, b.Max.Y-2)
+}
+
+// TestFrameOrientationFFmpeg runs the ffmpeg installed on PATH, when there
+// is one, turning a photo by each EXIF orientation in place of the one
+// the file has.
+func TestFrameOrientationFFmpeg(t *testing.T) {
+	f, err := Find("")
+	if err != nil {
+		t.Skip("ffmpeg is not installed")
+	}
+	photo := cornersJPEG(t)
+	for o, want := range map[int]string{
+		1: "rg..", 2: "gr..", 3: "..gr", 4: "..rg",
+		5: "r.g.", 6: ".r.g", 7: ".g.r", 8: "g.r.",
+	} {
+		img, err := f.FrameWith(t.Context(), photo, nil, FrameOptions{Orientation: o})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := corners(img); got != want {
+			t.Errorf("orientation %d: corners %q, want %q", o, got, want)
+		}
+		wantW, wantH := 64, 32
+		if o >= 5 {
+			wantW, wantH = 32, 64
+		}
+		if b := img.Bounds(); b.Dx() != wantW || b.Dy() != wantH {
+			t.Errorf("orientation %d: frame is %dx%d, want %dx%d", o, b.Dx(), b.Dy(), wantW, wantH)
+		}
+	}
+	// Turned, the box is the turned photo's: 16x32 covers 16x32 exactly.
+	if img, err := f.FrameWith(t.Context(), photo, nil, FrameOptions{Orientation: 6, Width: 16, Height: 16}); err != nil {
+		t.Error(err)
+	} else if b := img.Bounds(); b.Dx() != 16 || b.Dy() != 32 {
+		t.Errorf("turned and shrunk to cover 16x16: frame is %dx%d, want 16x32", b.Dx(), b.Dy())
+	}
+	// Fit inside, and decoded at a quarter of the size.
+	if img, err := f.FrameWith(t.Context(), photo, nil, FrameOptions{Orientation: 1, Width: 32, Height: 32, Inside: true}); err != nil {
+		t.Error(err)
+	} else if b := img.Bounds(); b.Dx() != 32 || b.Dy() != 16 {
+		t.Errorf("inside 32x32: frame is %dx%d, want 32x16", b.Dx(), b.Dy())
+	}
+	if img, err := f.FrameWith(t.Context(), photo, nil, FrameOptions{Orientation: 1, Reduce: 2}); err != nil {
+		t.Error(err)
+	} else if b := img.Bounds(); b.Dx() != 16 || b.Dy() != 8 {
+		t.Errorf("reduced by 4: frame is %dx%d, want 16x8", b.Dx(), b.Dy())
+	}
+}
+
+// TestWebPFFmpeg runs the ffmpeg installed on PATH, when there is one
+// with libwebp, to make WebP images.
+func TestWebPFFmpeg(t *testing.T) {
+	f, err := Find("")
+	if err != nil {
+		t.Skip("ffmpeg is not installed")
+	}
+	if enc, err := f.Encoders(t.Context()); err != nil || !enc["libwebp"] {
+		t.Skipf("ffmpeg has no libwebp encoder (%v)", err)
+	}
+	data, err := f.FrameWebP(t.Context(), cornersJPEG(t), nil, FrameOptions{Orientation: 2, Width: 32, Height: 32, Inside: true}, 90)
+	if err != nil {
+		t.Fatal(err)
+	}
+	img, err := webp.Decode(bytes.NewReader(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if b := img.Bounds(); b.Dx() != 32 || b.Dy() != 16 {
+		t.Errorf("WebP frame is %dx%d, want 32x16", b.Dx(), b.Dy())
+	}
+	if got := corners(img); got != "gr.." {
+		t.Errorf("WebP frame corners %q, want \"gr..\"", got)
+	}
+
+	for name, src := range map[string]*image.NRGBA{
+		"opaque": image.NewNRGBA(image.Rect(0, 0, 40, 20)),
+		"clear":  image.NewNRGBA(image.Rect(0, 0, 40, 20)),
+	} {
+		for i := range src.Pix {
+			if name == "opaque" || i%4 != 3 {
+				src.Pix[i] = 0xff
+			}
+		}
+		// A sub-image, whose rows don't start at the start of Pix.
+		sub := src.SubImage(image.Rect(4, 2, 36, 18)).(*image.NRGBA)
+		data, err := f.EncodeWebP(t.Context(), sub, 80)
+		if err != nil {
+			t.Fatal(name, err)
+		}
+		img, err := webp.Decode(bytes.NewReader(data))
+		if err != nil {
+			t.Fatal(name, err)
+		}
+		if b := img.Bounds(); b.Dx() != 32 || b.Dy() != 16 {
+			t.Errorf("%s: WebP image is %dx%d, want 32x16", name, b.Dx(), b.Dy())
+		}
+		_, _, _, a := img.At(5, 5).RGBA()
+		if want := map[string]uint32{"opaque": 0xffff, "clear": 0}[name]; a != want {
+			t.Errorf("%s: alpha = %#x, want %#x", name, a, want)
+		}
 	}
 }
 

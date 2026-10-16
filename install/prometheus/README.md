@@ -72,5 +72,5 @@ Metric | Labels | What it measures
 `thumbnail_store_lookup_duration_seconds` | `result` (hit, miss) | Asking the store for a thumbnail.
 `thumbnail_stored_bytes_total` | `kind` | Bytes of thumbnails put in the store.
 `thumbnail_store_size_bytes` | | Size of the store's database file.
-`thumbnail_ffmpeg_duration_seconds` | `operation` (frame, duration), `input` (file, pipe), `outcome` | Each run of ffmpeg.
+`thumbnail_ffmpeg_duration_seconds` | `operation` (frame, duration, photo, encode), `input` (file, pipe), `outcome` | Each run of ffmpeg: a video's frame, its length, a photo, or a thumbnail made in Go written as WebP. A frame or photo run can make the whole thumbnail, which is then all of its decode stage.
 `thumbnail_video_copy_bytes_total` | | Videos copied out of archives for ffmpeg.

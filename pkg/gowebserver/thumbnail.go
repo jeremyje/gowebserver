@@ -69,12 +69,14 @@ import (
 //	                 fill     stretch to the box
 //	                 inside   fit inside the box at the file's ratio; the
 //	                          result can be smaller than the box
-//	format         jpeg, png or gif. Defaults to png for images with
-//	               transparency and jpeg otherwise.
+//	format         webp, jpeg, png or gif. Defaults to webp when the
+//	               browser accepts it and ffmpeg can write it, else png
+//	               for images with transparency and jpeg otherwise. webp
+//	               without ffmpeg is the default.
 //	background     Padding color for fit=contain: RRGGBB, RRGGBBAA or
-//	               "transparent". Defaults to transparent for png and gif
-//	               and black for jpeg.
-//	quality        JPEG quality, 1 to 100 (default 82).
+//	               "transparent". Defaults to transparent for webp, png
+//	               and gif and black for jpeg.
+//	quality        WebP or JPEG quality, 1 to 100 (default 75).
 //
 // Without width and height the file is served as usual. Files that can't
 // be thumbnailed (formats Go can't decode, or videos when ffmpeg isn't
@@ -84,7 +86,10 @@ const (
 	thumbnailMaxSize      = 4096
 	thumbnailMaxPixels    = 100_000_000
 	thumbnailMaxFileBytes = 256 << 20
-	thumbnailJPEGQuality  = 82
+	// thumbnailQuality is the default quality. At the sizes the file
+	// browser shows, WebP or JPEG at 75 looks no different from more, and
+	// is a fifth smaller than at 82.
+	thumbnailQuality      = 75
 	thumbnailVideoTimeout = 30 * time.Second
 	// thumbnailMaxVideoCopy bounds the temporary copy made of a video in an
 	// archive that ffmpeg can't read through a pipe.
@@ -110,7 +115,7 @@ const (
 type thumbnailSpec struct {
 	width, height int
 	fit           thumbnailFit
-	format        string // "" picks jpeg or png from the image
+	format        string // "" picks webp, jpeg or png (see ServeHTTP and make)
 	background    *color.NRGBA
 	quality       int
 }
@@ -121,7 +126,7 @@ func parseThumbnailSpec(q url.Values) (spec *thumbnailSpec, ok bool, err error) 
 	if !q.Has("width") && !q.Has("height") {
 		return nil, false, nil
 	}
-	spec = &thumbnailSpec{fit: fitCover, quality: thumbnailJPEGQuality}
+	spec = &thumbnailSpec{fit: fitCover, quality: thumbnailQuality}
 	size := func(name string) (int, error) {
 		v := q.Get(name)
 		if v == "" {
@@ -154,10 +159,10 @@ func parseThumbnailSpec(q url.Values) (spec *thumbnailSpec, ok bool, err error) 
 	case "":
 	case "jpeg", "jpg":
 		spec.format = "jpeg"
-	case "png", "gif":
+	case "png", "gif", "webp":
 		spec.format = v
 	default:
-		return nil, true, fmt.Errorf("format must be one of jpeg, png, gif")
+		return nil, true, fmt.Errorf("format must be one of webp, jpeg, png, gif")
 	}
 	if v := q.Get("background"); v != "" {
 		c, err := parseHexColor(v)
@@ -187,7 +192,7 @@ func (s *thumbnailSpec) key() string {
 	if s.background != nil {
 		k += fmt.Sprintf("-bg%02x%02x%02x%02x", s.background.R, s.background.G, s.background.B, s.background.A)
 	}
-	if s.quality != thumbnailJPEGQuality {
+	if s.quality != thumbnailQuality {
 		k += fmt.Sprintf("-q%d", s.quality)
 	}
 	return k
@@ -221,6 +226,25 @@ type thumbnailer struct {
 
 	mu      sync.Mutex
 	renders map[string]*render // by store key, while being made
+
+	// What ffmpeg can do for photos (see photoTools), once known.
+	toolsMu    sync.Mutex
+	tools      *photoTools
+	probing    bool
+	probeAgain time.Time // after a failed look
+	probed     chan struct{}
+	// Finding out runs in the background until close.
+	probeCtx    context.Context
+	probeCancel context.CancelFunc
+	probes      sync.WaitGroup
+}
+
+// photoTools is what ffmpeg does for photos: decode JPEGs, which it does
+// several times faster than Go, and at a fraction of their size, and
+// write WebP, which is about a quarter smaller than JPEG at the same
+// quality.
+type photoTools struct {
+	jpeg, webp bool
 }
 
 // render is a thumbnail being made, shared by every request waiting for
@@ -326,14 +350,64 @@ func newThumbnailer(conf Thumbnails, ff *ffmpeg.FFmpeg, mc *monitoringContext) (
 	if err := metrics.observe(store, slots); err != nil {
 		return nil, errors.Join(err, store.close())
 	}
+	probeCtx, probeCancel := context.WithCancel(context.Background())
 	return &thumbnailer{
-		store:   store,
-		ffmpeg:  ff,
-		sem:     make(chan struct{}, slots),
-		tp:      mc.getTraceProvider(),
-		metrics: metrics,
-		renders: map[string]*render{},
+		probeCtx:    probeCtx,
+		probeCancel: probeCancel,
+		store:       store,
+		ffmpeg:      ff,
+		sem:         make(chan struct{}, slots),
+		tp:          mc.getTraceProvider(),
+		metrics:     metrics,
+		renders:     map[string]*render{},
+		probed:      make(chan struct{}),
 	}, nil
+}
+
+// thumbnailProbeRetry is how long after failing to run ffmpeg photos are
+// made without it before it's tried again.
+const thumbnailProbeRetry = 10 * time.Minute
+
+// photoTools reports what ffmpeg does for photos. Until that's known,
+// nothing: the first call finds out in the background, since it can mean
+// downloading ffmpeg, and photos are made without it meanwhile.
+func (t *thumbnailer) photoTools() photoTools {
+	if t.ffmpeg == nil {
+		return photoTools{}
+	}
+	t.toolsMu.Lock()
+	defer t.toolsMu.Unlock()
+	if t.tools != nil {
+		return *t.tools
+	}
+	if !t.probing && time.Now().After(t.probeAgain) && t.probeCtx.Err() == nil {
+		t.probing = true
+		t.probes.Add(1)
+		go t.probe()
+	}
+	return photoTools{}
+}
+
+// probe finds out what ffmpeg does for photos.
+func (t *thumbnailer) probe() {
+	defer t.probes.Done()
+	encoders, err := t.ffmpeg.Encoders(t.probeCtx)
+	t.toolsMu.Lock()
+	defer t.toolsMu.Unlock()
+	t.probing = false
+	if t.probeCtx.Err() != nil {
+		return // closed
+	}
+	if err != nil {
+		slog.Warn("photo thumbnails are made without ffmpeg", "error", err, "retry after", thumbnailProbeRetry)
+		t.probeAgain = time.Now().Add(thumbnailProbeRetry)
+		return
+	}
+	t.tools = &photoTools{jpeg: true, webp: encoders["libwebp"]}
+	if !t.tools.webp {
+		slog.Info("thumbnails are JPEG and PNG, not WebP: ffmpeg has no libwebp encoder")
+	}
+	close(t.probed)
 }
 
 // close releases the thumbnail store. It's safe on a nil thumbnailer.
@@ -341,6 +415,10 @@ func (t *thumbnailer) close() error {
 	if t == nil {
 		return nil
 	}
+	t.toolsMu.Lock()
+	t.probeCancel()
+	t.toolsMu.Unlock()
+	t.probes.Wait()
 	return t.store.close()
 }
 
@@ -400,6 +478,11 @@ func (h *thumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	setRequestHandler(r, handlerThumbnail)
 	start := time.Now()
+	if spec.format == "" {
+		// Which formats the browser shows picks the format.
+		w.Header().Add("Vary", "Accept")
+	}
+	spec = h.t.chooseWebP(spec, r.Header.Get("Accept"))
 	kind := thumbnailKind(video)
 	ctx, span := h.t.tp.Tracer("thumbnail").Start(r.Context(), "thumbnail")
 	defer span.End()
@@ -460,6 +543,22 @@ func (h *thumbnailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, "", info.ModTime(), bytes.NewReader(th.data))
 }
 
+// chooseWebP resolves spec's format when it's WebP or left to the server
+// (see the format parameter): WebP when it's asked for, or the browser's
+// Accept header (accept) lists it, and ffmpeg can write it, otherwise
+// left to the server to pick JPEG or PNG once it has the image.
+func (t *thumbnailer) chooseWebP(spec *thumbnailSpec, accept string) *thumbnailSpec {
+	if spec.format != "" && spec.format != "webp" {
+		return spec
+	}
+	s := *spec
+	s.format = ""
+	if (spec.format == "webp" || strings.Contains(accept, "image/webp")) && t.photoTools().webp {
+		s.format = "webp"
+	}
+	return &s
+}
+
 // thumbnailPath is where the thumbnail of the file name (with info) for
 // spec lives in the store. The version, from the file's size and
 // modification time, gives an edited file a new thumbnail and ETag. A
@@ -493,15 +592,19 @@ func (h *thumbnailHandler) make(ctx context.Context, name string, video bool, sp
 	var (
 		src         image.Image
 		orientation = 1
+		whole       []byte // the thumbnail, when ffmpeg made all of it
 		err         error
 	)
 	dctx, span, decoded := m.stage(ctx, kind, thumbnailStageDecode, &timing)
 	if video {
-		src, err = h.videoFrame(dctx, name, spec)
+		src, whole, err = h.videoFrame(dctx, name, spec)
 	} else {
-		src, orientation, err = h.decodeImage(name)
+		src, orientation, whole, err = h.decodeImage(dctx, name, spec)
 	}
-	if err == nil {
+	switch {
+	case whole != nil:
+		span.SetAttributes(attribute.Int("bytes", len(whole)), attribute.String("format", spec.format))
+	case err == nil:
 		b := src.Bounds()
 		span.SetAttributes(attribute.Int("width", b.Dx()), attribute.Int("height", b.Dy()))
 		m.sourceSize.Record(context.WithoutCancel(ctx), float64(b.Dx())*float64(b.Dy())/1e6, metric.WithAttributes(kindAttr(kind)))
@@ -509,6 +612,9 @@ func (h *thumbnailHandler) make(ctx context.Context, name string, video bool, sp
 	decoded()
 	if err != nil {
 		return nil, err
+	}
+	if whole != nil {
+		return &thumbnail{data: whole, contentType: "image/webp", kind: kind, timing: timing}, nil
 	}
 	// Decoding can't be interrupted, but scaling can be skipped.
 	if err := ctx.Err(); err != nil {
@@ -528,8 +634,17 @@ func (h *thumbnailHandler) make(ctx context.Context, name string, video bool, sp
 	_, _, scaled := m.stage(ctx, kind, thumbnailStageScale, &timing)
 	out := renderThumbnail(src, orientation, spec)
 	scaled()
-	_, span, encoded := m.stage(ctx, kind, thumbnailStageEncode, &timing)
-	th, err := encodeThumbnail(out, spec)
+	ectx, span, encoded := m.stage(ctx, kind, thumbnailStageEncode, &timing)
+	var th *thumbnail
+	if spec.format == "webp" {
+		err = h.withFFmpeg(ectx, ffmpegEncode, false, func(ctx context.Context) error {
+			data, err := h.t.ffmpeg.EncodeWebP(ctx, out, spec.quality)
+			th = &thumbnail{data: data, contentType: "image/webp"}
+			return err
+		})
+	} else {
+		th, err = encodeThumbnail(out, spec)
+	}
 	if err == nil {
 		span.SetAttributes(attribute.Int("bytes", len(th.data)), attribute.String("format", spec.format))
 	}
@@ -541,36 +656,142 @@ func (h *thumbnailHandler) make(ctx context.Context, name string, video bool, sp
 	return th, nil
 }
 
-func (h *thumbnailHandler) decodeImage(name string) (image.Image, int, error) {
+// thumbnailJPEGHeader is how much of a local JPEG is read to find its size
+// and orientation before ffmpeg decodes it: enough for the metadata
+// cameras put before the image.
+const thumbnailJPEGHeader = 256 << 10
+
+// decodeImage decodes the photo name, or the part of it spec needs. A
+// JPEG is decoded by ffmpeg when it can (see ffmpegPhoto), which already
+// turns it the right way up, and when spec is a WebP ffmpeg can make in
+// the same run, it returns that as whole instead. Anything else, or a
+// JPEG ffmpeg can't read, is decoded in Go, returning the file's EXIF
+// orientation.
+func (h *thumbnailHandler) decodeImage(ctx context.Context, name string, spec *thumbnailSpec) (img image.Image, orientation int, whole []byte, err error) {
 	f, err := h.fsys.Open(name)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
 			slog.Error("failed to close image after thumbnailing", "path", name, "error", err)
 		}
 	}()
-	data, err := io.ReadAll(io.LimitReader(f, thumbnailMaxFileBytes+1))
+	// A file on disk is read by ffmpeg itself, so only its header is
+	// needed here, unless ffmpeg can't read it.
+	osf, local := f.(*os.File)
+	limit := int64(thumbnailMaxFileBytes + 1)
+	if local {
+		limit = thumbnailJPEGHeader
+	}
+	data, err := io.ReadAll(io.LimitReader(f, limit))
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 	if len(data) > thumbnailMaxFileBytes {
-		return nil, 0, errThumbnailUnsupported
+		return nil, 0, nil, errThumbnailUnsupported
+	}
+	if h.t.photoTools().jpeg && bytes.HasPrefix(data, []byte{0xFF, 0xD8, 0xFF}) {
+		input, stdin := "pipe:0", io.Reader(bytes.NewReader(data))
+		if local {
+			input, stdin = osf.Name(), nil
+		}
+		img, whole, err := h.ffmpegPhoto(ctx, input, stdin, data, spec)
+		switch {
+		case err == nil:
+			return img, 1, whole, nil
+		case ctx.Err() != nil, errors.Is(err, errThumbnailUnsupported):
+			return nil, 0, nil, err
+		}
+		slog.Debug("ffmpeg could not read a photo; decoding it in Go", "path", name, "error", err)
+	}
+	if local {
+		rest, err := io.ReadAll(io.LimitReader(f, thumbnailMaxFileBytes+1-int64(len(data))))
+		if err != nil {
+			return nil, 0, nil, err
+		}
+		data = append(data, rest...)
+	}
+	if len(data) > thumbnailMaxFileBytes {
+		return nil, 0, nil, errThumbnailUnsupported
 	}
 	cfg, _, err := image.DecodeConfig(bytes.NewReader(data))
 	if err != nil || cfg.Width*cfg.Height > thumbnailMaxPixels {
-		return nil, 0, errThumbnailUnsupported
+		return nil, 0, nil, errThumbnailUnsupported
 	}
 	img, format, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
-		return nil, 0, errThumbnailUnsupported
+		return nil, 0, nil, errThumbnailUnsupported
 	}
-	orientation := 1
+	orientation = 1
 	if format == "jpeg" {
 		orientation = jpegOrientation(data)
 	}
-	return img, orientation, nil
+	return img, orientation, nil, nil
+}
+
+// ffmpegPhoto decodes the JPEG input (with stdin as for
+// ffmpeg.FrameWith), whose first bytes are header, with ffmpeg: several
+// times faster than Go, and at a half, a quarter or an eighth of its size
+// when spec needs no more, which is faster still. ffmpeg turns it by its
+// EXIF orientation. When spec is a WebP whose size ffmpeg can work out
+// (see thumbnailSpec.direct), ffmpeg makes the whole thumbnail, which it
+// returns as whole.
+func (h *thumbnailHandler) ffmpegPhoto(ctx context.Context, input string, stdin io.Reader, header []byte, spec *thumbnailSpec) (img image.Image, whole []byte, err error) {
+	cfg, err := jpeg.DecodeConfig(bytes.NewReader(header))
+	if err != nil {
+		return nil, nil, err
+	}
+	if cfg.Width*cfg.Height > thumbnailMaxPixels {
+		return nil, nil, errThumbnailUnsupported
+	}
+	o := ffmpeg.FrameOptions{Orientation: jpegOrientation(header)}
+	// The size needed, in the file's orientation.
+	lw, lh := cfg.Width, cfg.Height
+	if o.Orientation >= 5 {
+		lw, lh = lh, lw
+	}
+	tw, th := thumbnailSize(lw, lh, spec)
+	if o.Orientation >= 5 {
+		tw, th = th, tw
+	}
+	o.Reduce = jpegReduce(cfg.Width, cfg.Height, tw, th)
+	err = h.withFFmpeg(ctx, ffmpegPhoto, stdin != nil, func(ctx context.Context) error {
+		if spec.format == "webp" && spec.direct() {
+			o.Width, o.Height, o.Inside = spec.ffmpegBox()
+			whole, err = h.t.ffmpeg.FrameWebP(ctx, input, stdin, o, spec.quality)
+			return err
+		}
+		rgba, err := h.t.ffmpeg.FrameWith(ctx, input, stdin, o)
+		if err == nil {
+			img = rgba
+		}
+		return err
+	})
+	return img, whole, err
+}
+
+// jpegReduce returns how many times (up to 3) a w x h JPEG can be halved
+// as it's decoded and still be a quarter larger than tw x th, which
+// leaves scaling enough pixels to keep it sharp.
+func jpegReduce(w, h, tw, th int) int {
+	k := 0
+	for k < 3 && (w>>(k+1))*4 >= tw*5 && (h>>(k+1))*4 >= th*5 {
+		k++
+	}
+	return k
+}
+
+// direct reports whether ffmpeg can make spec's thumbnail by itself: one
+// that shrinks the file at its own ratio, without cropping or padding.
+func (s *thumbnailSpec) direct() bool {
+	return s.width == 0 || s.height == 0 || s.fit == fitOutside || s.fit == fitInside
+}
+
+// ffmpegBox is the box of a direct spec for ffmpeg.FrameOptions. With one
+// side left to the ratio, it's a box the file fits inside.
+func (s *thumbnailSpec) ffmpegBox() (w, h int, inside bool) {
+	return s.width, s.height, s.width == 0 || s.height == 0 || s.fit == fitInside
 }
 
 // thumbnailVideoFrameAt is how far into a video its thumbnail is taken
@@ -583,18 +804,46 @@ const thumbnailVideoFrameAt = 10 * time.Second
 // videoFrame grabs the first keyframe thumbnailVideoFrameAt or more into
 // the video (see ffmpegFrames for shorter ones) with ffmpeg, which also
 // applies the video's rotation and shrinks the frame to what spec needs.
+// When spec is a WebP ffmpeg can make by itself (see
+// thumbnailSpec.direct), it makes the whole thumbnail in the same run,
+// and that's returned as whole instead.
 // Files on local disk are passed by path so ffmpeg can seek.
 // Others, inside archives, are piped in, which works for streamable
 // containers; when it doesn't (an MP4 with its index at the end, the
 // usual layout), the file is copied to a temporary file up to
 // thumbnailMaxVideoCopy bytes.
-func (h *thumbnailHandler) videoFrame(ctx context.Context, name string, spec *thumbnailSpec) (image.Image, error) {
+func (h *thumbnailHandler) videoFrame(ctx context.Context, name string, spec *thumbnailSpec) (img image.Image, whole []byte, err error) {
 	if h.t.ffmpeg == nil {
-		return nil, errThumbnailUnsupported
+		return nil, nil, errThumbnailUnsupported
 	}
+	// The frame only has to cover the box: making the thumbnail from it
+	// crops or pads it, and enlarges only a frame that was smaller to
+	// begin with.
+	o := ffmpeg.FrameOptions{Keyframe: true, Width: spec.width, Height: spec.height}
+	webp := spec.format == "webp" && spec.direct()
+	if webp {
+		o.Width, o.Height, o.Inside = spec.ffmpegBox()
+	}
+	grab := func(ctx context.Context, input string, stdin io.Reader, at time.Duration) error {
+		o := o
+		o.At = at
+		if webp {
+			data, err := h.t.ffmpeg.FrameWebP(ctx, input, stdin, o, spec.quality)
+			if err == nil {
+				whole = data
+			}
+			return err
+		}
+		rgba, err := h.t.ffmpeg.FrameWith(ctx, input, stdin, o)
+		if err == nil {
+			img = rgba
+		}
+		return err
+	}
+
 	f, err := h.fsys.Open(name)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	info, statErr := f.Stat()
 	osf, local := f.(*os.File)
@@ -602,26 +851,28 @@ func (h *thumbnailHandler) videoFrame(ctx context.Context, name string, spec *th
 		slog.Error("failed to close video after thumbnailing", "path", name, "error", err)
 	}
 	if local {
-		return h.ffmpegFrames(ctx, osf.Name(), "", spec)
+		err := h.ffmpegFrames(ctx, osf.Name(), "", grab)
+		return img, whole, err
 	}
 
-	img, err := h.ffmpegFrames(ctx, "pipe:0", name, spec)
+	err = h.ffmpegFrames(ctx, "pipe:0", name, grab)
 	if err == nil || ctx.Err() != nil {
-		return img, err
+		return img, whole, err
 	}
 	if statErr != nil || info.Size() > thumbnailMaxVideoCopy {
-		return nil, errThumbnailUnsupported
+		return nil, nil, errThumbnailUnsupported
 	}
 	tmp, err := h.copyToTemp(ctx, name)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer func() {
 		if err := os.Remove(tmp); err != nil {
 			slog.Error("failed to remove temporary video copy", "path", tmp, "error", err)
 		}
 	}()
-	return h.ffmpegFrames(ctx, tmp, "", spec)
+	err = h.ffmpegFrames(ctx, tmp, "", grab)
+	return img, whole, err
 }
 
 // copyToTemp copies the file name to a new temporary file and returns its
@@ -652,37 +903,27 @@ func (h *thumbnailHandler) copyToTemp(ctx context.Context, name string) (string,
 	return tmp.Name(), nil
 }
 
-// ffmpegFrames returns the first keyframe thumbnailVideoFrameAt or more
-// into the video, shrunk to cover spec's box, which for most is the one
-// run of ffmpeg. Only when there is none is the video's length asked
-// for: one no longer than that gives the first keyframe from 10% of the
-// way through, and any other its first frame, as does a clip too short
-// for ffmpeg to seek in. When pipe is set, input is "pipe:0" and the file
-// pipe (in h.fsys) is opened afresh for each run of ffmpeg and fed to its
-// stdin.
-func (h *thumbnailHandler) ffmpegFrames(ctx context.Context, input, pipe string, spec *thumbnailSpec) (image.Image, error) {
-	frame := func(at time.Duration) (img image.Image, err error) {
-		err = h.withVideo(ctx, ffmpegFrame, pipe, func(ctx context.Context, stdin io.Reader) error {
+// ffmpegFrames grabs the first keyframe thumbnailVideoFrameAt or more
+// into the video with grab, which runs ffmpeg on input and stdin for the
+// frame at at, which for most is the one run of ffmpeg. Only when there
+// is none is the video's length asked for: one no longer than that gives
+// the first keyframe from 10% of the way through, and any other its first
+// frame, as does a clip too short for ffmpeg to seek in. When pipe is
+// set, input is "pipe:0" and the file pipe (in h.fsys) is opened afresh
+// for each run of ffmpeg and fed to its stdin.
+func (h *thumbnailHandler) ffmpegFrames(ctx context.Context, input, pipe string, grab func(ctx context.Context, input string, stdin io.Reader, at time.Duration) error) error {
+	frame := func(at time.Duration) error {
+		return h.withVideo(ctx, ffmpegFrame, pipe, func(ctx context.Context, stdin io.Reader) error {
 			trace.SpanFromContext(ctx).SetAttributes(attribute.Float64("at_seconds", at.Seconds()))
-			// The frame only has to cover the box: making the thumbnail
-			// from it crops or pads it, and enlarges only a frame that
-			// was smaller to begin with.
-			rgba, err := h.t.ffmpeg.FrameWith(ctx, input, stdin, ffmpeg.FrameOptions{
-				At: at, Keyframe: true, Width: spec.width, Height: spec.height,
-			})
-			if err == nil {
-				img = rgba
-			}
-			return err
+			return grab(ctx, input, stdin, at)
 		})
-		return img, err
 	}
-	img, last := frame(thumbnailVideoFrameAt)
+	last := frame(thumbnailVideoFrameAt)
 	if last == nil {
-		return img, nil
+		return nil
 	}
 	if ctx.Err() != nil {
-		return nil, ctx.Err()
+		return ctx.Err()
 	}
 
 	var times []time.Duration
@@ -693,7 +934,7 @@ func (h *thumbnailHandler) ffmpegFrames(ctx context.Context, input, pipe string,
 	})
 	switch {
 	case ctx.Err() != nil:
-		return nil, ctx.Err()
+		return ctx.Err()
 	case err == nil && dur <= thumbnailVideoFrameAt:
 		times = []time.Duration{dur / 10, 0}
 	case err == nil:
@@ -706,41 +947,80 @@ func (h *thumbnailHandler) ffmpegFrames(ctx context.Context, input, pipe string,
 		times = []time.Duration{time.Second, 0}
 	}
 	for _, at := range times {
-		img, err := frame(at)
+		err := frame(at)
 		if err == nil {
-			return img, nil
+			return nil
 		}
 		if ctx.Err() != nil {
-			return nil, ctx.Err()
+			return ctx.Err()
 		}
 		last = err
 	}
 	slog.Debug("ffmpeg could not read a frame", "input", input, "error", last)
-	return nil, errThumbnailUnsupported
+	return errThumbnailUnsupported
 }
 
-// withVideo runs one ffmpeg call, fn, with a timeout, and with the file
-// pipe opened as its stdin when pipe is set. The run is a span,
-// ffmpeg.OPERATION, and is timed with how it ended.
-func (h *thumbnailHandler) withVideo(ctx context.Context, operation, pipe string, fn func(context.Context, io.Reader) error) (err error) {
+// withVideo runs one ffmpeg call, fn, as withFFmpeg does, with the file
+// pipe opened as its stdin when pipe is set.
+func (h *thumbnailHandler) withVideo(ctx context.Context, operation, pipe string, fn func(context.Context, io.Reader) error) error {
+	return h.withFFmpeg(ctx, operation, pipe != "", func(ctx context.Context) error {
+		if pipe == "" {
+			return fn(ctx, nil)
+		}
+		f, err := h.fsys.Open(pipe)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if err := f.Close(); err != nil {
+				slog.Error("failed to close video after thumbnailing", "path", pipe, "error", err)
+			}
+		}()
+		return fn(ctx, f)
+	})
+}
+
+// withFFmpeg runs one ffmpeg call, fn, with a timeout. The run is a span,
+// ffmpeg.OPERATION, and is timed with whether its input was piped and how
+// it ended.
+func (h *thumbnailHandler) withFFmpeg(ctx context.Context, operation string, piped bool, fn func(context.Context) error) (err error) {
 	parent := ctx
-	ran := h.t.metrics.ffmpegRun(&ctx, operation, pipe != "")
+	ran := h.t.metrics.ffmpegRun(&ctx, operation, piped)
 	ctx, cancel := context.WithTimeout(ctx, thumbnailVideoTimeout)
 	defer cancel()
 	defer func() { ran(ffmpegOutcome(parent, ctx, err)) }()
-	if pipe == "" {
-		return fn(ctx, nil)
+	return fn(ctx)
+}
+
+// thumbnailSize is the size of spec's image of a file lw x lh, before
+// it's cropped or padded to the box.
+func thumbnailSize(lw, lh int, spec *thumbnailSpec) (int, int) {
+	fw, fh := float64(lw), float64(lh)
+	bw, bh := float64(spec.width), float64(spec.height)
+	var sx, sy float64
+	switch {
+	case spec.width == 0:
+		sx = math.Min(1, bh/fh)
+		sy = sx
+	case spec.height == 0:
+		sx = math.Min(1, bw/fw)
+		sy = sx
+	case spec.fit == fitFill:
+		sx, sy = bw/fw, bh/fh
+	case spec.fit == fitCover:
+		sx = math.Max(bw/fw, bh/fh)
+		sy = sx
+	case spec.fit == fitContain:
+		sx = math.Min(bw/fw, bh/fh)
+		sy = sx
+	case spec.fit == fitOutside: // never larger than the file
+		sx = math.Min(1, math.Max(bw/fw, bh/fh))
+		sy = sx
+	default: // fitInside: never larger than the file.
+		sx = math.Min(1, math.Min(bw/fw, bh/fh))
+		sy = sx
 	}
-	f, err := h.fsys.Open(pipe)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			slog.Error("failed to close video after thumbnailing", "path", pipe, "error", err)
-		}
-	}()
-	return fn(ctx, f)
+	return max(1, int(math.Round(fw*sx))), max(1, int(math.Round(fh*sy)))
 }
 
 // renderThumbnail scales src (whose EXIF orientation is orientation) to
@@ -751,37 +1031,11 @@ func renderThumbnail(src image.Image, orientation int, spec *thumbnailSpec) *ima
 	// The image as displayed ("logical") is transposed for orientations
 	// 5 to 8.
 	transposed := orientation >= 5 && orientation <= 8
-	lw, lh := float64(b.Dx()), float64(b.Dy())
+	lw, lh := b.Dx(), b.Dy()
 	if transposed {
 		lw, lh = lh, lw
 	}
-
-	bw, bh := float64(spec.width), float64(spec.height)
-	var sx, sy float64
-	switch {
-	case spec.width == 0:
-		sx = math.Min(1, bh/lh)
-		sy = sx
-	case spec.height == 0:
-		sx = math.Min(1, bw/lw)
-		sy = sx
-	case spec.fit == fitFill:
-		sx, sy = bw/lw, bh/lh
-	case spec.fit == fitCover:
-		sx = math.Max(bw/lw, bh/lh)
-		sy = sx
-	case spec.fit == fitContain:
-		sx = math.Min(bw/lw, bh/lh)
-		sy = sx
-	case spec.fit == fitOutside: // never larger than the file
-		sx = math.Min(1, math.Max(bw/lw, bh/lh))
-		sy = sx
-	default: // fitInside: never larger than the file.
-		sx = math.Min(1, math.Min(bw/lw, bh/lh))
-		sy = sx
-	}
-	tw := max(1, int(math.Round(lw*sx)))
-	th := max(1, int(math.Round(lh*sy)))
+	tw, th := thumbnailSize(lw, lh, spec)
 
 	// Scale in the file's orientation.
 	stw, sth := tw, th

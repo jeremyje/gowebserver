@@ -101,6 +101,7 @@ else
 endif
 
 ACTIONLINT = build/toolchain/bin/actionlint$(EXE)
+FFMPEG = build/toolchain/bin/ffmpeg$(EXE)
 CERTTOOL = build/toolchain/bin/certtool$(EXE)
 DOCKER_COMPOSE = build/toolchain/bin/docker-compose$(EXE)
 GOCOVER_COBERTURA = build/toolchain/bin/gocover-cobertura$(EXE)
@@ -124,7 +125,7 @@ ANDROID_NDK = build/toolchain/android-ndk-$(ANDROID_NDK_VERSION)
 ANDROID_NDK_BIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64/bin
 ANDROID_NDK_CLANG = $(ANDROID_NDK_BIN)/clang
 
-COMMON_TOOLCHAIN = $(ACTIONLINT) $(CERTTOOL) $(DOCKER_COMPOSE) $(GOCOVER_COBERTURA) $(GOFUMPT) $(GOLANGCI_LINT) $(GOVULNCHECK) $(HADOLINT) $(REVIVE) $(RUMDL) $(SHELLCHECK) $(TERRAFORM) $(TFLINT) $(TRIVY) $(VIZB)
+COMMON_TOOLCHAIN = $(ACTIONLINT) $(CERTTOOL) $(DOCKER_COMPOSE) $(FFMPEG) $(GOCOVER_COBERTURA) $(GOFUMPT) $(GOLANGCI_LINT) $(GOVULNCHECK) $(HADOLINT) $(REVIVE) $(RUMDL) $(SHELLCHECK) $(TERRAFORM) $(TFLINT) $(TRIVY) $(VIZB)
 
 $(ACTIONLINT):
 	mkdir -p "$(dir $@)"
@@ -139,6 +140,13 @@ $(DOCKER_COMPOSE):
 	mkdir -p "$(dir $@)"
 	$(CURL) -Lo $@ "$(DOCKERCOMPOSE_PACKAGE)"
 	chmod +x "$(REPOSITORY_ROOT)/$@"
+
+# For the tests that run the real ffmpeg (thumbnails of photos and videos),
+# which find it on PATH and are skipped without it. The download, BtbN's GPL
+# build through pkg/ffmpeg, is kept in the user cache directory, so it
+# survives `make clean` and is fetched again only for a new ffmpeg version.
+$(FFMPEG):
+	$(GO) run ./internal/tools/installffmpeg -o "$@"
 
 $(GOCOVER_COBERTURA):
 	mkdir -p "$(dir $@)"
