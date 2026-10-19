@@ -18,7 +18,7 @@
 # can be reproduced on any repo created from it (or restored here) with
 # one command instead of clicking through Settings by hand.
 #
-# Usage: scripts/configure-github-repo.sh [-r|--repo OWNER/REPO] [-n|--dry-run]
+# Usage: scripts/template-go/configure-github-repo.sh [-r|--repo OWNER/REPO] [-n|--dry-run]
 # Defaults to the `origin` remote of the current git repo; pass --repo to
 # target a different one. Requires `gh` to be authenticated with admin
 # rights on the target repo. Pass --dry-run to print what would run
