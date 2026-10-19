@@ -60,23 +60,14 @@ jobs:
         with:
           go-version: stable
           cache: false
+      - name: Prepare CI
+        run: ./scripts/prepare-ci.sh
       - name: System Information
         run: make system-info
       # - name: Container Fix
       #   run: git config --system --add safe.directory /__w/
-
       - name: Install Signing Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get -y -q install osslsigncode binutils openssl
-      - name: Install Prerequisites
-        run: |
-          sudo apt-get update
-          sudo apt -y -q install software-properties-common
-          sudo add-apt-repository universe
-          sudo apt-get update
-          sudo apt-get -y -q install lz4 p7zip-full rar unrar
-
+        run: ./scripts/template-go/install-codesign.sh
       - name: Clean
         run: make clean
       - name: Build Assets
@@ -115,7 +106,6 @@ jobs:
           file: coverage.xml
           language: Go
           label: code-coverage/gotest
-
       - name: Benchmark
         # Benchmarks are for performance tracking, not PR correctness.
         if: ${{ github.event_name != 'pull_request' }}
@@ -130,16 +120,13 @@ jobs:
             benchmark.html
           retention-days: 7
           if-no-files-found: error
-
       - name: Build Binaries
         run: make all -j"$(nproc)"
-
       - name: Set up Docker Buildx (Scan)
         # https://github.com/docker/setup-buildx-action
         # Skipped on pull requests along with the image scan below.
         if: ${{ github.event_name != 'pull_request' }}
         uses: docker/setup-buildx-action@v4
-
       - name: Scan Container Image
         # Builds a local single-arch image with --load purely so trivy has
         # something to scan; independent of the multi-arch push pipeline
@@ -148,11 +135,9 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         continue-on-error: true
         run: make scan-images
-
       - name: Release Package
         if: ${{ github.event_name != 'pull_request' }}
         run: make build/packages/release.tar.gz
-
       - name: Create Release
         # https://github.com/softprops/action-gh-release
         uses: softprops/action-gh-release@v3
@@ -169,7 +154,6 @@ jobs:
             build/release/gowebserver-linux_arm64
             build/release/gowebserver-windows_amd64.exe
             build/release/gowebserver-windows_arm64.exe
-
       - name: Login to GitHub Container Registry
         # https://github.com/docker/login-action#github-packages-docker-registry
         uses: docker/login-action@v4
@@ -178,7 +162,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Login to Docker Hub
         # https://github.com/docker/login-action#github-packages-docker-registry
         uses: docker/login-action@v4
@@ -186,22 +169,18 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
-
       - name: Set up QEMU
         # https://github.com/docker/setup-qemu-action
         uses: docker/setup-qemu-action@v4
         if: ${{ github.event_name != 'pull_request' }}
-
       - name: Set up Docker Buildx
         # https://github.com/docker/setup-buildx-action
         uses: docker/setup-buildx-action@v4
         if: ${{ github.event_name != 'pull_request' }}
-
       - name: Push Images (Commit)
         if: ${{ !startsWith(github.ref, 'refs/tags/') && github.event_name != 'pull_request' }}
         run: |
           make DOCKER_PUSH="" REGISTRY=docker.io/cloudfra linux-images windows-images
-
       - name: Push Images (Release)
         if: startsWith(github.ref, 'refs/tags/')
         run: |
@@ -222,6 +201,9 @@ jobs:
         with:
           go-version: stable
           cache: false
+      - name: Initialize CI
+        shell: powershell
+        run: ./scripts/Initialize-CI.ps1
       - name: System Information
         run: make system-info
       - name: Clean
@@ -240,7 +222,6 @@ jobs:
         run: make GO_TEST_COUNT=${{ github.event_name == 'pull_request' && '3' || '5' }} test-deflake
       - name: Coverage
         run: make coverage.txt coverage.xml
-
       - name: Benchmark
         # Benchmarks are for performance tracking, not PR correctness.
         if: ${{ github.event_name != 'pull_request' }}

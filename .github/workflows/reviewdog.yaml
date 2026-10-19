@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: reviewdog
+name: Reviewdog
 on: [pull_request]
 
 concurrency:
@@ -87,6 +87,7 @@ jobs:
           # codespell's dictionary is broad enough to flag real typos in it
           # that aren't ours to fix.
           skip: "./.git,./go.sum,./go.mod,./third_party"
+          ignore_words_file: .codespellignore
 
   # https://github.com/marketplace/actions/run-yamllint-with-reviewdog
   yamllint:

@@ -599,7 +599,9 @@ func TestThumbnailShared(t *testing.T) {
 		case <-time.After(20 * time.Millisecond):
 		}
 		cancel2()
-		<-errs
+		if err := <-errs; err == nil {
+			t.Error("canceling the context did not return an error")
+		}
 		select {
 		case <-cancelled:
 		case <-time.After(5 * time.Second):
