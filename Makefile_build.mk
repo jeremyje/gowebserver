@@ -12,10 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# What `make test` runs. Set before the includes below because
+# Makefile_javascript.mk appends test-js to it when the project sets
+# JAVASCRIPT_DIR, and the test rule further down is read from this list.
+TEST_TARGETS = test-go test-tf
+
+# What the test and benchmark rules wait for. Assigned before the includes
+# below because Makefile_projecttools.mk appends this project's own tools to
+# it, so a test that shells out to one of them finds it installed without the
+# project wiring the dependency up itself.
+TEST_DEPS = $(TEST_ASSETS)
+
+# Makefile_projecttools.mk comes before the includes whose rules call its
+# download macros. Recipes expand lazily so the order is not load-bearing, but
+# it keeps the dependency between them explicit.
 include Makefile_core.mk
+include Makefile_projecttools.mk
 include Makefile_proto.mk
 include Makefile_toolchain.mk
 include Makefile_testassets.mk
+include Makefile_javascript.mk
 
 DOCKER_PUSH = --push
 
@@ -123,11 +139,12 @@ DOCKER_EXTRA_FLAGS = --builder $(BUILDX_BUILDER) --provenance=false --sbom=false
 DOCKER_LABEL_ARGS = --build-arg BUILD_DATE=$(BUILD_DATE) --build-arg VCS_REF=$(SHORT_SHA) --build-arg BUILD_VERSION=$(VERSION)
 
 TOOLCHAIN = $(COMMON_TOOLCHAIN) $(PROTOC_TOOLCHAIN)
-tools: $(TOOLCHAIN)
+tools: $(TOOLCHAIN) $(PROJECT_TOOLS)
 
 all: no-sudo $(ALL_BINARIES)
-assets: $(ASSETS)
+assets: $(ASSETS) $(PROJECT_TOOLS)
 testassets: $(TEST_ASSETS)
+projecttools: $(PROJECT_TOOLS)
 protos: $(PROTOS)
 windows-binaries: $(WINDOWS_BINARIES)
 
@@ -232,26 +249,22 @@ lint-markdown: build/toolchain/bin/rumdl$(EXE)
 lint-vuln: build/toolchain/bin/govulncheck$(EXE)
 	$(IGNORE_LINT_CHECK)"$(REPOSITORY_ROOT)/build/toolchain/bin/govulncheck$(EXE)" ./...
 
-bench: $(TEST_ASSETS)
+bench: $(TEST_DEPS)
 	$(GO) test -bench=. -benchmem -tags testing ${SOURCE_DIRS}
 
-benchmark.html: $(TEST_ASSETS) build/toolchain/bin/vizb$(EXE)
+benchmark.html: $(TEST_DEPS) build/toolchain/bin/vizb$(EXE)
 	$(GO) test -json -bench=. -benchmem -tags testing ${SOURCE_DIRS} | build/toolchain/bin/vizb$(EXE) -o benchmark.html
-
-# What `make test` runs. A makefile included before this one adds its own
-# with TEST_TARGETS += (see Makefile_javascript.mk).
-TEST_TARGETS += test-go test-tf
 
 test: $(TEST_TARGETS)
 
-test-go: $(TEST_ASSETS)
+test-go: $(TEST_DEPS)
 	$(GO) test -shuffle=on -tags testing ${SOURCE_DIRS}
 
-test-deflake: $(TEST_ASSETS)
+test-deflake: $(TEST_DEPS)
 	CGO_ENABLED=1 $(GO) test -shuffle=on -tags testing $(GO_RACE) ${SOURCE_DIRS} -cover -count $(GO_TEST_COUNT) -test.short
 
 ifneq ($(wildcard install/terraform),)
-test-tf: build/toolchain/bin/terraform$(EXE) $(TEST_ASSETS)
+test-tf: build/toolchain/bin/terraform$(EXE) $(TEST_DEPS)
 	# -backend=false: main.tftest.hcl mocks the providers and never touches
 	# real state, so there's no need to configure the (real, per-environment)
 	# GCS backend just to run tests.
@@ -285,6 +298,8 @@ clean:
 	@if [ -n output/ ]; then rm -rf output/; fi
 	@if [ -n "$(strip $(ASSETS))" ]; then rm -rf $(ASSETS); fi
 	@if [ -n "$(strip $(TEST_ASSETS))" ]; then rm -rf $(TEST_ASSETS); fi
+	@if [ -n "$(strip $(PROJECT_TOOLS))" ]; then rm -rf $(PROJECT_TOOLS); fi
+	@if [ -n "$(strip $(PROJECT_ARCHIVES))" ]; then rm -rf $(PROJECT_ARCHIVES); fi
 
 presubmit: no-sudo tools assets testassets lint all test-deflake release-binaries
 
@@ -388,4 +403,4 @@ system-info:
 sync-upstream:
 	-git fetch origin; git add -A; git commit -m"Save pending changes."; git rebase -i origin/main
 
-.PHONY: tools all assets testassets protos windows-binaries release-binaries wasm-binaries lint lint-terraform lint-go lint-docker lint-yaml lint-shell lint-markdown lint-vuln bench test test-go test-deflake test-tf deps clean presubmit ensure-builder docker-images scan-images images linux-images windows-images no-sudo system-info sync-upstream
+.PHONY: tools all assets testassets projecttools protos windows-binaries release-binaries wasm-binaries lint lint-terraform lint-go lint-docker lint-yaml lint-shell lint-markdown lint-vuln bench test test-go test-deflake test-tf deps clean presubmit ensure-builder docker-images scan-images images linux-images windows-images no-sudo system-info sync-upstream

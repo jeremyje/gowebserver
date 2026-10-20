@@ -26,11 +26,26 @@ NETBSD_PLATFORMS = netbsd/amd64 netbsd/arm64 netbsd/arm/v5 netbsd/arm/v6 netbsd/
 
 JAVASCRIPT_DIR = pkg/gowebserver/template
 JAVASCRIPT_SERVER = build/bin/$(HOST_OS)/$(HOST_ARCH)/gowebserver$(EXE)
+# What the scripts read beyond what the template passes (NODE_PATH,
+# PLAYWRIGHT_BROWSERS_PATH and JAVASCRIPT_SERVER itself): browser.js names
+# the server binary GOWEBSERVER, and browserbench.js takes its workload from
+# the environment.
+JAVASCRIPT_EXTRA_ENV = GOWEBSERVER="$(REPOSITORY_ROOT)/$(JAVASCRIPT_SERVER)" PHOTOS=$(PHOTOS) PHOTO_SIZE=$(PHOTO_SIZE) THUMBNAILS=$(THUMBNAILS)
 
-# Before Makefile_build.mk: it adds test-js to the TEST_TARGETS that the test
-# rule there is made from.
-include Makefile_javascript.mk
+# The one tool this project needs that the template's toolchain doesn't
+# ship. The tests that make real thumbnails find ffmpeg on PATH, which
+# already includes build/toolchain/bin, and skip without it.
+PROJECT_TOOLS = build/toolchain/bin/ffmpeg$(EXE)
+
 include Makefile_build.mk
+
+# pkg/ffmpeg does the downloading, so the license is accepted here and the
+# archive is kept in the user cache directory: `make clean` removes the
+# installed binary but not the download, which is fetched again only for a
+# new ffmpeg version. This rule sits below the include so it doesn't become
+# what a bare `make` builds.
+build/toolchain/bin/ffmpeg$(EXE):
+	$(GO) run ./internal/tools/installffmpeg -o "$@"
 
 run: clean assets lint
 	$(GO) run cmd/gowebserver/gowebserver.go -http.port 8181 -path=. -verbose -debug -enhancedindex=true

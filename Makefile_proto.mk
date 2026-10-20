@@ -57,18 +57,12 @@ PROTOC_TOOLCHAIN += build/toolchain/bin/protoc-gen-grpc-gateway$(EXE)
 PROTOC_TOOLCHAIN += build/toolchain/bin/protoc-gen-openapiv2$(EXE)
 
 build/archives/protoc.zip:
-	mkdir -p $(ARCHIVES_DIR)/
-	$(CURL) -o $(ARCHIVES_DIR)/protoc.zip -L $(PROTOC_PACKAGE)
-	touch "$(REPOSITORY_ROOT)/$@"
+	$(call download_archive,$(PROTOC_PACKAGE),$@)
 
+# protoc.zip keeps its tree (bin/, include/, readme), so no strip: the member
+# is the path inside the archive.
 build/toolchain/bin/protoc$(EXE): build/archives/protoc.zip
-	mkdir -p "$(dir $@)"
-	mkdir -p "$(TOOLCHAIN_DIR)/protoc-temp/"
-	cp "$(ARCHIVES_DIR)/protoc.zip" "$(TOOLCHAIN_DIR)/protoc-temp/"
-	(cd "$(TOOLCHAIN_DIR)/protoc-temp/"; unzip -q -o protoc.zip)
-	cp "$(TOOLCHAIN_DIR)/protoc-temp/bin/protoc$(EXE)" "$(TOOLCHAIN_BIN)/protoc$(EXE)"
-	rm -rf "$(TOOLCHAIN_DIR)/protoc-temp/"
-	touch "$(REPOSITORY_ROOT)/$@"
+	$(call install_tool,$<,$@,bin/protoc$(EXE))
 
 build/toolchain/bin/protoc-gen-go-grpc$(EXE): third_party/google_protobuf/include/google/LICENSE third_party/grpc_gateway/include/protoc-gen-openapiv2/LICENSE
 	mkdir -p "$(dir $@)"
