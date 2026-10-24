@@ -238,11 +238,7 @@ bench: $(TEST_ASSETS)
 benchmark.html: $(TEST_ASSETS) build/toolchain/bin/vizb$(EXE)
 	$(GO) test -json -bench=. -benchmem -tags testing ${SOURCE_DIRS} | build/toolchain/bin/vizb$(EXE) -o benchmark.html
 
-# What `make test` runs. A makefile included before this one adds its own
-# with TEST_TARGETS += (see Makefile_javascript.mk).
-TEST_TARGETS += test-go test-tf
-
-test: $(TEST_TARGETS)
+test: test-go test-tf
 
 test-go: $(TEST_ASSETS)
 	$(GO) test -shuffle=on -tags testing ${SOURCE_DIRS}

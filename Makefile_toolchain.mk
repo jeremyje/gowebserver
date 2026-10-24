@@ -19,9 +19,9 @@ ACTIONLINT_VERSION=latest
 # https://github.com/docker/compose/releases
 DOCKERCOMPOSE_VERSION = 5.6.0
 # https://developer.hashicorp.com/terraform/install
-TERRAFORM_VERSION = 1.16.5
+TERRAFORM_VERSION = 1.16.6
 # https://github.com/cloudfra/certtool/releases
-CERTTOOL_VERSION = 0.6.0
+CERTTOOL_VERSION = 0.7.0
 # https://github.com/hadolint/hadolint/releases
 HADOLINT_VERSION = 2.15.1
 # https://github.com/t-yuki/gocover-cobertura/releases
@@ -31,21 +31,21 @@ GOFUMPT_VERSION = latest
 # https://github.com/golangci/golangci-lint/releases
 GOLANGCI_LINT_VERSION = latest
 # https://github.com/golang/vuln/releases
-GOVULNCHECK_VERSION = 1.8.0
+GOVULNCHECK_VERSION = 1.9.0
 # https://github.com/mgechev/revive/releases
 REVIVE_VERSION=latest
 # https://github.com/rvben/rumdl/releases
-RUMDL_VERSION = 0.2.78
+RUMDL_VERSION = 0.3.0
 # https://github.com/koalaman/shellcheck/releases
 SHELLCHECK_VERSION = 0.11.0
 # https://github.com/terraform-linters/tflint/releases
 TFLINT_VERSION = latest
 # https://github.com/aquasecurity/trivy/releases
-TRIVY_VERSION = 0.75.0
+TRIVY_VERSION = 0.76.0
 # https://github.com/goptics/vizb/releases
-VIZB_VERSION = 0.21.0
+VIZB_VERSION = 0.22.0
 # https://developer.android.com/ndk/downloads
-ANDROID_NDK_VERSION = r28c
+ANDROID_NDK_VERSION = r30
 # Minimum Android API level for the NDK's clang target wrappers; 21 is the
 # lowest the NDK supports.
 ANDROID_API = 21
@@ -101,7 +101,6 @@ else
 endif
 
 ACTIONLINT = build/toolchain/bin/actionlint$(EXE)
-FFMPEG = build/toolchain/bin/ffmpeg$(EXE)
 CERTTOOL = build/toolchain/bin/certtool$(EXE)
 DOCKER_COMPOSE = build/toolchain/bin/docker-compose$(EXE)
 GOCOVER_COBERTURA = build/toolchain/bin/gocover-cobertura$(EXE)
@@ -124,8 +123,12 @@ VIZB = build/toolchain/bin/vizb$(EXE)
 ANDROID_NDK = build/toolchain/android-ndk-$(ANDROID_NDK_VERSION)
 ANDROID_NDK_BIN = $(ANDROID_NDK)/toolchains/llvm/prebuilt/linux-x86_64/bin
 ANDROID_NDK_CLANG = $(ANDROID_NDK_BIN)/clang
+# Kept as a variable (rather than inline in the download rule) so
+# scripts/template-go/update-project.sh can expand the exact URL this build
+# would fetch and HEAD-check a candidate NDK release before rewriting the pin.
+ANDROID_NDK_PACKAGE = https://dl.google.com/android/repository/android-ndk-$(ANDROID_NDK_VERSION)-linux.zip
 
-COMMON_TOOLCHAIN = $(ACTIONLINT) $(CERTTOOL) $(DOCKER_COMPOSE) $(FFMPEG) $(GOCOVER_COBERTURA) $(GOFUMPT) $(GOLANGCI_LINT) $(GOVULNCHECK) $(HADOLINT) $(REVIVE) $(RUMDL) $(SHELLCHECK) $(TERRAFORM) $(TFLINT) $(TRIVY) $(VIZB)
+COMMON_TOOLCHAIN = $(ACTIONLINT) $(CERTTOOL) $(DOCKER_COMPOSE) $(GOCOVER_COBERTURA) $(GOFUMPT) $(GOLANGCI_LINT) $(GOVULNCHECK) $(HADOLINT) $(REVIVE) $(RUMDL) $(SHELLCHECK) $(TERRAFORM) $(TFLINT) $(TRIVY) $(VIZB)
 
 $(ACTIONLINT):
 	mkdir -p "$(dir $@)"
@@ -140,13 +143,6 @@ $(DOCKER_COMPOSE):
 	mkdir -p "$(dir $@)"
 	$(CURL) -Lo $@ "$(DOCKERCOMPOSE_PACKAGE)"
 	chmod +x "$(REPOSITORY_ROOT)/$@"
-
-# For the tests that run the real ffmpeg (thumbnails of photos and videos),
-# which find it on PATH and are skipped without it. The download, BtbN's GPL
-# build through pkg/ffmpeg, is kept in the user cache directory, so it
-# survives `make clean` and is fetched again only for a new ffmpeg version.
-$(FFMPEG):
-	$(GO) run ./internal/tools/installffmpeg -o "$@"
 
 $(GOCOVER_COBERTURA):
 	mkdir -p "$(dir $@)"
@@ -247,7 +243,7 @@ $(ANDROID_NDK_CLANG): build/archives/android-ndk.zip
 
 build/archives/android-ndk.zip:
 	mkdir -p "$(dir $@)"
-	$(CURL) -o "$(REPOSITORY_ROOT)/$@" -L "https://dl.google.com/android/repository/android-ndk-$(ANDROID_NDK_VERSION)-linux.zip"
+	$(CURL) -o "$(REPOSITORY_ROOT)/$@" -L "$(ANDROID_NDK_PACKAGE)"
 	touch "$(REPOSITORY_ROOT)/$@"
 
 build/archives/terraform.zip:
